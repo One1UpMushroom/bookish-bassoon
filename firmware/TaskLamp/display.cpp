@@ -55,13 +55,10 @@ bool Display::begin() {
   tft.setSPISpeed(cfg::kTftSpiHz);
   tft.setRotation(cfg::kTftRotation);
   tft.fillScreen(kBg);
-  // SPI.begin() claims the MISO pad (GP4) for SPI0 RX. The display is
-  // write-only, so we use that pad as TFT reset; make sure it ends up as a
-  // plain output held high whatever order the library configured things in.
-  if (cfg::kTftRst >= 0) {
-    pinMode(cfg::kTftRst, OUTPUT);
-    digitalWrite(cfg::kTftRst, HIGH);
-  }
+  // The breakout resets itself at power-up, so no RST line is used (the
+  // library sends a software reset instead). Note that SPI.begin() also
+  // claims the MI pad (GP4) as SPI0 RX; the display is write-only, and
+  // setup() reassigns that pad to the encoder INT input after this returns.
   band.setTextWrap(false);
   band.cp437(true);  // enables the degree sign (0xF8)
   invalidate();

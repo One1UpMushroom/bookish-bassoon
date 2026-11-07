@@ -61,13 +61,32 @@ class Knob : public Adafruit_seesaw {
     pressed = !(pins & (1ul << cfg::kEncSwitchPin));  // switch pulls to GND
     return true;
   }
+  // Reading the GPIO interrupt flags releases INT after a switch change
+  // (reading the encoder delta already releases it after rotation).
+  void clearIntFlags() {
+    uint8_t b[4];
+    read(SEESAW_GPIO_BASE, SEESAW_GPIO_INTFLAG, b, 4);
+  }
   bool connect(uint8_t addr) {
     if (!begin(addr, -1, false)) return false;
-    if (((getVersion() >> 16) & 0xFFFF) != 4991) return false;  // Adafruit PID 4991
+    // PID 4991 = encoder breakout, 5880 = same board with the encoder
+    // pre-soldered. Anything else that answered is still a seesaw with an
+    // encoder input, so warn instead of refusing it.
+    uint16_t pid = (getVersion() >> 16) & 0xFFFF;
+    if (pid != 4991 && pid != 5880) {
+      Serial.print("seesaw: unexpected product id ");
+      Serial.println(pid);
+    }
     pinMode(cfg::kEncSwitchPin, INPUT_PULLUP);
+    if (cfg::kEncIntPin >= 0) {  // drive INT on rotation and on switch changes
+      setGPIOInterrupts(1ul << cfg::kEncSwitchPin, true);
+      enableEncoderInterrupt();
+    }
     int32_t d;
     bool p;
-    return sample(d, p);  // also clears any stale delta
+    bool ok = sample(d, p);  // also clears any stale delta
+    clearIntFlags();
+    return ok;
   }
 };
 
@@ -83,6 +102,17 @@ static uint8_t gKnobErrors;
 static uint32_t gKnobRetryAt;
 static uint32_t gLastGlow = 0xFFFFFFFF;
 static settings::SaveScheduler gSaver;
+static bool gStorageOk;
+static IntGate gGate(cfg::kEncIntPin >= 0);
+static bool gLastPressed;
+static volatile bool gIntFlag;  // latched by the INT edge, so short pulses aren't missed
+
+static void onEncoderInt() { gIntFlag = true; }
+
+// The breakout mounts its encoder at 45 degrees, which makes it count
+// negative for clockwise turns (Adafruit guide). Flip it so clockwise means
+// "more"; the Knob dir setting is a further user override.
+static int32_t orient(int32_t d) { return gSettings.hw.knobReverse ? d : -d; }
 
 static void publish() {
   mutex_enter_blocking(&gLock);
@@ -111,37 +141,62 @@ static void pollKnobs(uint32_t now) {
   }
   int32_t d = 0;
   bool pressed = false;
-  if (gKnob.sample(d, pressed)) {
-    gKnobErrors = 0;
-    if (gSettings.hw.knobReverse) d = -d;
-    gGest.enableDoubleClick(gUi.wantDoubleClick());
-    gGest.update(now, pressed, d);
-  } else if (++gKnobErrors >= 3) {
-    gKnobOk = false;
-    gGest.update(now, false, 0);
-    gGest.update(now, false, 0);  // two samples: debounced release
-    gUi.setEncoderMissing(true);
+  gGest.enableDoubleClick(gUi.wantDoubleClick());
+  bool intAsserted =
+      cfg::kEncIntPin >= 0 && (gIntFlag || digitalRead(cfg::kEncIntPin) == LOW);
+  bool held = gLastPressed || gGest.held();
+  if (!gGate.shouldRead(now, intAsserted, held)) {
+    gGest.update(now, gLastPressed, 0);  // nothing new: keep gesture timers running
+  } else {
+    gIntFlag = false;  // cleared before the read, so an edge during it is kept
+    if (gKnob.sample(d, pressed)) {
+      if (intAsserted) gKnob.clearIntFlags();
+      gKnobErrors = 0;
+      d = orient(d);
+      gGate.afterRead(now, intAsserted, held, d != 0 || pressed != gLastPressed);
+      gLastPressed = pressed;
+      gGest.update(now, pressed, d);
+    } else if (++gKnobErrors >= 3) {
+      gKnobOk = false;
+      gLastPressed = false;
+      gGest.update(now, false, 0);
+      gGest.update(now, false, 0);  // two samples: debounced release
+      gUi.setEncoderMissing(true);
+    }
   }
-  if (gKnob2Ok && gKnob2.sample(d, pressed)) {
-    if (gSettings.hw.knobReverse) d = -d;
-    gGest2.update(now, pressed, d);
-  }
+  // The optional second knob has no INT wire, so it is simply polled.
+  if (gKnob2Ok && gKnob2.sample(d, pressed)) gGest2.update(now, pressed, orient(d));
 }
 
 static void drawUi(Painter& p, void*) { gUi.draw(p); }
 
 void setup() {
+  // The TFT breakout pulls its backlight (Lite) high, which would show the
+  // display's power-up garbage at full brightness. Hold it dark until core 1
+  // takes the pin over as PWM and fades it in.
+  if (cfg::kTftBacklight >= 0) {
+    pinMode(cfg::kTftBacklight, OUTPUT);
+    digitalWrite(cfg::kTftBacklight, LOW);
+  }
+  Serial.begin(115200);
+
   // Unpowered on-board NeoPixel: saves current, and its light is useless here.
   pinMode(cfg::kBoardPixelPower, OUTPUT);
   digitalWrite(cfg::kBoardPixelPower, LOW);
 
   settings::defaults(gSettings);
-  if (!(storage::begin() && storage::load(gSettings))) settings::defaults(gSettings);
+  // Fails when the board was built with "Flash Size: ... (no FS)", which is
+  // the Arduino IDE default for this board: then warn on screen, don't save.
+  gStorageOk = storage::begin();
+  if (!(gStorageOk && storage::load(gSettings))) settings::defaults(gSettings);
   gSaver.markSaved(settings::computeCrc(gSettings));
 
   memset(&gRuntime, 0, sizeof(gRuntime));
   gRuntime.on = 1;  // a lamp switched on at the wall should light up
 
+  // GP22/GP23 (the STEMMA QT port) can only be routed to the RP2040's I2C1
+  // block, which arduino-pico exposes as Wire1. (The QT Py guide names the
+  // port inconsistently; the hardware mapping is what counts.)
   Wire1.setSDA(cfg::kI2cSda);
   Wire1.setSCL(cfg::kI2cScl);
   Wire1.begin();
@@ -149,6 +204,11 @@ void setup() {
 
   gDisplay.begin();
   gUi.begin(&gSettings, &gRuntime, millis());
+  gUi.setStorageMissing(!gStorageOk);
+  if (cfg::kEncIntPin >= 0) {
+    pinMode(cfg::kEncIntPin, INPUT_PULLUP);  // seesaw INT is active low
+    attachInterrupt(digitalPinToInterrupt(cfg::kEncIntPin), onEncoderInt, FALLING);
+  }
   connectKnobs();
   publish();
   gCore0Ready = true;
@@ -190,7 +250,7 @@ void loop() {
   }
 
   // Flash wear: only write after 5 s without changes, and only if different.
-  if (gSaver.pending() && gSaver.due(now, settings::computeCrc(gSettings), cfg::kSaveDelayMs)) {
+  if (gStorageOk && gSaver.pending() && gSaver.due(now, settings::computeCrc(gSettings), cfg::kSaveDelayMs)) {
     settings::seal(gSettings);
     if (storage::save(gSettings)) gSaver.markSaved(gSettings.crc);
     else gSaver.touch(now);  // try again later

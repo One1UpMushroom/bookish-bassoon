@@ -751,6 +751,57 @@ TEST(ui_fuzz) {
   }
 }
 
+
+TEST(int_gate) {
+  {  // INT wired and working: idle polls skip I2C except the safety poll
+    IntGate g(true);
+    CHECK(g.shouldRead(0, false, false));  // first poll always reads
+    g.afterRead(0, false, false, false);
+    CHECK(!g.shouldRead(10, false, false));
+    CHECK(!g.shouldRead(240, false, false));
+    CHECK(g.shouldRead(250, false, false));  // safety poll
+    g.afterRead(250, false, false, false);
+    CHECK(g.shouldRead(260, true, false));   // INT fired
+    g.afterRead(260, true, false, true);
+    CHECK(g.shouldRead(500, false, false));  // stays responsive after activity
+    g.afterRead(600, false, false, false);
+    CHECK(!g.shouldRead(790, false, false));  // quiet again, safety poll not due
+    CHECK(g.shouldRead(790, false, true));    // button held: keep reading
+    CHECK(g.usingInt());
+  }
+  {  // INT not wired: activity found on safety polls -> fall back to polling
+    IntGate g(true);
+    g.afterRead(0, false, false, false);
+    g.afterRead(1000, false, false, true);  // strike 1
+    CHECK(g.usingInt());
+    g.afterRead(2000, false, false, true);  // strike 2
+    CHECK(!g.usingInt());
+    CHECK(g.shouldRead(2010, false, false));
+  }
+  {  // activity right after INT-announced activity is not held against INT
+    IntGate g(true);
+    g.afterRead(0, true, false, true);
+    g.afterRead(10, false, false, true);
+    g.afterRead(20, false, false, true);
+    CHECK(g.usingInt());
+  }
+  {  // INT disabled in config: always read
+    IntGate g(false);
+    g.afterRead(0, false, false, false);
+    CHECK(g.shouldRead(1, false, false));
+  }
+}
+
+TEST(ui_storage_warning) {
+  UiRig r;
+  CHECK(!r.shows("settings not saved"));
+  r.ui.setStorageMissing(true);
+  CHECK(r.shows("No flash FS: settings not saved"));
+  r.ui.setEncoderMissing(true);  // encoder warning takes the line
+  CHECK(r.shows("Encoder not found"));
+  CHECK(!r.shows("settings not saved"));
+}
+
 int main() {
   RUN(color_lightness);
   RUN(color_hsv_cct);
@@ -766,12 +817,14 @@ int main() {
   RUN(engine_sleep_timer_and_preview);
   RUN(output_stage);
   RUN(gestures);
+  RUN(int_gate);
   RUN(ui_home_and_power);
   RUN(ui_menu_mode_select);
   RUN(ui_sweep_editor_preview);
   RUN(ui_calibration_preview);
   RUN(ui_favorites_and_sleep);
   RUN(ui_display_power);
+  RUN(ui_storage_warning);
   RUN(ui_fuzz);
   printf("\n%d checks, %d failures\n", gChecks, gFails);
   return gFails ? 1 : 0;

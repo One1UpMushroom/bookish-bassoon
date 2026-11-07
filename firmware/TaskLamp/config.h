@@ -32,7 +32,7 @@ constexpr uint8_t kSpiSck = 6;   // SCK pad -> TFT SCK
 constexpr uint8_t kSpiMosi = 3;  // MO  pad -> TFT MOSI (SI)
 constexpr int8_t kTftCs = 24;    // SDA pad -> TFT TCS   (pad used as GPIO)
 constexpr int8_t kTftDc = 25;    // SCL pad -> TFT D/C   (pad used as GPIO)
-constexpr int8_t kTftRst = 4;    // MI  pad -> TFT RST   (-1 if tied to 3V3)
+constexpr int8_t kTftRst = -1;   // not wired: the breakout has its own power-on reset chip
 constexpr int8_t kTftBacklight = 5;     // RX  pad -> TFT Lite  (PWM 2B, dimmable)
 constexpr uint32_t kTftSpiHz = 40000000;
 constexpr uint8_t kTftRotation = 0;  // 0..3, rotate to suit the enclosure
@@ -48,6 +48,11 @@ constexpr uint8_t kEncAddr = 0x36;        // main encoder (default address)
 constexpr uint8_t kEnc2Addr = 0x37;       // optional 2nd encoder (cut A0 jumper)
 constexpr uint8_t kEncSwitchPin = 24;    // seesaw pin of the push switch
 constexpr uint8_t kEncPixelPin = 6;   // seesaw pin of the on-board NeoPixel
+// Encoder breakout INT pad -> QT Py MI pad (GP4). The seesaw pulls it low on
+// rotation or a switch change, so idle polls cost a GPIO read instead of an
+// I2C transaction. Optional: the firmware detects when it isn't wired and
+// falls back to plain polling. Set to -1 to disable entirely.
+constexpr int8_t kEncIntPin = 4;
 
 // On-board QT Py NeoPixel: we keep it unpowered to save ~1 mA.
 constexpr uint8_t kBoardPixelPower = 11;

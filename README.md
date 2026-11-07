@@ -7,7 +7,7 @@ and a 240×240 color display.
 | Part | Role |
 |---|---|
 | Adafruit **QT Py RP2040** | Microcontroller. Dual-core, 8 hardware PWM slices, 8 MB flash |
-| Adafruit **STEMMA QT rotary encoder** (seesaw, PID 4991) | Encoder, push switch and an RGB "locator" pixel, all over I2C |
+| Adafruit **I2C QT rotary encoder** (seesaw; PID 4991, or 5880 pre-soldered) | Encoder, push switch and an RGB "locator" pixel, all over I2C |
 | Adafruit **240×240 TFT** (ST7789) | User interface |
 | Amber/cool-white + RGB LED arrays | The light. Driven through **external drivers**, never from the GPIO pins |
 
@@ -22,7 +22,7 @@ and a 240×240 color display.
  Green driver  ◄── │ A1  (GP28)    GND       │── common ground
   Blue driver  ◄── │ A2  (GP27)    3V        │── TFT Vin, (encoder via STEMMA)
   Warm driver  ◄── │ A3  (GP26)    MO (GP3)  │──► TFT MOSI (SI)
-     TFT TCS   ◄── │ SDA (GP24)    MI (GP4)  │──► TFT RST
+     TFT TCS   ◄── │ SDA (GP24)    MI (GP4)  │◄── Encoder INT (extra wire)
      TFT D/C   ◄── │ SCL (GP25)    SCK (GP6) │──► TFT SCK
   Cool driver  ◄── │ TX  (GP20)    RX (GP5)  │──► TFT Lite (backlight PWM)
                    │   [STEMMA QT port]──────│──► Rotary encoder breakout
@@ -39,21 +39,34 @@ and a 240×240 color display.
 | RX | GP5 | TFT **Lite** | PWM slice 2B: dimmable backlight |
 | SCK | GP6 | TFT **SCK** | SPI0 |
 | MO | GP3 | TFT **SI / MOSI** | SPI0 |
-| MI | GP4 | TFT **RST** | MISO isn't needed by a write-only display |
+| MI | GP4 | Encoder breakout **INT** pad | Optional extra wire. Lets the firmware skip I2C reads while the knob is idle |
 | SDA | GP24 | TFT **TCS** | Used as a plain GPIO |
 | SCL | GP25 | TFT **D/C** | Used as a plain GPIO |
 | STEMMA QT | GP22/23 | Encoder breakout | I2C1 (`Wire1`), 400 kHz |
 | 3V / GND | | TFT Vin / GND | |
+| – | – | TFT **RST**, **CCS**, **SO**, **TE** | Leave unconnected. The display resets itself at power-up, and the microSD slot isn't used (leave it empty) |
 
-This uses all 11 pads, and every LED channel gets its own hardware PWM output. The pin
+This uses all 11 pads, and every LED channel gets its own hardware PWM output.
+If you don't run the INT wire, the firmware notices within a couple of knob turns and
+falls back to plain polling. The pin
 choice is deliberate: R+G and B+WW share PWM slices, so the firmware can phase-offset
 them (see §5). Pin numbers live in `firmware/TaskLamp/config.h`.
+
+**Encoder and I2C notes (from the Adafruit guides):**
+* Clockwise turns increase values. The breakout's 45° encoder counts backwards, and the
+  firmware compensates. *Settings ▸ Knob dir* flips it if your encoder differs.
+* Touching the back of the encoder board can register as a button press. Insulate it
+  from fingers and metal in the enclosure.
+* Keep the STEMMA QT cable short (about 15 cm or less). Plug it in before powering up:
+  I2C isn't designed for hot-plugging, although the firmware does retry every 2 s.
+* With several encoders on one cable, Adafruit suggests powering their VIN separately
+  if they misbehave.
 
 **More controls without more pins:** the STEMMA QT port can be daisy-chained. A
 **second rotary encoder breakout** with its A0 jumper cut (address 0x37) is detected
 automatically. It becomes a dedicated **brightness knob**, and its click becomes
 **power on/off**, working from any screen. This is the most worthwhile add-on for
-day-to-day use.
+day-to-day use. (The second knob has no INT wire, so it's simply polled.)
 
 ---
 
@@ -82,8 +95,10 @@ You're sizing the drivers. These are the constraints the firmware assumes:
 * **Logic power:** don't run LED current through the QT Py. Power it from USB or a
   separate 5 V buck converter. If you feed its 5V pad while USB may also be connected,
   add a Schottky diode so the two sources can't back-feed each other.
-* **The 3V rail** (QT Py regulator) feeds the TFT and the encoder, tens of mA in total,
-  which is well within its rating.
+* **The 3V rail** (QT Py regulator, 500 mA available) feeds the TFT and the encoder,
+  tens of mA in total.
+* **Display glass:** the 1.54" panel's backlight can slowly peel away from the TFT if
+  nothing holds it. Plan a clear cover or window in the enclosure (or tape the edges).
 
 ---
 
@@ -91,12 +106,14 @@ You're sizing the drivers. These are the constraints the firmware assumes:
 
 **Arduino IDE**
 1. Boards Manager: install **Raspberry Pi Pico/RP2040** by Earle F. Philhower III.
-2. Board: **Adafruit QT Py RP2040**. *Flash Size*: any option with a filesystem (FS) of
-   at least 64 KB.
+2. Board: **Adafruit QT Py RP2040** (not the *Picoprobe* or *pico-debug* variants).
+   *Flash Size*: pick an option **with** a filesystem (FS) of at least 64 KB. The default,
+   "8MB (no FS)", leaves nowhere to store settings; the lamp then shows "No flash FS:
+   settings not saved" on the home screen.
 3. Library Manager: install **Adafruit seesaw Library**, **Adafruit ST7735 and ST7789 Library**
    and **Adafruit GFX Library**.
-4. Open `firmware/TaskLamp/TaskLamp.ino` and upload. For the first upload, hold BOOT and tap
-   RESET if the port doesn't appear.
+4. Open `firmware/TaskLamp/TaskLamp.ino` and upload. If the port doesn't appear, hold
+   BOOT, tap RST, and keep holding BOOT until the RPI-RP2 drive appears.
 
 **PlatformIO**: `pio run -t upload` (see `platformio.ini`).
 
@@ -225,9 +242,15 @@ Menu
   differ (by CRC) from what's stored. The write goes through LittleFS (wear-levelled), to
   a temporary file followed by an atomic rename, so a power cut can't corrupt them. On
   load, the data is CRC-checked and every field is range-clamped.
+* **Interrupt-driven input.** With INT wired, an idle knob costs one GPIO read per poll.
+  I2C is used only when the encoder signals a change, while the button is held, for half
+  a second after activity, and in a 4 Hz safety poll. An edge latch catches even short
+  INT pulses.
 * **Robust input.** Encoder reads check for I2C errors, so a loose cable can't look like
-  a held button. The encoder is hot-plug: it's retried every 2 s. The switch is
-  debounced, and the hardware watchdog reboots the board if either core ever stalls.
+  a held button. A missing encoder is retried every 2 s. The switch is debounced, and the
+  hardware watchdog reboots the board if either core ever stalls.
+* **Clean power-up.** The backlight is held dark until the first frame is ready, so the
+  display's power-up noise is never shown.
 
 ### Source map (`firmware/TaskLamp/`)
 
@@ -239,7 +262,7 @@ Menu
 | `settings.*` | Persistent settings, defaults, sanitizing, CRC, save scheduler | ✓ |
 | `engine.*` | Modes, effects, fades, sleep timer, previews | ✓ |
 | `output.*` | Trim, power budget, duty floor → PWM levels | ✓ |
-| `input.*` | Click / double / long / press-turn gestures, acceleration | ✓ |
+| `input.*` | Click / double / long / press-turn gestures, acceleration, INT gating | ✓ |
 | `ui.*` | Home screen, menu system, display power policy | ✓ |
 | `painter.h` | Drawing interface used by the UI | ✓ |
 | `display.*` | ST7789 driver, banded change-only rendering | – |
@@ -254,7 +277,7 @@ Menu
 * The hardware layer has been type-checked against stubs of the library APIs but **has not
   yet been compiled with the real arduino-pico toolchain or run on hardware**. Expect to
   confirm the following on the bench:
-  * The encoder's turn direction (flip it with *Knob dir*).
+  * Clockwise turns brighten. If not, use *Knob dir*.
   * The display orientation (`kTftRotation` in `config.h`).
-  * Whether your TFT breakout needs the RST line. If it doesn't, you can set `kTftRst = -1`
-    and free the MI pad for something else.
+  * INT works: the encoder's red INT LED (on the back) blinks when you turn the knob.
+  * No white flash on the display at power-up.

@@ -83,3 +83,23 @@ void Gestures::update(uint32_t nowMs, bool pressed, int32_t delta) {
     push(Ev::Click);
   }
 }
+
+bool IntGate::shouldRead(uint32_t nowMs, bool intAsserted, bool held) const {
+  if (!trusted_ || intAsserted || held || recentlyActive(nowMs)) return true;
+  return !everRead_ || nowMs - lastRead_ >= kSafetyMs;
+}
+
+void IntGate::afterRead(uint32_t nowMs, bool intAsserted, bool held, bool activity) {
+  bool unannounced = activity && !intAsserted && !held && !recentlyActive(nowMs);
+  lastRead_ = nowMs;
+  everRead_ = true;
+  if (activity) {
+    lastActivity_ = nowMs;
+    everActive_ = true;
+  }
+  if (intAsserted && activity) {
+    strikes_ = 0;  // INT demonstrably works
+  } else if (unannounced && trusted_ && ++strikes_ >= kStrikes) {
+    trusted_ = false;  // INT not wired (or not working): poll every time
+  }
+}

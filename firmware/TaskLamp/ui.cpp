@@ -891,7 +891,9 @@ void Ui::drawHome(Painter& p) {
   drawnLimited_ = st_.limited;
   drawnSleepMin_ = sleepMin;
 
+  // One warning line; a missing encoder matters most.
   if (encMissing_) p.textCenter(kScreenW / 2, 231, "Encoder not found - check cable", 1, C_WARN);
+  else if (storeMissing_) p.textCenter(kScreenW / 2, 231, "No flash FS: settings not saved", 1, C_WARN);
 }
 
 void Ui::itemValue(const Item& it, char* buf, int n) const {

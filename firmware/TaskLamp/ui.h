@@ -90,6 +90,7 @@ class Ui {
   float backlight() const;      // 0..1 linear
   uint32_t knobGlow() const;    // 0xRRGGBB for the encoder NeoPixel
   void setEncoderMissing(bool m) { if (m != encMissing_) { encMissing_ = m; redraw_ = true; } }
+  void setStorageMissing(bool m) { if (m != storeMissing_) { storeMissing_ = m; redraw_ = true; } }
   void toast(const char* msg);
 
   // ---- used by menu builders / actions (ui.cpp) ----
@@ -152,6 +153,7 @@ class Ui {
   uint32_t lastInput_ = 0;
   bool dimmed_ = false, asleep_ = false;
   bool encMissing_ = false;
+  bool storeMissing_ = false;  // flash filesystem unavailable: nothing is saved
 
   char toast_[20] = {};
   uint32_t toastUntil_ = 0;
