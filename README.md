@@ -72,6 +72,10 @@ day-to-day use. (The second knob has no INT wire, so it's simply polled.)
 
 ## 2. Circuit notes (hardware limits to respect)
 
+The tested-on-paper breadboard driver design for this build (1.6 m NFLS tunable-white
+strip plus four 3 W RGB stars) is in [`docs/driver-build.html`](docs/driver-build.html):
+schematics, pin-by-pin wiring, bring-up order and firmware settings.
+
 You're sizing the drivers. These are the constraints the firmware assumes:
 
 * **The GPIOs only provide a logic signal.** RP2040 pins are 3.3 V and rated for a few

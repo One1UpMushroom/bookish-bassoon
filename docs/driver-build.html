@@ -1,0 +1,673 @@
+<title>Task Lamp Driver Build</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a single datasheet-style column; schematics sit in bordered plates that scroll sideways on phones. */
+:root {
+  --bg: #F4F6F2;
+  --plate: #FBFCFA;
+  --panel: #E8ECE5;
+  --fg: #1B2420;
+  --muted: #59655E;
+  --rule: #C9D1C8;
+  --accent: #1E6B50;
+  --warn: #8C5300;
+  --warn-bg: #F5E8D2;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101412; --plate: #151a17; --panel: #1B221E; --fg: #DCE4DF; --muted: #95A39B;
+    --rule: #2C3631; --accent: #5FC79D; --warn: #E6B25E; --warn-bg: #2B2416; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101412; --plate: #151a17; --panel: #1B221E; --fg: #DCE4DF; --muted: #95A39B;
+  --rule: #2C3631; --accent: #5FC79D; --warn: #E6B25E; --warn-bg: #2B2416; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body);
+  font-size: 16px; line-height: 1.6;
+}
+.page {
+  max-width: 900px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+  display: grid; gap: 56px;
+}
+header { display: grid; gap: 14px; }
+.eyebrow {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted);
+}
+h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(32px, 6vw, 46px); letter-spacing: -.01em; }
+h2 { font-size: 27px; }
+h3 { font-size: 19px; }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 18px; color: var(--fg); }
+section { display: grid; gap: 18px; min-width: 0; }
+section > header { gap: 6px; }
+code, .mono { font-family: var(--mono); font-size: .92em; }
+.num { font-variant-numeric: tabular-nums; }
+
+.verdict {
+  border: 1px solid var(--rule); background: var(--plate); border-radius: 6px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.verdict > div { padding: 18px 20px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.verdict > div + div { border-left: 1px solid var(--rule); }
+@media (max-width: 560px) { .verdict > div + div { border-left: 0; border-top: 1px solid var(--rule); } }
+.verdict .k { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.verdict .v { font-family: var(--display); font-size: 21px; font-weight: 600; line-height: 1.2; }
+.ok { color: var(--accent); }
+.verdict p { font-size: 14.5px; color: var(--muted); }
+
+.note {
+  border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 12px 16px;
+  border-radius: 0 4px 4px 0; font-size: 15px; max-width: 72ch;
+}
+.note strong { color: var(--warn); }
+
+figure { margin: 0; border: 1px solid var(--rule); background: var(--plate); border-radius: 6px; min-width: 0; }
+.scroll { overflow-x: auto; padding: 14px 10px 4px; }
+figure svg { display: block; width: 100%; min-width: 640px; height: auto; color: var(--fg); }
+figcaption { border-top: 1px solid var(--rule); padding: 10px 16px 12px; font-size: 14px; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 600; }
+
+.sch line, .sch polyline, .sch path { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.sch .sig { stroke: var(--accent); }
+.sch rect.r { fill: var(--plate); stroke: currentColor; stroke-width: 1.6; }
+.sch rect.box { fill: var(--panel); stroke: currentColor; stroke-width: 1.4; }
+.sch polygon { fill: var(--plate); stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+.sch polygon.solid, .sch circle.dot { fill: currentColor; stroke: none; }
+.sch polygon.acc { fill: var(--accent); stroke: none; }
+.sch text { fill: currentColor; font-family: var(--mono); font-size: 12px; }
+.sch text.lbl { fill: var(--muted); font-size: 11.5px; }
+.sch text.pin { fill: var(--muted); font-size: 10.5px; }
+.sch text.ttl { font-family: var(--display); font-size: 15px; font-weight: 600; }
+.sch text.acc { fill: var(--accent); }
+.sch .thick { stroke-width: 3; }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--plate); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 12px; vertical-align: top; border-bottom: 1px solid var(--rule); }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--mono); font-weight: 500; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--panel); white-space: nowrap; }
+td.id { font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.cols > * { min-width: 0; }
+
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 14px; max-width: 74ch; }
+ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
+ol.steps > li::before {
+  content: counter(s); font-family: var(--mono); font-size: 13px; font-weight: 500;
+  width: 26px; height: 26px; border: 1.5px solid var(--accent); color: var(--accent);
+  border-radius: 50%; display: grid; place-items: center; margin-top: 1px;
+}
+ol.steps b { font-weight: 600; }
+ul.plain { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 72ch; }
+.later { border-top: 2px solid var(--rule); padding-top: 40px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="page">
+
+<header>
+  <div class="eyebrow">Task lamp · driver stage · breadboard build</div>
+  <h1>Task Lamp Driver Build</h1>
+  <p class="lede">You can drive both LED loads from parts you already own. The tunable-white strip runs at full power today. The four RGB stars run at a breadboard-safe current today, and reach full power once you add heatsinks or build the switch-mode version at the end of this page.</p>
+</header>
+
+<div class="verdict">
+  <div>
+    <span class="k">Strip, 1.6 m (WW + CW)</span>
+    <span class="v ok">Full power now</span>
+    <p>LM339 + BC547 + IRFZ44N per channel. Up to about 1 A per channel, no heatsink.</p>
+  </div>
+  <div>
+    <span class="k">RGB stars (R, G, B)</span>
+    <span class="v ok">Up to ≈ 52 mA now</span>
+    <p>LM324 + IRFZ44N current sinks. Full ≈ 310 mA needs heatsinks, or the LM3414 version.</p>
+  </div>
+  <div>
+    <span class="k">Still to get</span>
+    <span class="v">24 V ≥ 3 A supply</span>
+    <p>Class 2 adapter, a screw-terminal jack, and 22 AWG wire for the strip current.</p>
+  </div>
+</div>
+
+<section>
+  <header>
+    <div class="eyebrow">What the loads need</div>
+    <h2>Two kinds of LED, two kinds of driver</h2>
+  </header>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Load</th><th>Wiring</th><th>Current</th><th>What it needs</th></tr></thead>
+    <tbody>
+      <tr><td>Tunable-white strip NFLS-VCTH1200, 1.6 m</td><td>24 V common +, separate WW− and CW− returns</td><td class="num">14.8 W/m → about 24 W, ≈ 1 A at full</td><td>An on/off switch on each return. The strip has its own current-limiting resistors.</td></tr>
+      <tr><td>4 × 3 W RGB star (unknown make)</td><td>Each die has its own + and − pad. Wire the four red dies in series, then green, then blue.</td><td class="num">Typ. 300–350 mA per die. String ≈ 8–10 V (R), 12–15 V (G, B)</td><td>A constant-current source per color. Bare high-power LEDs have no resistor and will run away on a plain switch.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <figure>
+    <div class="scroll">
+    <svg class="sch" viewBox="0 0 790 320" role="img" aria-label="Block diagram: QT Py PWM pins A3 and TX drive two strip switches, pins A0, A1 and A2 drive three current sinks; switches handle the strip returns, sinks set the RGB string currents.">
+      <defs>
+        <marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" stroke="none"/></marker>
+      </defs>
+      <rect class="box" x="20" y="50" width="140" height="240" rx="6"/>
+      <text class="ttl" x="90" y="76" text-anchor="middle">QT Py RP2040</text>
+      <text x="152" y="120" text-anchor="end">A3 · GP26</text>
+      <text x="152" y="150" text-anchor="end">TX · GP20</text>
+      <text x="152" y="206" text-anchor="end">A0 · GP29</text>
+      <text x="152" y="236" text-anchor="end">A1 · GP28</text>
+      <text x="152" y="266" text-anchor="end">A2 · GP27</text>
+      <text class="lbl" x="90" y="308" text-anchor="middle">USB-C 5 V</text>
+
+      <line class="sig" x1="160" y1="116" x2="268" y2="116" marker-end="url(#ah1)"/>
+      <line class="sig" x1="160" y1="146" x2="268" y2="146" marker-end="url(#ah1)"/>
+      <line class="sig" x1="160" y1="202" x2="268" y2="202" marker-end="url(#ah1)"/>
+      <line class="sig" x1="160" y1="232" x2="268" y2="232" marker-end="url(#ah1)"/>
+      <line class="sig" x1="160" y1="262" x2="268" y2="262" marker-end="url(#ah1)"/>
+      <text class="lbl acc" x="214" y="96" text-anchor="middle">3.3 V PWM</text>
+
+      <rect class="box" x="270" y="96" width="210" height="70" rx="4"/>
+      <text class="ttl" x="375" y="122" text-anchor="middle">Strip switch × 2</text>
+      <text class="lbl" x="375" y="142" text-anchor="middle">LM339 → BC547 → IRFZ44N</text>
+      <text class="lbl" x="375" y="158" text-anchor="middle">+12 V gate drive</text>
+
+      <rect class="box" x="270" y="182" width="210" height="100" rx="4"/>
+      <text class="ttl" x="375" y="212" text-anchor="middle">Current sink × 3</text>
+      <text class="lbl" x="375" y="232" text-anchor="middle">LM324 + IRFZ44N</text>
+      <text class="lbl" x="375" y="250" text-anchor="middle">2.5 Ω sense, pot sets mA</text>
+
+      <line x1="480" y1="131" x2="578" y2="131" marker-end="url(#ah1)"/>
+      <text class="lbl" x="529" y="122" text-anchor="middle">switches return</text>
+      <line x1="480" y1="232" x2="578" y2="232" marker-end="url(#ah1)"/>
+      <text class="lbl" x="529" y="223" text-anchor="middle">sinks 0–52 mA</text>
+
+      <rect class="box" x="580" y="96" width="190" height="70" rx="4"/>
+      <text class="ttl" x="675" y="122" text-anchor="middle">LED strip, 1.6 m</text>
+      <text class="lbl" x="675" y="142" text-anchor="middle">WW 2700 K · CW 6500 K</text>
+      <text class="lbl" x="675" y="158" text-anchor="middle">anode on +24 V</text>
+
+      <rect class="box" x="580" y="182" width="190" height="100" rx="4"/>
+      <text class="ttl" x="675" y="212" text-anchor="middle">4 × 3 W RGB star</text>
+      <text class="lbl" x="675" y="232" text-anchor="middle">one series string per color</text>
+      <text class="lbl" x="675" y="250" text-anchor="middle">anodes on +24 V</text>
+
+      <text class="lbl" x="375" y="40" text-anchor="middle">drivers: +12 V from L7812</text>
+      <text class="lbl" x="675" y="40" text-anchor="middle">loads: +24 V supply</text>
+    </svg>
+    </div>
+    <figcaption><b>Five PWM pins, two driver types.</b> The firmware's pin map is unchanged. A3 and TX switch the strip's warm and cool returns. A0, A1 and A2 turn each RGB current sink on and off, and a pot on each sink sets its current.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <header>
+    <div class="eyebrow">Power</div>
+    <h2>24 V for the LEDs, 12 V for gate drive, USB for logic</h2>
+  </header>
+  <figure>
+    <div class="scroll">
+    <svg class="sch" viewBox="0 0 860 345" role="img" aria-label="Power schematic: 24 V supply with two 100 microfarad bulk capacitors, an L7812 making a 12 V rail with 330 nF in and 100 nF plus 10 microfarad out, and a 47k, 10k, 10k divider making the 1.79 V comparator threshold.">
+      <rect class="box" x="20" y="66" width="100" height="74" rx="4"/>
+      <text class="ttl" x="70" y="98" text-anchor="middle">24 V DC</text>
+      <text class="lbl" x="70" y="118" text-anchor="middle">≥ 3 A, class 2</text>
+      <text class="pin" x="126" y="80">+</text>
+      <text class="pin" x="126" y="137">−</text>
+      <line x1="120" y1="85" x2="840" y2="85"/>
+      <text x="840" y="76" text-anchor="end">+24 V → strip +, RGB string anodes</text>
+      <polyline points="120,125 145,125 145,300"/>
+      <line x1="40" y1="300" x2="840" y2="300"/>
+      <line x1="30" y1="300" x2="50" y2="300"/><line x1="34" y1="305" x2="46" y2="305"/><line x1="38" y1="310" x2="42" y2="310"/>
+
+      <!-- bulk caps -->
+      <circle class="dot" cx="185" cy="85" r="3"/><circle class="dot" cx="220" cy="85" r="3"/>
+      <line x1="185" y1="85" x2="185" y2="178"/><line x1="175" y1="178" x2="195" y2="178"/><path d="M175,188 Q185,182 195,188"/><line x1="185" y1="186" x2="185" y2="300"/>
+      <line x1="220" y1="85" x2="220" y2="178"/><line x1="210" y1="178" x2="230" y2="178"/><path d="M210,188 Q220,182 230,188"/><line x1="220" y1="186" x2="220" y2="300"/>
+      <text class="pin" x="170" y="174">+</text>
+      <text class="lbl" x="202" y="72" text-anchor="middle">2 × 100 µF 50 V</text>
+
+      <!-- L7812 -->
+      <circle class="dot" cx="270" cy="85" r="3"/>
+      <polyline points="270,85 270,165 300,165"/>
+      <circle class="dot" cx="270" cy="165" r="3"/>
+      <line x1="270" y1="165" x2="270" y2="215"/><line x1="260" y1="215" x2="280" y2="215"/><line x1="260" y1="223" x2="280" y2="223"/><line x1="270" y1="223" x2="270" y2="300"/>
+      <text class="lbl" x="282" y="246">330 nF</text>
+      <rect class="box" x="300" y="140" width="90" height="50" rx="3"/>
+      <text class="ttl" x="345" y="170" text-anchor="middle">L7812</text>
+      <text class="pin" x="304" y="158">1 IN</text>
+      <text class="pin" x="386" y="158" text-anchor="end">3 OUT</text>
+      <text class="pin" x="345" y="186" text-anchor="middle">2 GND</text>
+      <line x1="345" y1="190" x2="345" y2="300"/>
+      <line x1="390" y1="165" x2="840" y2="165"/>
+      <text x="840" y="157" text-anchor="end">+12 V rail</text>
+
+      <circle class="dot" cx="420" cy="165" r="3"/><circle class="dot" cx="480" cy="165" r="3"/>
+      <line x1="420" y1="165" x2="420" y2="225"/><line x1="410" y1="225" x2="430" y2="225"/><line x1="410" y1="233" x2="430" y2="233"/><line x1="420" y1="233" x2="420" y2="300"/>
+      <text class="lbl" x="432" y="252">100 nF</text>
+      <line x1="480" y1="165" x2="480" y2="225"/><line x1="470" y1="225" x2="490" y2="225"/><path d="M470,235 Q480,229 490,235"/><line x1="480" y1="233" x2="480" y2="300"/>
+      <text class="lbl" x="492" y="252">10 µF</text>
+
+      <!-- VT divider -->
+      <circle class="dot" cx="600" cy="165" r="3"/>
+      <line x1="600" y1="165" x2="600" y2="174"/><rect class="r" x="593" y="174" width="14" height="30"/>
+      <line x1="600" y1="204" x2="600" y2="210"/><rect class="r" x="593" y="210" width="14" height="28"/>
+      <line x1="600" y1="238" x2="600" y2="258"/><rect class="r" x="593" y="258" width="14" height="28"/>
+      <line x1="600" y1="286" x2="600" y2="300"/>
+      <text class="lbl" x="588" y="193" text-anchor="end">47 kΩ</text>
+      <text class="lbl" x="588" y="228" text-anchor="end">10 kΩ</text>
+      <text class="lbl" x="588" y="276" text-anchor="end">10 kΩ</text>
+      <circle class="dot" cx="600" cy="248" r="3"/>
+      <line class="sig" x1="600" y1="248" x2="840" y2="248"/>
+      <text class="acc" x="840" y="240" text-anchor="end">VT 1.79 V → LM339 pins 4, 6</text>
+      <circle class="dot" cx="690" cy="248" r="3"/>
+      <line x1="690" y1="248" x2="690" y2="268"/><line x1="680" y1="268" x2="700" y2="268"/><line x1="680" y1="276" x2="700" y2="276"/><line x1="690" y1="276" x2="690" y2="300"/>
+      <text class="lbl" x="702" y="282">100 nF</text>
+
+      <text class="lbl" x="60" y="330">GND: supply −, MOSFET sources, sense resistors, IC grounds and QT Py GND meet at one point</text>
+    </svg>
+    </div>
+    <figcaption><b>The 12 V rail draws about 10 mA</b>, so the L7812 runs cool with no heatsink. Power the QT Py from its USB-C port, and join its GND to this ground. The 1.79 V threshold comes from the 12 V rail on purpose. If the QT Py is unpowered or still booting, its pins read 0 V, which is below the threshold, so the strip stays dark.</figcaption>
+  </figure>
+  <p>Mount the L7812 so its pins read <span class="mono">1 IN · 2 GND · 3 OUT</span> when you face the label. Put a 100 nF capacitor from LM339 pin 3 to pin 12 and another from LM324 pin 4 to pin 11, right at the chips.</p>
+</section>
+
+<section>
+  <header>
+    <div class="eyebrow">Channels WW and CW · build twice</div>
+    <h2>Strip switch</h2>
+  </header>
+  <p>The strip only needs its return wire switched. The IRFZ44N in your parts is not a logic-level MOSFET: it needs about 10 V on its gate to switch fully, and a 3.3 V pin leaves it half on and hot. One LM339 comparator turns the 3.3 V PWM into a 12 V signal. A BC547 emitter follower charges the gate in about a microsecond, and a 1N5819 empties it back into the comparator output.</p>
+  <figure>
+    <div class="scroll">
+    <svg class="sch" viewBox="0 0 800 340" role="img" aria-label="Strip switch schematic: QT Py pin to LM339 plus input with 100k pulldown; minus input at 1.79 V; open-collector output pulled up by 4.7k to 12 V drives a BC547 emitter follower; a 1N5819 from emitter back to the comparator output discharges the gate; 100 ohm into the IRFZ44N gate with 100k to source; drain switches the strip return, with a 1N5819 clamp to 24 V.">
+      <text x="95" y="139" text-anchor="end">A3 · GP26</text>
+      <line class="sig" x1="100" y1="135" x2="220" y2="135"/>
+      <circle class="dot" cx="130" cy="135" r="3"/>
+      <line x1="130" y1="135" x2="130" y2="200"/><rect class="r" x="123" y="200" width="14" height="36"/><line x1="130" y1="236" x2="130" y2="290"/>
+      <line x1="120" y1="290" x2="140" y2="290"/><line x1="124" y1="295" x2="136" y2="295"/><line x1="128" y1="300" x2="132" y2="300"/>
+      <text class="lbl" x="142" y="222">100 kΩ</text>
+
+      <polygon points="220,110 220,210 320,160"/>
+      <text x="227" y="140">+</text><text x="227" y="190">−</text>
+      <text class="lbl" x="250" y="164">LM339</text>
+      <text class="pin" x="212" y="129" text-anchor="end">5</text>
+      <text class="pin" x="212" y="179" text-anchor="end">4</text>
+      <text class="pin" x="328" y="152">2</text>
+      <polyline points="220,185 200,185 200,248"/>
+      <text class="lbl" x="200" y="264" text-anchor="middle">VT</text>
+      <text class="lbl" x="200" y="278" text-anchor="middle">1.79 V</text>
+
+      <line x1="320" y1="160" x2="400" y2="160"/>
+      <circle class="dot" cx="400" cy="160" r="3"/>
+      <line x1="380" y1="40" x2="470" y2="40"/>
+      <text x="374" y="44" text-anchor="end">+12 V</text>
+      <circle class="dot" cx="400" cy="40" r="3"/>
+      <line x1="400" y1="40" x2="400" y2="70"/><rect class="r" x="393" y="70" width="14" height="40"/><line x1="400" y1="110" x2="400" y2="160"/>
+      <text class="lbl" x="412" y="94">4.7 kΩ</text>
+
+      <line x1="400" y1="160" x2="440" y2="160"/>
+      <line class="thick" x1="440" y1="140" x2="440" y2="180"/>
+      <polyline points="440,150 470,130 470,40"/>
+      <polyline points="440,170 470,190 470,240"/>
+      <polygon class="solid" points="470,190 459,188.6 464.4,180.4"/>
+      <text class="lbl" x="482" y="168">BC547</text>
+      <text class="pin" x="482" y="182">C·B·E</text>
+
+      <circle class="dot" cx="470" cy="240" r="3"/>
+      <line x1="470" y1="240" x2="440" y2="240"/>
+      <polygon points="440,230 440,250 420,240"/>
+      <line x1="420" y1="230" x2="420" y2="250"/>
+      <polyline points="420,240 400,240 400,160"/>
+      <text class="lbl" x="430" y="268" text-anchor="middle">1N5819</text>
+
+      <line x1="470" y1="240" x2="500" y2="240"/><rect class="r" x="500" y="233" width="40" height="14"/><line x1="540" y1="240" x2="600" y2="240"/>
+      <text class="lbl" x="520" y="226" text-anchor="middle">100 Ω</text>
+      <circle class="dot" cx="575" cy="240" r="3"/>
+      <line x1="575" y1="240" x2="575" y2="262"/><rect class="r" x="568" y="262" width="14" height="30"/><polyline points="575,292 575,305 640,305"/>
+      <text class="lbl" x="562" y="284" text-anchor="end">100 kΩ</text>
+
+      <line class="thick" x1="600" y1="220" x2="600" y2="260"/>
+      <line class="thick" x1="610" y1="215" x2="610" y2="227"/><line class="thick" x1="610" y1="234" x2="610" y2="246"/><line class="thick" x1="610" y1="253" x2="610" y2="265"/>
+      <polyline points="610,221 640,221 640,145"/>
+      <polyline points="610,259 640,259 640,305"/>
+      <line x1="640" y1="240" x2="621" y2="240"/>
+      <polygon class="solid" points="612,240 621,235 621,245"/>
+      <text class="ttl" x="652" y="246">IRFZ44N</text>
+      <text class="pin" x="652" y="262">G·D·S facing label</text>
+      <line x1="630" y1="305" x2="650" y2="305"/><line x1="634" y1="310" x2="646" y2="310"/><line x1="638" y1="315" x2="642" y2="315"/>
+      <text class="lbl" x="656" y="322">to supply −</text>
+
+      <rect class="box" x="615" y="80" width="50" height="50" rx="3"/>
+      <text x="640" y="102" text-anchor="middle">WW</text>
+      <text class="pin" x="640" y="118" text-anchor="middle">strip</text>
+      <line x1="640" y1="130" x2="640" y2="145"/>
+      <line x1="640" y1="80" x2="640" y2="40"/>
+      <line x1="640" y1="40" x2="720" y2="40"/>
+      <text x="730" y="44">+24 V</text>
+      <circle class="dot" cx="640" cy="145" r="3"/>
+      <polyline points="640,145 720,145 720,120"/>
+      <polygon points="710,120 730,120 720,100"/>
+      <line x1="710" y1="100" x2="730" y2="100"/>
+      <line x1="720" y1="100" x2="720" y2="40"/>
+      <circle class="dot" cx="720" cy="40" r="3"/>
+      <text class="lbl" x="732" y="116">1N5819</text>
+    </svg>
+    </div>
+    <figcaption><b>Shown for WW.</b> For CW, use <span class="mono">TX · GP20</span> into LM339 pin 7, threshold on pin 6, output on pin 1. Tie the unused comparators' inputs (pins 8–11) to GND and leave pins 13 and 14 open. The gate swings 0.5 V → 11 V, so the MOSFET is fully off or fully on, with nothing in between.</figcaption>
+  </figure>
+  <div class="note"><strong>Keep the strip current off the breadboard.</strong> Breadboard contacts are rated around 1 A. Solder the strip's WW− and CW− wires straight to each drain leg. Run a 22 AWG or heavier wire from each source leg to the supply's − terminal, and feed the strip's + from the supply's + terminal.</div>
+</section>
+
+<section>
+  <header>
+    <div class="eyebrow">Channels R, G, B · build three times</div>
+    <h2>Current sink</h2>
+  </header>
+  <p>The op-amp adjusts the MOSFET until the voltage across the 2.5 Ω sense resistor equals its reference. The reference comes from the PWM pin itself, through a divider and a pot. When the pin is high, the string carries the set current. When it's low, the reference is zero and the MOSFET shuts off. The pot sets the current, so you can also white-balance the three colors on it.</p>
+  <figure>
+    <div class="scroll">
+    <svg class="sch" viewBox="0 0 800 360" role="img" aria-label="Current sink schematic: QT Py pin through 220k to a 10k pot whose wiper feeds the LM324 plus input; output through 100 ohm to the IRFZ44N gate with 100k gate to source; source to a 2.5 ohm sense resistor; sense fed back through 1k to the minus input with 1 nF from output to minus input and 1 megohm from 12 V for offset; drain to the bottom of a four-die series LED string whose top is on 24 V.">
+      <text x="95" y="104" text-anchor="end">A0 · GP29</text>
+      <line class="sig" x1="100" y1="100" x2="130" y2="100"/><rect class="r" x="130" y="93" width="60" height="14"/><line class="sig" x1="190" y1="100" x2="240" y2="100"/>
+      <text class="lbl" x="160" y="86" text-anchor="middle">220 kΩ</text>
+      <line x1="240" y1="100" x2="240" y2="130"/><rect class="r" x="233" y="130" width="14" height="60"/><line x1="240" y1="190" x2="240" y2="300"/>
+      <line x1="230" y1="300" x2="250" y2="300"/><line x1="234" y1="305" x2="246" y2="305"/><line x1="238" y1="310" x2="242" y2="310"/>
+      <line x1="275" y1="160" x2="258" y2="160"/>
+      <polygon class="solid" points="249,160 258,155 258,165"/>
+      <text class="lbl" x="226" y="152" text-anchor="end">10 kΩ</text>
+      <text class="lbl" x="226" y="166" text-anchor="end">pot</text>
+      <line class="sig" x1="275" y1="160" x2="320" y2="160"/>
+
+      <polygon points="320,135 320,235 420,185"/>
+      <text x="327" y="164">+</text><text x="327" y="214">−</text>
+      <text class="lbl" x="346" y="190">LM324</text>
+      <text class="pin" x="312" y="154" text-anchor="end">3</text>
+      <text class="pin" x="312" y="204" text-anchor="end">2</text>
+      <text class="pin" x="426" y="178">1</text>
+
+      <line x1="420" y1="185" x2="470" y2="185"/>
+      <circle class="dot" cx="450" cy="185" r="3"/>
+      <rect class="r" x="470" y="178" width="40" height="14"/>
+      <text class="lbl" x="490" y="171" text-anchor="middle">100 Ω</text>
+      <line x1="510" y1="185" x2="560" y2="185"/>
+      <circle class="dot" cx="535" cy="185" r="3"/>
+      <line x1="535" y1="185" x2="535" y2="205"/><rect class="r" x="528" y="205" width="14" height="34"/><line x1="535" y1="239" x2="535" y2="260"/>
+      <text class="lbl" x="522" y="226" text-anchor="end">100 kΩ</text>
+
+      <line class="thick" x1="560" y1="165" x2="560" y2="205"/>
+      <line class="thick" x1="570" y1="160" x2="570" y2="172"/><line class="thick" x1="570" y1="179" x2="570" y2="191"/><line class="thick" x1="570" y1="198" x2="570" y2="210"/>
+      <polyline points="570,166 600,166 600,92"/>
+      <polyline points="570,204 600,204 600,260"/>
+      <line x1="600" y1="185" x2="581" y2="185"/>
+      <polygon class="solid" points="572,185 581,180 581,190"/>
+      <text class="ttl" x="612" y="190">IRFZ44N</text>
+
+      <line x1="510" y1="260" x2="600" y2="260"/>
+      <circle class="dot" cx="535" cy="260" r="3"/><circle class="dot" cx="600" cy="260" r="3"/>
+      <line x1="600" y1="260" x2="600" y2="272"/><rect class="r" x="593" y="272" width="14" height="40"/><line x1="600" y1="312" x2="600" y2="325"/>
+      <line x1="590" y1="325" x2="610" y2="325"/><line x1="594" y1="330" x2="606" y2="330"/><line x1="598" y1="335" x2="602" y2="335"/>
+      <text class="lbl" x="612" y="288">2.5 Ω</text>
+      <text class="lbl" x="612" y="303">= 4 × 10 Ω in parallel</text>
+
+      <rect class="r" x="470" y="253" width="40" height="14"/>
+      <text class="lbl" x="490" y="283" text-anchor="middle">1 kΩ</text>
+      <polyline points="470,260 300,260 300,210 320,210"/>
+      <line x1="450" y1="185" x2="450" y2="218"/><line x1="440" y1="218" x2="460" y2="218"/><line x1="440" y1="226" x2="460" y2="226"/><line x1="450" y1="226" x2="450" y2="260"/>
+      <circle class="dot" cx="450" cy="260" r="3"/>
+      <text class="lbl" x="436" y="226" text-anchor="end">1 nF</text>
+      <circle class="dot" cx="380" cy="260" r="3"/>
+      <line x1="380" y1="260" x2="380" y2="285"/><rect class="r" x="373" y="285" width="14" height="30"/><line x1="380" y1="315" x2="380" y2="330"/>
+      <text class="lbl" x="394" y="304">1 MΩ</text>
+      <text x="380" y="346" text-anchor="middle">+12 V</text>
+
+      <polygon points="588,70 612,70 600,92"/>
+      <line x1="588" y1="92" x2="612" y2="92"/>
+      <line x1="600" y1="70" x2="600" y2="40"/>
+      <line x1="616" y1="74" x2="628" y2="64"/><line x1="620" y1="84" x2="632" y2="74"/>
+      <line x1="600" y1="40" x2="680" y2="40"/>
+      <text x="690" y="44">+24 V</text>
+      <text class="lbl" x="638" y="88">4 red dies in series</text>
+      <text class="lbl" x="638" y="104">(LED 1 R− → LED 2 R+ …)</text>
+    </svg>
+    </div>
+    <figcaption><b>Shown for red, on LM324 amplifier 1</b> (pins 3, 2, 1). Green uses A1 · GP28 on pins 5, 6, 7. Blue uses A2 · GP27 on pins 10, 9, 8. Supply is pin 4 = +12 V, pin 11 = GND. For the unused fourth amplifier, tie pin 12 to GND and pin 13 to pin 14. The 1 MΩ to +12 V lifts the − input by 12 mV, which is more than the LM324's worst-case input offset. That way a channel at 0% is truly dark instead of faintly glowing.</figcaption>
+  </figure>
+
+  <h3>Why the current is capped at 52 mA on the breadboard</h3>
+  <p>From 24 V, the sink MOSFET burns all the voltage the string doesn't use. The red string drops only about 8–9 V, so its MOSFET burns about 15 V × the current. A bare TO-220 on a breadboard handles about 1 W, so the 220 kΩ top resistor limits the pot's range to a safe maximum.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Top resistor</th><th>Pot range</th><th>MOSFET heat at max (R / G, B)</th><th>Needs</th></tr></thead>
+    <tbody>
+      <tr><td>220 kΩ <span class="lbl">(bench)</span></td><td class="num">0–52 mA</td><td class="num">0.8 W / 0.6 W</td><td>Nothing. The red MOSFET gets too hot to hold, which is normal.</td></tr>
+      <tr><td>22 kΩ + 10 kΩ in series</td><td class="num">0–310 mA</td><td class="num">4.3 W / 3.0 W</td><td>A heatsink of 10 °C/W or better on each MOSFET, with an insulating pad (the tab is the drain).</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="num">Current = (3.3 V × 10 kΩ ⁄ (R<sub>top</sub> + 10 kΩ) × pot position − 12 mV) ⁄ 2.5 Ω. To set it, read the voltage across the sense resistor: 0.125 V = 50 mA.</p>
+</section>
+
+<section>
+  <header>
+    <div class="eyebrow">Wiring checklist</div>
+    <h2>Pin by pin</h2>
+  </header>
+  <div class="cols">
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>QT Py pad</th><th>Goes to</th></tr></thead>
+      <tbody>
+        <tr><td>A3 · GP26</td><td>LM339 pin 5 (+ 100 kΩ to GND)</td></tr>
+        <tr><td>TX · GP20</td><td>LM339 pin 7 (+ 100 kΩ to GND)</td></tr>
+        <tr><td>A0 · GP29</td><td>220 kΩ → red pot top</td></tr>
+        <tr><td>A1 · GP28</td><td>220 kΩ → green pot top</td></tr>
+        <tr><td>A2 · GP27</td><td>220 kΩ → blue pot top</td></tr>
+        <tr><td>GND</td><td>Ground star point</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>LM339 pin</th><th>Connection</th></tr></thead>
+      <tbody>
+        <tr><td>3 / 12</td><td>+12 V / GND, 100 nF across</td></tr>
+        <tr><td>4, 6</td><td>VT (1.79 V)</td></tr>
+        <tr><td>5 → 2</td><td>WW in → WW out (4.7 kΩ pull-up)</td></tr>
+        <tr><td>7 → 1</td><td>CW in → CW out (4.7 kΩ pull-up)</td></tr>
+        <tr><td>8–11</td><td>GND</td></tr>
+        <tr><td>13, 14</td><td>Open</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>LM324 pin</th><th>Connection</th></tr></thead>
+      <tbody>
+        <tr><td>4 / 11</td><td>+12 V / GND, 100 nF across</td></tr>
+        <tr><td>3, 2, 1</td><td>Red: wiper, feedback, gate</td></tr>
+        <tr><td>5, 6, 7</td><td>Green: wiper, feedback, gate</td></tr>
+        <tr><td>10, 9, 8</td><td>Blue: wiper, feedback, gate</td></tr>
+        <tr><td>12</td><td>GND</td></tr>
+        <tr><td>13 ↔ 14</td><td>Tied together</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <p>Run the LM324's ground (pin 11) on its own wire to the point where the three sense resistors meet ground. Strip current flowing through a shared ground wire would otherwise shift every RGB setpoint.</p>
+</section>
+
+<section>
+  <header>
+    <div class="eyebrow">Bring-up</div>
+    <h2>Build it in this order</h2>
+  </header>
+  <ol class="steps">
+    <li><div><b>Power section only.</b> Connect 24 V and measure: the +12 V rail should read 11.5–12.5 V and VT about 1.79 V.</div></li>
+    <li><div><b>Strip switches, no strip yet.</b> With the lamp firmware running, choose Mixer mode. Warm at 100% should put about 11 V on the WW gate, and 0% should leave it under 0.5 V. Repeat for Cool. Unplug the QT Py's USB: both gates must stay low. This also checks that the marketplace IRFZ44Ns switch properly.</div></li>
+    <li><div><b>Identify the RGB dies.</b> On each star, feed the QT Py's 5V pad through a 220 Ω resistor into a pad, and connect the other pad to GND. That's about 10 mA, a dim and safe glow. If nothing lights, swap the two leads. Don't use more than 5 V for this test, because LEDs only tolerate about 5 V in reverse. Mark which pad pair is red, green and blue, and which side is +. Only R± and B± are printed on your stars.</div></li>
+    <li><div><b>Wire the three strings.</b> Chain LED 1 R− → LED 2 R+ → LED 3 R+ … → LED 4 R−, and the same for green and blue. Turn all three pots fully toward the ground end, then connect each string's last − pad to its MOSFET drain.</div></li>
+    <li><div><b>Set the currents.</b> In Mixer, set Red to 100% and the others to 0. Turn the red pot until the sense resistor reads 0.125 V (50 mA). Do the same for green and blue. After 5 minutes, check that no MOSFET is hotter than the red one.</div></li>
+    <li><div><b>Connect the strip.</b> Put your meter in series with the strip's + lead on the 10 A range. Read the current at Warm 100%, then at Cool 100%, and write both down.</div></li>
+    <li><div><b>Enter the settings below</b>, then calibrate Min duty on each channel.</div></li>
+  </ol>
+</section>
+
+<section>
+  <header>
+    <div class="eyebrow">Firmware</div>
+    <h2>Settings for this hardware</h2>
+  </header>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Menu</th><th>Set to</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Channels ▸ each ▸ Invert</td><td>Off</td><td>All five drivers are non-inverting.</td></tr>
+      <tr><td>White LEDs ▸ Warm LED / Cool LED</td><td class="num">2700 K / 6500 K</td><td>From the strip datasheet.</td></tr>
+      <tr><td>PWM freq</td><td class="num">2.0 kHz</td><td>Suits both driver types, and the LM3414 later.</td></tr>
+      <tr><td>Power ▸ WW, CW @100%</td><td>Your step 6 readings</td><td>Makes the current estimate and the power budget accurate.</td></tr>
+      <tr><td>Power ▸ R, G, B @100%</td><td class="num">50 mA (your step 5 setting)</td><td>The current each sink draws from 24 V.</td></tr>
+      <tr><td>Power ▸ Budget</td><td class="num">2400 mA</td><td>80% of a 3 A supply.</td></tr>
+      <tr><td>Channels ▸ each ▸ Min duty</td><td>Raise until the LED just glows at Test level 0.1%</td><td>The RGB sinks take a few µs to turn on, so expect them to need more than the strip.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <header>
+    <div class="eyebrow">Parts</div>
+    <h2>From your inventory</h2>
+  </header>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>ID</th><th>Part</th><th>Use</th><th>Qty used / have</th></tr></thead>
+    <tbody>
+      <tr><td class="id">IC-006</td><td>LM339 quad comparator</td><td>Strip gate drive</td><td class="num">1 / 12</td></tr>
+      <tr><td class="id">IC-001</td><td>LM324 quad op-amp</td><td>RGB current control</td><td class="num">1 / 12</td></tr>
+      <tr><td class="id">VR-006</td><td>L7812</td><td>+12 V rail</td><td class="num">1 / 5</td></tr>
+      <tr><td class="id">Q-003</td><td>IRFZ44N</td><td>All five channels</td><td class="num">5 / 20</td></tr>
+      <tr><td class="id">Q-001</td><td>BC547</td><td>Gate boosters</td><td class="num">2 / 5</td></tr>
+      <tr><td class="id">D-002</td><td>1N5819</td><td>Gate discharge ×2, strip clamps ×2</td><td class="num">4 / 25</td></tr>
+      <tr><td class="id">E-002</td><td>10 kΩ pot</td><td>RGB current set</td><td class="num">3 / 3</td></tr>
+      <tr><td class="id">R-002</td><td>10 Ω</td><td>Sense resistors, 4 per color</td><td class="num">12 / 25</td></tr>
+      <tr><td class="id">R-005</td><td>100 Ω</td><td>Gate resistors</td><td class="num">5 / 50</td></tr>
+      <tr><td class="id">R-006</td><td>220 Ω</td><td>LED identification test</td><td class="num">1 / 50</td></tr>
+      <tr><td class="id">R-008</td><td>1 kΩ</td><td>Op-amp feedback</td><td class="num">3 / 50</td></tr>
+      <tr><td class="id">R-010</td><td>4.7 kΩ</td><td>Comparator pull-ups</td><td class="num">2 / 25</td></tr>
+      <tr><td class="id">R-011</td><td>10 kΩ</td><td>VT divider</td><td class="num">2 / 50</td></tr>
+      <tr><td class="id">R-013</td><td>47 kΩ</td><td>VT divider</td><td class="num">1 / 25</td></tr>
+      <tr><td class="id">R-014</td><td>100 kΩ</td><td>Input ×2, gate ×5 pulldowns</td><td class="num">7 / 25</td></tr>
+      <tr><td class="id">R-015</td><td>220 kΩ</td><td>Bench current limit</td><td class="num">3 / 25</td></tr>
+      <tr><td class="id">R-017</td><td>1 MΩ</td><td>Op-amp offset bias</td><td class="num">3 / 25</td></tr>
+      <tr><td class="id">C-011</td><td>1 nF ceramic</td><td>Loop compensation</td><td class="num">3 / 10</td></tr>
+      <tr><td class="id">C-021</td><td>100 nF ceramic</td><td>Decoupling ×3, VT ×1</td><td class="num">4 / 10</td></tr>
+      <tr><td class="id">C-024</td><td>330 nF ceramic</td><td>L7812 input</td><td class="num">1 / 10</td></tr>
+      <tr><td class="id">C-038</td><td>10 µF 50 V electrolytic</td><td>12 V rail</td><td class="num">1 / 16</td></tr>
+      <tr><td class="id">C-044</td><td>100 µF 50 V electrolytic</td><td>24 V bulk</td><td class="num">2 / 6</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <h3>Not in the inventory</h3>
+  <ul class="plain">
+    <li>A 24 V DC supply, 3 A or more and class 2, which the strip datasheet requires. Add a barrel-jack-to-screw-terminal adapter.</li>
+    <li>22 AWG or heavier hookup wire for the strip's + and returns. Use your breadboard and jumper wires for everything else.</li>
+    <li>For full RGB power: an aluminum heatsink and thermal paste under the four stars (about 12 W in total). You'll need these whichever driver you use.</li>
+  </ul>
+</section>
+
+<section class="later">
+  <header>
+    <div class="eyebrow">Later · full RGB power at 90% efficiency</div>
+    <h2>Switch-mode version with your LM3414s</h2>
+  </header>
+  <p>You have 25 LM3414 constant-current buck drivers. One per color replaces the op-amp sink. Each chip sets its own current, takes the same PWM on its DIM pin, and wastes about 10% instead of half. At full current the RGB side then draws about 0.5 A from 24 V instead of 0.94 A, with no hot transistors. The firmware doesn't change.</p>
+  <figure>
+    <div class="scroll">
+    <svg class="sch" viewBox="0 0 800 330" role="img" aria-label="LM3414 schematic per color: VIN on 24 V with 10 microfarad to ground; DIM from the QT Py pin through 1k with 10k to ground; IADJ 10k and FS 47k to ground; VCC 1 microfarad to ground; LX pin connects through a 100 to 150 microhenry inductor to the cathode end of the LED string whose anode is on 24 V; a 1N5819 from LX to 24 V.">
+      <line x1="60" y1="40" x2="740" y2="40"/>
+      <text x="52" y="44" text-anchor="end">+24 V</text>
+      <circle class="dot" cx="60" cy="40" r="3"/>
+      <line x1="60" y1="40" x2="60" y2="150"/><line x1="50" y1="150" x2="70" y2="150"/><line x1="50" y1="158" x2="70" y2="158"/><line x1="60" y1="158" x2="60" y2="300"/>
+      <text class="lbl" x="74" y="152">10 µF</text>
+      <line x1="60" y1="300" x2="560" y2="300"/>
+      <line x1="40" y1="300" x2="60" y2="300"/><line x1="44" y1="305" x2="56" y2="305"/><line x1="48" y1="310" x2="52" y2="310"/>
+
+      <text x="155" y="174" text-anchor="end">A0 · GP29</text>
+      <line class="sig" x1="160" y1="170" x2="180" y2="170"/><rect class="r" x="180" y="163" width="40" height="14"/><line class="sig" x1="220" y1="170" x2="320" y2="170"/>
+      <text class="lbl" x="200" y="156" text-anchor="middle">1 kΩ</text>
+      <circle class="dot" cx="250" cy="170" r="3"/>
+      <line x1="250" y1="170" x2="250" y2="200"/><rect class="r" x="243" y="200" width="14" height="36"/><line x1="250" y1="236" x2="250" y2="300"/>
+      <text class="lbl" x="262" y="222">10 kΩ</text>
+
+      <rect class="box" x="320" y="120" width="220" height="100" rx="4"/>
+      <text class="ttl" x="430" y="174" text-anchor="middle">LM3414</text>
+      <text class="pin" x="430" y="136" text-anchor="middle">8 VIN</text>
+      <text class="pin" x="328" y="174">6 DIM</text>
+      <text class="pin" x="532" y="174" text-anchor="end">7 LX</text>
+      <text class="pin" x="350" y="212" text-anchor="middle">3 IADJ</text>
+      <text class="pin" x="410" y="212" text-anchor="middle">5 FS</text>
+      <text class="pin" x="470" y="212" text-anchor="middle">1 VCC</text>
+      <text class="pin" x="520" y="212" text-anchor="middle">2,4</text>
+      <line x1="430" y1="120" x2="430" y2="40"/>
+      <circle class="dot" cx="430" cy="40" r="3"/>
+
+      <line x1="350" y1="220" x2="350" y2="235"/><rect class="r" x="343" y="235" width="14" height="32"/><line x1="350" y1="267" x2="350" y2="300"/>
+      <text class="lbl" x="338" y="256" text-anchor="end">10 kΩ</text>
+      <line x1="410" y1="220" x2="410" y2="235"/><rect class="r" x="403" y="235" width="14" height="32"/><line x1="410" y1="267" x2="410" y2="300"/>
+      <text class="lbl" x="398" y="256" text-anchor="end">47 kΩ</text>
+      <line x1="470" y1="220" x2="470" y2="250"/><line x1="460" y1="250" x2="480" y2="250"/><line x1="460" y1="258" x2="480" y2="258"/><line x1="470" y1="258" x2="470" y2="300"/>
+      <text class="lbl" x="484" y="258">1 µF</text>
+      <line x1="520" y1="220" x2="520" y2="300"/>
+      <text class="lbl" x="532" y="286">PGND, GND, pad</text>
+
+      <line x1="540" y1="170" x2="640" y2="170"/>
+      <circle class="dot" cx="640" cy="170" r="3"/>
+      <line x1="640" y1="40" x2="640" y2="60"/>
+      <circle class="dot" cx="640" cy="40" r="3"/>
+      <polygon points="628,60 652,60 640,82"/>
+      <line x1="628" y1="82" x2="652" y2="82"/>
+      <line x1="640" y1="82" x2="640" y2="100"/>
+      <path d="M640,100 a6,6 0 0,1 0,12 a6,6 0 0,1 0,12 a6,6 0 0,1 0,12 a6,6 0 0,1 0,12"/>
+      <line x1="640" y1="148" x2="640" y2="170"/>
+      <text class="lbl" x="628" y="76" text-anchor="end">4 dies in series</text>
+      <text class="lbl" x="628" y="122" text-anchor="end">100–150 µH</text>
+      <text class="lbl" x="628" y="138" text-anchor="end">Isat ≥ 0.6 A</text>
+
+      <polyline points="640,170 720,170 720,130"/>
+      <polygon points="710,130 730,130 720,110"/>
+      <line x1="710" y1="110" x2="730" y2="110"/>
+      <line x1="720" y1="110" x2="720" y2="40"/>
+      <circle class="dot" cx="720" cy="40" r="3"/>
+      <text class="lbl" x="734" y="124">1N5819</text>
+    </svg>
+    </div>
+    <figcaption><b>One per color.</b> Current = 3125 ⁄ R<sub>IADJ</sub>: 10 kΩ gives 312 mA, and 2 × 4.7 kΩ in series gives 332 mA. Switching frequency = 20 MHz ⁄ R<sub>FS</sub>: 47 kΩ gives about 425 kHz. The red channel's on-time is about 0.86 µs, above the chip's 400 ns minimum. DIM counts as "on" when left open, so the 10 kΩ pulldown keeps the LEDs dark while the QT Py boots.</figcaption>
+  </figure>
+  <ul class="plain">
+    <li><b>From your inventory, per color:</b> LM3414 (IC-023), 1N5819 (D-002), 10 kΩ ×2, 47 kΩ, 1 kΩ, 1 µF ceramic (C-027), and 10 µF ceramic (C-030) at VIN. Add a 1 µF ceramic across the LED string if you want to smooth the ripple.</li>
+    <li><b>To buy:</b>
+      <ul class="plain">
+        <li>3 shielded inductors, 100–150 µH, with saturation current of 0.6 A or more and resistance under 0.5 Ω.</li>
+        <li>3 SOIC-8 adapter boards that include a center thermal pad, or a small PCB. The chip's exposed pad must be soldered to ground copper.</li>
+      </ul>
+    </li>
+    <li><b>Build it on perfboard, not the breadboard.</b> At 425 kHz, the VIN capacitor, the diode and the LX node must sit within a few millimetres of the chip. Before soldering, check the pinout and LED/inductor order against the typical-application figure in TI's LM3414 datasheet.</li>
+    <li><b>Firmware afterwards:</b> set Power ▸ R, G, B @100% to the current drawn from 24 V, about 130 mA for red and 200 mA each for green and blue.</li>
+  </ul>
+</section>
+
+</div>
