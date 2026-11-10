@@ -2,3 +2,4 @@
 .vscode/
 test/host_tests
 *.o
+__pycache__/

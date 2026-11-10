@@ -9,7 +9,7 @@ and a 240×240 color display.
 | Adafruit **QT Py RP2040** | Microcontroller. Dual-core, 8 hardware PWM slices, 8 MB flash |
 | Adafruit **I2C QT rotary encoder** (seesaw; PID 4991, or 5880 pre-soldered) | Encoder, push switch and an RGB "locator" pixel, all over I2C |
 | Adafruit **240×240 TFT** (ST7789) | User interface |
-| Amber/cool-white + RGB LED arrays | The light. Driven through **external drivers**, never from the GPIO pins |
+| 1.6 m tunable-white strip (2700 K + 6500 K) + four 3 W RGB stars | The light. Driven through the **driver stage** in [`docs/driver-build.html`](docs/driver-build.html), never from the GPIO pins |
 
 ---
 
@@ -72,11 +72,27 @@ day-to-day use. (The second knob has no INT wire, so it's simply polled.)
 
 ## 2. Circuit notes (hardware limits to respect)
 
-The tested-on-paper breadboard driver design for this build (1.6 m NFLS tunable-white
-strip plus four 3 W RGB stars) is in [`docs/driver-build.html`](docs/driver-build.html):
-schematics, pin-by-pin wiring, bring-up order and firmware settings.
+The driver stage for this build (1.6 m NFLS tunable-white strip plus four 3 W RGB stars)
+is in [`docs/driver-build.html`](docs/driver-build.html), a step-by-step build booklet for
+two half-size breadboards: every step shows the parts to add, where each leg goes, and
+what to measure before going on. Revision 2 of that design:
 
-You're sizing the drivers. These are the constraints the firmware assumes:
+* **Strip (warm, cool):** one logic-level IRLB8721 per channel, gate driven straight from
+  the QT Py pin through 220 Ω, with a 10 kΩ pull-down and a 1N5819 clamp. Four parts per
+  channel, full strip power.
+* **RGB stars:** one LM324 section plus an IRLB8721 per colour as a constant-current sink.
+  The reference is the PWM pin's own 3.3 V scaled by a pot, and the sense resistor is 50 Ω,
+  so the current can never exceed 3.3 V ⁄ 50 Ω = 66 mA, whatever the pot or a loose wire
+  does. Full 310 mA needs heatsinks or the LM3414 buck drivers (last section of the booklet).
+* The pin map is unchanged from §1.
+
+The booklet is generated, not hand-drawn. `tools/guide/layout.py` holds the placement of
+every part and wire, and `python3 tools/guide/build.py` refuses to write the page unless
+that placement implements the schematic: one lead per hole, every net in one piece, no two
+nets touching. `tools/sink_sim.py` is the small time-step model behind the RGB sink's
+turn-on figures.
+
+If you change the drivers, these are the constraints the firmware assumes:
 
 * **The GPIOs only provide a logic signal.** RP2040 pins are 3.3 V and rated for a few
   mA. Each channel needs a driver stage:
@@ -89,7 +105,9 @@ You're sizing the drivers. These are the constraints the firmware assumes:
 * **Match the PWM frequency to the driver.** The setting is under *Settings ▸ PWM freq*.
   The default is 2 kHz. Many CC drivers accept only 100 Hz–1 kHz on DIM (Mean Well LDD
   series, for example); set those to 1000 Hz. MOSFET-switched arrays can run at 1–20 kHz.
-  Resolution depends on frequency: about 15 bits at 2 kHz, about 12.7 bits at 20 kHz.
+  Resolution depends on frequency and on the CPU speed chosen in the Tools menu: 15–16
+  bits at 2 kHz, about 13 bits at 20 kHz. The revision 2 drivers want 2 kHz or lower: the
+  RGB sinks take about 5 µs to turn on, which is 1 % of a 2 kHz cycle.
 * **Active-low DIM inputs** are handled per channel with *Settings ▸ Channels ▸ (ch) ▸ Invert*.
 * **Pull-downs:** fit 10–100 kΩ from each driver input to GND. The pins float during
   reset and USB bootloader mode, and the pull-downs keep the LEDs dark until the firmware
@@ -121,10 +139,16 @@ You're sizing the drivers. These are the constraints the firmware assumes:
 
 **PlatformIO**: `pio run -t upload` (see `platformio.ini`).
 
-**Host tests** (no hardware needed): `make -C test` runs about 4,000 checks of the
+**Host tests** (no hardware needed): `make -C test` runs about 4,100 checks of the
 color math, light engine, power limiter, gesture decoder and the whole menu UI, including
 a 200,000-event random-input fuzz run under AddressSanitizer/UBSan. `make -C test check`
 also type-checks the Arduino-facing files against API stubs.
+
+**Checked against the real toolchain:** the sketch compiles without warnings
+(`-Wall -Wextra`) and links into a complete image with arduino-pico 6.3.2 (GCC 16.1),
+Adafruit seesaw 1.7.9, Adafruit ST7735 and ST7789 1.12.0, Adafruit GFX 1.13.0 and Adafruit
+BusIO 1.17.4. The image is about 392 KB of flash and 22 KB of static RAM.
+`tools/rp2040_build_check.sh` repeats that build outside the Arduino IDE.
 
 ---
 
@@ -194,13 +218,15 @@ Menu
 
 1. **PWM freq**: set it to suit your drivers (§2).
 2. **Channels ▸ each channel**: on this screen the lamp shows *only* that channel at the
-   *Test level* (default 0.1 %).
+   *Test level* (default 0.1 %). Test and preview screens stay up for 10 minutes instead of
+   the usual 30 s, so there is time to take a meter reading.
    * Set **Invert** if the LED is lit when it should be dark.
    * Raise **Min duty** until the LED just starts to glow. This removes the dead zone at
      the bottom of the knob, so the first step above zero is the dimmest real light.
    * Use **Trim** to cap a channel. This is useful for balancing the warm and cool whites,
      or for under-driving an LED that runs hot.
-3. **White LEDs**: enter the color temperature of your amber/warm and cool LEDs.
+3. **White LEDs**: enter the color temperature of your warm and cool LEDs. The defaults,
+   2700 K and 6500 K, match the strip in this build.
 4. **Power**: measure each channel's current at 100 % and enter it, then set **Budget**
    to about 80 % of your supply's rating. The home screen then shows estimated current
    draw. Above the budget, all channels are scaled down together, so the color stays
@@ -220,9 +246,11 @@ Menu
 ```
 
 * **Two cores.** Core 1 does nothing but compute light and write PWM, so fades and
-  effects stay smooth even while the display redraws or flash is written. The cores
-  exchange one snapshot each way. The mutex is held only for a copy, and core 1 never
-  waits on it.
+  effects stay smooth while the display redraws. The cores exchange one snapshot each way.
+  The mutex is held only for a copy, and core 1 never waits on it. The one thing that does
+  pause core 1 is a flash write: the RP2040 can't run code from flash while erasing it, so
+  the core is held for a few tens of ms. The hardware PWM keeps running, so a steady light
+  shows nothing. See *Flash wear* for how effects are kept clear of it.
 * **Perceptual control, linear mixing.** Every level you set is CIE L\* lightness, so
   equal knob steps look equal from 0.1 % to 100 %. Mixing and cross-fading happen in
   linear light, which is how LED light physically adds up.
@@ -243,7 +271,9 @@ Menu
   sleep mode. The QT Py's own NeoPixel is left unpowered. When the lamp is off, a faint
   amber glow on the encoder shows where the knob is.
 * **Flash wear.** Settings are saved only after 5 s without changes, and only if they
-  differ (by CRC) from what's stored. The write goes through LittleFS (wear-levelled), to
+  differ (by CRC) from what's stored. While an effect is running the wait is 30 s, or
+  until the light is steady or off, so the short pause a flash write causes doesn't land
+  in the middle of a sweep. The write goes through LittleFS (wear-levelled), to
   a temporary file followed by an atomic rename, so a power cut can't corrupt them. On
   load, the data is CRC-checked and every field is range-clamped.
 * **Interrupt-driven input.** With INT wired, an idle knob costs one GPIO read per poll.
@@ -255,6 +285,9 @@ Menu
   hardware watchdog reboots the board if either core ever stalls.
 * **Clean power-up.** The backlight is held dark until the first frame is ready, so the
   display's power-up noise is never shown.
+* **Display sleep timing.** The ST7789 needs 120 ms between going to sleep and waking, and
+  5 ms before its next command. The driver enforces both, so touching the knob at the
+  instant the screen dozes off can't leave it dark.
 
 ### Source map (`firmware/TaskLamp/`)
 
@@ -273,15 +306,22 @@ Menu
 | `pwm_hw.*` | RP2040 PWM setup and phase staggering | – |
 | `storage.*` | LittleFS load/save | – |
 
+Outside the firmware: `tools/guide/` (the driver booklet's layout, checker and renderer),
+`tools/sink_sim.py` (RGB sink timing model) and `tools/rp2040_build_check.sh` (full build
+with the real core and libraries).
+
 ---
 
 ## 6. Status
 
 * All hardware-independent logic is covered by the host tests (`make -C test`).
-* The hardware layer has been type-checked against stubs of the library APIs but **has not
-  yet been compiled with the real arduino-pico toolchain or run on hardware**. Expect to
-  confirm the following on the bench:
+* The whole sketch builds and links cleanly with the real arduino-pico toolchain and the
+  current Adafruit libraries (§3). It **has not yet been run on hardware**, and neither has the
+  driver stage: its layout is machine-checked against the schematic and its timing is
+  modelled, but nothing has been measured. Expect to confirm the following on the bench:
   * Clockwise turns brighten. If not, use *Knob dir*.
   * The display orientation (`kTftRotation` in `config.h`).
   * INT works: the encoder's red INT LED (on the back) blinks when you turn the knob.
   * No white flash on the display at power-up.
+  * The stop-and-check cards in the driver booklet, above all that the strip MOSFETs drop
+    under 0.1 V when on (that is the test of driving them from 3.3 V).
