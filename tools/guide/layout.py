@@ -93,8 +93,8 @@ P("QC", "to220", "A", {"G": "f12", "D": "f13", "S": "f14"},
 
 two("RgW", "res", "A", "c2", "c6", "PWM_WW", "GATE_WW", "220", "A3", "R-006")
 two("RgC", "res", "A", "h8", "h12", "PWM_CW", "GATE_CW", "220", "A3", "R-006")
-two("RpW", "res", "A", "a6", "L-6", "GATE_WW", "GND", "10k", "A3", "R-011")
-two("RpC", "res", "A", "j12", "R-12", "GATE_CW", "GND", "10k", "A3", "R-011")
+two("RpW", "res", "A", "a6", "L-6", "GATE_WW", "GND", "100k", "A3", "R-014")
+two("RpC", "res", "A", "j12", "R-12", "GATE_CW", "GND", "100k", "A3", "R-014")
 
 # Clamp diodes: anode on the drain row, cathode (stripe) on the +24 V rail.
 P("DW", "diode", "A", {"A": "a7", "K": "L+7"}, {"A": "DRAIN_WW", "K": "P24"}, "1N5819", "A4", "D-002")
@@ -149,9 +149,9 @@ two("Cdec", "cap", "B", "L+19", "L-19", "P12", "GND", "100n", "B3", "C-021")
 def sink(ch, step, fet, gate_r, pd, s1, s2, staple, fb, cfb, off, ref, inv_note=""):
     """One current sink. Every argument is a hole or a (hole, hole) pair."""
     n = lambda s: f"{s}_{ch}"
+    two(f"S{ch}", "staple", "B", *staple, n("SRC"), n("SRC"), "", step + "a", "")
     P(f"Q{ch}", "to220", "B", {"G": fet[0], "D": fet[1], "S": fet[2]},
       {"G": n("GATE"), "D": n("DRAIN"), "S": n("SRC")}, "IRLB8721", step + "a", "Q-004")
-    two(f"S{ch}", "staple", "B", *staple, n("SRC"), n("SRC"), "", step + "a", "")
     two(f"Rg{ch}", "res", "B", *gate_r, n("OUT"), n("GATE"), "100", step + "b", "R-005")
     two(f"Rp{ch}", "res", "B", *pd, n("GATE"), "GND", "100k", step + "b", "R-014")
     two(f"Rs1{ch}", "res", "B", *s1, n("SRC"), "GND", "100", step + "c", "R-005")
@@ -164,7 +164,7 @@ def sink(ch, step, fet, gate_r, pd, s1, s2, staple, fb, cfb, off, ref, inv_note=
 
 sink("R", "B4", ("e7", "e8", "e9"), ("c12", "c7"), ("a7", "L-7"), ("a9", "L-9"), ("a10", "L-10"),
      ("d9", "d10"), ("b9", "b13"), ("d12", "d13"), ("a13", "L+13"), ("a14", "L-14"))
-sink("G", "B5", ("e21", "e22", "e23"), ("c18", "c21"), ("a21", "L-21"), ("a23", "L-23"), ("a24", "L-24"),
+sink("G", "B5", ("d21", "d22", "d23"), ("c18", "c21"), ("a21", "L-21"), ("a23", "L-23"), ("a24", "L-24"),
      ("c23", "c24"), ("b23", "b17"), ("d18", "d17"), ("a17", "L+17"), ("a16", "L-16"))
 sink("B", "B5", ("f21", "f22", "f23"), ("h18", "h21"), ("j21", "R-21"), ("j23", "R-23"), ("j24", "R-24"),
      ("h23", "h24"), ("i23", "i17"), ("g18", "g17"), ("j17", "R+17"), ("j16", "R-16"))

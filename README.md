@@ -46,6 +46,9 @@ and a 240×240 color display.
 | 3V / GND | | TFT Vin / GND | |
 | – | – | TFT **RST**, **CCS**, **SO**, **TE** | Leave unconnected. The display resets itself at power-up, and the microSD slot isn't used (leave it empty) |
 
+The same connections are drawn as a picture on the *Controller wiring* card of the driver
+booklet (`docs/driver-build.html`).
+
 This uses all 11 pads, and every LED channel gets its own hardware PWM output.
 If you don't run the INT wire, the firmware notices within a couple of knob turns and
 falls back to plain polling. The pin
@@ -78,7 +81,7 @@ two half-size breadboards: every step shows the parts to add, where each leg goe
 what to measure before going on. Revision 2 of that design:
 
 * **Strip (warm, cool):** one logic-level IRLB8721 per channel, gate driven straight from
-  the QT Py pin through 220 Ω, with a 10 kΩ pull-down and a 1N5819 clamp. Four parts per
+  the QT Py pin through 220 Ω, with a 100 kΩ pull-down and a 1N5819 clamp. Four parts per
   channel, full strip power.
 * **RGB stars:** one LM324 section plus an IRLB8721 per colour as a constant-current sink.
   The reference is the PWM pin's own 3.3 V scaled by a pot, and the sense resistor is 50 Ω,

@@ -23,7 +23,7 @@ STEPS = [
     ("bag", 1, "Board A", "Strip switches"),
     ("A1", "A", 1, 6, "Link the rails", "Red rail to red rail, blue rail to blue rail. On this board both red rails carry 24 V.", None),
     ("A2", "A", 1, 17, "Two MOSFETs", "Printed side faces column a. Left leg (G) goes in the lowest row number.", "to220"),
-    ("A3", "A", 1, 17, "Gate resistors", "220 Ω feeds each gate. 10 kΩ holds it low while the QT Py boots.", None),
+    ("A3", "A", 1, 17, "Gate resistors", "220 Ω feeds each gate. 100 kΩ holds it low while the QT Py boots.", None),
     ("A4", "A", 1, 17, "Clamp diodes", "The stripe end goes into the red + rail. A reversed diode shorts the supply.", "diode"),
     ("A5", "A", 1, 17, "Bulk capacitors", "Stripe (short leg) into the blue − rail. 50 V parts only.", "ecap"),
     ("A6", "A", 1, 17, "Ground links", "Ties each MOSFET's source row to the blue rail beside it.", None),
@@ -35,19 +35,20 @@ STEPS = [
     ("B2", "B", 1, 10, "12 V regulator", "L7812 printed side faces column a. The 10 µF stripe goes into the blue rail.", "to220"),
     ("B3", "B", 9, 21, "LM324", "Notch toward row 1, so pin 1 sits in e12. Then power, ground and the spare amplifier.", "dip"),
     ("bag", 4, "Board B", "Red current sink"),
-    ("B4a", "B", 4, 16, "MOSFET and link", "Printed side faces column a. The link joins rows 9 and 10.", "to220"),
+    ("B4a", "B", 4, 16, "Link and MOSFET", "Fit the link first: it joins rows 9 and 10, right in front of the MOSFET. Printed side faces column a.", "to220"),
     ("B4b", "B", 4, 16, "Gate parts", "100 Ω from op-amp pin 1 to the gate. 100 kΩ holds the gate low at power-up.", None),
     ("B4c", "B", 4, 16, "Sense resistors", "Two 100 Ω side by side make 50 Ω. They set the 66 mA ceiling.", None),
     ("B4d", "B", 4, 16, "Feedback", "1 kΩ from the source row to pin 2. 1 nF from pin 1 to pin 2.", None),
     ("B4e", "B", 4, 16, "Bias and reference", "1 MΩ to the red rail keeps the LEDs fully dark at 0%. 100 kΩ holds pin 3 low if a wire falls out.", None),
     ("bag", 5, "Board B", "Green and blue sinks"),
-    ("B5a", "B", 14, 27, "MOSFETs and links", "Same again, twice. Both printed sides face column a.", "to220"),
+    ("B5a", "B", 14, 27, "Links and MOSFETs", "Links first, then the MOSFETs. Both printed sides face column a. Keep the gap between the two: the metal tabs are live.", "to220"),
     ("B5b", "B", 14, 27, "Gate parts", "100 Ω from pins 7 and 8 to the gates. 100 kΩ from each gate to a blue rail.", None),
     ("B5c", "B", 14, 27, "Sense resistors", "Four 100 Ω: two per channel.", None),
     ("B5d", "B", 14, 27, "Feedback", "1 kΩ and 1 nF per channel.", None),
     ("B5e", "B", 14, 27, "Bias and reference", "1 MΩ to a red rail, 100 kΩ to a blue rail, per channel.", None),
     ("bag", 6, "Both boards", "Hook-up and first light"),
     ("C1", "AB", 1, 30, "Join the boards", "24 V and ground go across. The three pot wipers go to op-amp pins 3, 5 and 10.", None),
+    ("check", "CONTROLLER"),
     ("C2", "A", 1, 30, "QT Py", "Five PWM wires and ground. The pin map is the one the firmware already uses.", "qtpy"),
     ("C3", "A", 1, 18, "24 V supply", "Unplug the supply first. Two thick wires carry the strip current back to the supply's − terminal.", None),
     ("check", CHECK1),
@@ -358,7 +359,7 @@ INSETS = {
     "pot": ('<svg viewBox="0 0 150 96" class="ins"><circle cx="75" cy="36" r="30" fill="#AEB6BF" stroke="#6E7781"/><circle cx="75" cy="36" r="10" fill="#D9DDE2" stroke="#8A929B"/>'
             '<path d="M55,64v24M75,66v22M95,64v24" stroke="#A9B0B7" stroke-width="4" stroke-linecap="round"/>'
             '<text x="40" y="92" text-anchor="end" class="iq">end</text><text x="75" y="80" text-anchor="middle" class="it2">W</text><text x="110" y="92" class="iq">end</text></svg>',
-            "Any 10 kΩ pot works. If its legs do not match these holes, keep the same three rows: end, wiper, end."),
+            "Any 10 kΩ pot works. One end leg gets the QT Py wire, the middle leg (wiper) goes to Board B, the other end leg goes to a blue rail. If your pot's legs land in other rows, move those three wires to match."),
     "dip": ('<svg viewBox="0 0 150 96" class="ins"><rect x="50" y="8" width="50" height="80" rx="4" fill="#2A2D31"/><path d="M67,8a8,8 0 0 0 16,0z" fill="#73797F"/>'
             '<circle cx="59" cy="20" r="3.4" fill="#E9ECEF"/><path d="M38,20H50M38,32H50M38,44H50M38,56H50M38,68H50M38,80H50M100,20H112M100,32H112M100,44H112M100,56H112M100,68H112M100,80H112" stroke="#C3C9CF" stroke-width="4"/>'
             '<text x="32" y="24" text-anchor="end" class="iq">pin 1</text><text x="118" y="24" class="iq">pin 14</text></svg>',
@@ -371,6 +372,67 @@ INSETS = {
              + '<text x="85" y="72" text-anchor="middle" class="it">QT Py</text><text x="85" y="86" text-anchor="middle" class="it">USB up</text></svg>',
              "Pads as seen from above with the USB-C socket at the top. Only A0–A3, TX and GND come to these boards."),
 }
+
+
+def controller_card():
+    """The controller itself: QT Py to display and encoder. Connections by name, not a breadboard layout."""
+    left = ["A0", "A1", "A2", "A3", "SDA", "SCL", "TX"]
+    right = ["5V", "GND", "3V", "MO", "MI", "SCK", "RX"]
+    y = lambda i: 62 + 19 * i
+    gold = lambda cx, cy: f'<circle cx="{cx}" cy="{cy}" r="4.6" fill="#E0B341" stroke="#7A5C12" stroke-width="0.8"/>'
+    # display pins on its right edge, fed by nested loops from the QT Py's right-hand pads (no crossings)
+    loops = [("Lite", 296, "RX", "orange", 270), ("SCK", 318, "SCK", "yellow", 282), ("SI", 340, "MO", "lime", 294),
+             ("Vin", 362, "3V", "red", 306), ("GND", 384, "GND", "black", 318)]
+    o = ['<svg viewBox="0 0 380 476" class="ctl" role="img" aria-label="Controller wiring: QT Py pads GND, 3V, MO, SCK and RX go to the display pins GND, Vin, SI, SCK and Lite; SDA and SCL go to TCS and D/C; MI goes to the encoder INT pad; a STEMMA QT cable joins the QT Py and the encoder; A0 to A3 and TX go to Board A.">']
+    # boards
+    o.append('<rect x="172" y="28" width="36" height="24" rx="4" fill="#C3C9CF" stroke="#7F8891"/>')
+    o.append('<rect x="140" y="40" width="100" height="156" rx="10" fill="#1F2328"/>')
+    o.append('<rect x="176" y="190" width="28" height="16" rx="2" fill="#D9DDE2" stroke="#8A929B"/>')
+    o.append('<rect x="100" y="270" width="156" height="140" rx="8" fill="#24384A" stroke="#0F1113"/>')
+    o.append('<rect x="150" y="288" width="58" height="58" rx="3" fill="#0E1620" stroke="#5D7A93"/>')
+    o.append('<rect x="100" y="424" width="156" height="42" rx="8" fill="#24384A" stroke="#0F1113"/>')
+    o.append('<circle cx="124" cy="445" r="13" fill="#C3C9CF" stroke="#7F8891"/><circle cx="124" cy="445" r="5" fill="#8A929B"/>')
+    o.append('<rect x="94" y="432" width="12" height="14" rx="2" fill="#D9DDE2" stroke="#8A929B"/>')
+    # wires
+    for name, col in (("A0", "pink"), ("A1", "lime"), ("A2", "sky"), ("A3", "yellow"), ("TX", "white")):
+        o.append(wire(f"M148,{y(left.index(name))}H126", col))
+    o.append(wire("M148,138H38V318H100", "sky"))     # SDA -> TCS
+    o.append(wire("M148,157H50V296H100", "white"))   # SCL -> D/C
+    for pin, py, pad, col, vx in loops:
+        o.append(wire(f"M232,{y(right.index(pad))}H{vx}V{py}H256", col))
+    o.append(wire("M232,138H248", "violet"))         # MI -> encoder INT (flagged, not routed)
+    o.append(wire("M256,456H272", "violet"))
+    o.append(wire("M190,206V236", "black", True))    # STEMMA QT cable
+    o.append(wire("M94,439H78", "black", True))
+    # pads and labels
+    for i, n_ in enumerate(left):
+        o.append(gold(148, y(i)) + f'<text x="158" y="{y(i) + 3.3}" class="it">{n_}</text>')
+    for i, n_ in enumerate(right):
+        o.append(gold(232, y(i)) + f'<text x="222" y="{y(i) + 3.3}" text-anchor="end" class="it">{n_}</text>')
+    for pin, py, pad, col, vx in loops:
+        o.append(gold(256, py) + f'<text x="246" y="{py + 3.3}" text-anchor="end" class="it">{pin}</text>')
+    o.append(gold(100, 296) + '<text x="110" y="299.3" class="it">D/C</text>')
+    o.append(gold(100, 318) + '<text x="110" y="321.3" class="it">TCS</text>')
+    o.append(gold(256, 456) + '<text x="246" y="459.3" text-anchor="end" class="it">INT</text>')
+    o.append('<text x="190" y="22" text-anchor="middle" class="iq">USB-C</text>')
+    o.append('<text x="179" y="314" text-anchor="middle" class="it">240 ×</text><text x="179" y="327" text-anchor="middle" class="it">240</text>')
+    o.append('<text x="110" y="284" class="it">Display</text>')
+    o.append('<text x="110" y="362" class="it">leave open:</text><text x="110" y="376" class="it">3Vo · SO · RST</text><text x="110" y="390" class="it">CCS · TE</text>')
+    o.append('<text x="146" y="448.3" class="it">Encoder</text>')
+    o.append(tag(122, 90, "Board A", "end") + tag(122, 176, "Board A", "end"))
+    o.append(tag(252, 138, "INT", "start") + tag(276, 456, "MI", "start"))
+    o.append(tag(190, 248, "encoder") + tag(74, 439, "QT Py", "end"))
+    o.append("</svg>")
+    rows = [("red", "QT Py 3V → display Vin"), ("black", "GND → GND"), ("lime", "MO → SI (MOSI)"),
+            ("yellow", "SCK → SCK"), ("orange", "RX → Lite (backlight)"), ("sky", "SDA → TCS"),
+            ("white", "SCL → D/C"), ("violet", "MI → encoder INT pad (optional)")]
+    lst = "".join(f'<li><b class="k dot" style="background:{WIRE[c]}"></b><span class="mono">{t}</span></li>' for c, t in rows)
+    return ('<section class="sheet" id="controller"><span class="where">Reference · if the controller is not wired yet</span>'
+            '<h3>QT Py, display and encoder</h3>'
+            '<figure class="traybox">' + "".join(o) + '</figure>'
+            f'<ol class="put two-col">{lst}</ol>'
+            '<p class="hint">The encoder plugs into the QT Py with a STEMMA QT cable of 15 cm or less. Power the QT Py from USB-C. '
+            'Wire colours here are only a suggestion. This is the pin map the firmware expects; the README has it as a table.</p></section>')
 
 
 def step_html(n, key, board, r0, r1, title, hint, inset):
@@ -424,7 +486,7 @@ def main():
             body.append(f'<header class="bag" id="bag-{num}"><span class="bagno">{num}</span>'
                         f'<div><span class="where">{where}</span><h2>{name}</h2></div></header>')
         elif s[0] == "check":
-            body.append(s[1])
+            body.append(controller_card() if s[1] == "CONTROLLER" else s[1])
         else:
             n += 1
             body.append(step_html(n, *s))

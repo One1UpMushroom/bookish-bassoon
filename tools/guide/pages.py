@@ -98,7 +98,7 @@ section.sheet { background: var(--card); border-radius: 16px; padding: 18px; dis
 @media (min-width: 740px) { .cols { grid-template-columns: 236px 1fr; align-items: start; } }
 
 .need { background: var(--tray); color: var(--tray-ink); border: 2px solid var(--tray-line); border-radius: 14px; padding: 10px 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 10px 14px; }
-.need.all { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.need.all { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
 .pc { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; row-gap: 1px; min-width: 0; }
 .pc svg { grid-row: 1 / span 3; }
 .pc b { font: 800 17px/1 var(--display); }
@@ -133,6 +133,11 @@ section.sheet { background: var(--card); border-radius: 16px; padding: 18px; dis
 .iq { font: 600 10px var(--mono); fill: var(--tray-ink); }
 
 .put { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.put.two-col { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.put.two-col li { grid-template-columns: 22px 1fr; }
+.k.dot { border: 2px solid var(--muted); }
+.traybox { margin: 0; background: var(--tray); border: 2px solid var(--tray-line); border-radius: 14px; padding: 8px; overflow-x: auto; min-width: 0; }
+.ctl { display: block; width: 100%; max-width: 420px; height: auto; margin-inline: auto; }
 .put li { display: grid; grid-template-columns: 22px minmax(84px, max-content) 1fr; gap: 9px; align-items: baseline; font-size: 14.5px; min-width: 0; }
 .k { width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--card); display: grid; place-items: center; font: 800 12px/1 var(--display); align-self: center; }
 .what { font-weight: 700; }
@@ -204,7 +209,7 @@ HEAD = """<title>Task Lamp Driver Build</title>
   <div><span class="where">Not in the inventory</span><span class="v">24 V ≥ 3 A supply</span><p>Class 2, with a screw-terminal jack. Plus a second half-size breadboard and 22 AWG wire.</p></div>
 </div>
 
-<nav class="bags" aria-label="Bags">{nav}<a href="#reference"><b>i</b>Why it changed</a></nav>
+<nav class="bags" aria-label="Bags">{nav}<a href="#controller"><b>c</b>Controller wiring</a><a href="#reference"><b>i</b>Why it changed</a></nav>
 
 {before}
 
@@ -256,6 +261,7 @@ CHECK1 = """<article class="check" id="check-1">
 
 CHECK2 = """<article class="check" id="check-2">
   <header><span class="stopno">!</span><div><span class="where">Stop and check · strip connected</span><h3>Is 3.3 V enough for your MOSFET?</h3></div></header>
+  <p>It should be: the IRLB8721 starts to conduct at 1.35–2.35 V. But its datasheet only promises a low on-resistance at 4.5 V and above, so this measurement is what settles it for your parts.</p>
   <ol>
     <li>Warm at 100%, Cool at 0%: the strip lights warm. Swap them: it lights cool.</li>
     <li>With Warm at 100%, measure across the warm MOSFET: red probe on the diode leg in A·a7, black probe on the thick wire in A·a8. <span class="read">under 0.10 V</span> means it is fully on. Above 0.3 V, swap in another IRLB8721. You have 19.</li>
@@ -314,14 +320,14 @@ REFERENCE = """<header class="bag" id="reference"><span class="bagno">i</span><d
   <h3>Strip switch, build twice</h3>
   <figure class="schem">
     <div class="scroll">
-    <svg class="sch" viewBox="0 0 640 290" role="img" aria-label="Strip switch: QT Py pin through 220 ohms to the gate of an IRLB8721, 10k from gate to ground, source to ground, drain to the strip's warm return, strip plus on 24 volts, and a 1N5819 from drain to 24 volts.">
+    <svg class="sch" viewBox="0 0 640 290" role="img" aria-label="Strip switch: QT Py pin through 220 ohms to the gate of an IRLB8721, 100k from gate to ground, source to ground, drain to the strip's warm return, strip plus on 24 volts, and a 1N5819 from drain to 24 volts.">
       <text x="112" y="154" text-anchor="end">A3 · GP26</text>
       <line class="sig" x1="118" y1="150" x2="160" y2="150"/><rect class="r" x="160" y="143" width="50" height="14"/><line class="sig" x1="210" y1="150" x2="300" y2="150"/>
       <text class="lbl" x="185" y="136" text-anchor="middle">220 Ω</text>
       <circle class="dot" cx="255" cy="150" r="3"/>
       <line x1="255" y1="150" x2="255" y2="172"/><rect class="r" x="248" y="172" width="14" height="40"/><line x1="255" y1="212" x2="255" y2="240"/>
       <line x1="245" y1="240" x2="265" y2="240"/><line x1="249" y1="245" x2="261" y2="245"/><line x1="253" y1="250" x2="257" y2="250"/>
-      <text class="lbl" x="242" y="196" text-anchor="end">10 kΩ</text>
+      <text class="lbl" x="242" y="196" text-anchor="end">100 kΩ</text>
       <line class="thick" x1="300" y1="130" x2="300" y2="170"/>
       <line class="thick" x1="310" y1="125" x2="310" y2="137"/><line class="thick" x1="310" y1="144" x2="310" y2="156"/><line class="thick" x1="310" y1="163" x2="310" y2="175"/>
       <polyline points="310,131 340,131 340,100"/><polyline points="310,169 340,169 340,240"/>
@@ -336,7 +342,7 @@ REFERENCE = """<header class="bag" id="reference"><span class="bagno">i</span><d
       <text class="lbl" x="446" y="92">1N5819</text>
     </svg>
     </div>
-    <figcaption><b>Shown for warm white.</b> Cool white is the same from <span class="mono">TX · GP20</span>. With the QT Py unpowered, booting or in bootloader mode the pin floats, the 10 kΩ holds the gate at 0 V and the strip stays dark. The IRLB8721 is a 30 V part, so use it on a regulated 24 V supply and nothing higher.</figcaption>
+    <figcaption><b>Shown for warm white.</b> Cool white is the same from <span class="mono">TX · GP20</span>. With the QT Py unpowered, booting or in bootloader mode the pin floats, the 100 kΩ holds the gate at 0 V and the strip stays dark. The IRLB8721 is a 30 V part, so use it on a regulated 24 V supply and nothing higher.</figcaption>
   </figure>
 
   <h3>Current sink, build three times</h3>

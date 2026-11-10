@@ -17,7 +17,7 @@ BOARD_TOP = -0.45    # top edge of the board body, in rows (row 1 sits at y = 1)
 
 WIRE = {"red": "#E0312B", "black": "#23272D", "orange": "#F08A1C", "yellow": "#F2C811",
         "white": "#F5F5F1", "pink": "#EC4F8B", "lime": "#6FBF3A", "sky": "#2F9DF2",
-        "amber": "#F7B23B", "ice": "#B9E1F8", "bare": "#B9C0C7"}
+        "amber": "#F7B23B", "ice": "#B9E1F8", "bare": "#B9C0C7", "violet": "#8E5BD6"}
 DIGIT = {"0": "#1D1D1B", "1": "#7A4A21", "2": "#D12A1F", "3": "#F08A1C", "4": "#F4D31E",
          "5": "#2E9E48", "6": "#2764D9", "7": "#8E44AD", "8": "#8C9196", "9": "#FFFFFF"}
 BANDS = {  # five-band, 1 % metal film
@@ -235,8 +235,8 @@ def wire_path(p1, p2):
 def wire(d, color, thick=False):
     w = 5.4 if thick else 3.3
     c = WIRE[color]
-    return (f'<path d="{d}" fill="none" stroke="#14181D" stroke-opacity=".55" stroke-width="{w + 1.7}" stroke-linecap="round"/>'
-            f'<path d="{d}" fill="none" stroke="{c}" stroke-width="{w}" stroke-linecap="round"/>')
+    return (f'<path d="{d}" fill="none" stroke="#14181D" stroke-opacity=".55" stroke-width="{w + 1.7}" stroke-linecap="round" stroke-linejoin="round"/>'
+            f'<path d="{d}" fill="none" stroke="{c}" stroke-width="{w}" stroke-linecap="round" stroke-linejoin="round"/>')
 
 
 def part_svg(p):
