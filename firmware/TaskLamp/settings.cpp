@@ -76,7 +76,7 @@ void defaults(Settings& s) {
   hw.whiteBoost = 1;
   hw.pastelWhite = 1;
   hw.knobReverse = 0;
-  hw.warmK = 2200;
+  hw.warmK = 2700;
   hw.coolK = 6500;
   hw.fadeMs = 500;
 

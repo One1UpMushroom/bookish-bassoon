@@ -2,6 +2,7 @@
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
+#include <Arduino.h>
 #include <SPI.h>
 
 #include "config.h"
@@ -88,9 +89,16 @@ int Display::render(DrawFn fn, void* ctx) {
 
 void Display::setSleep(bool sleep) {
   if (sleep == asleep_) return;
+  // ST7789 timing: sleep-in and sleep-out must be 120 ms apart, and the
+  // controller ignores other commands for 5 ms after either. Waking the
+  // screen an instant after it dozed off would otherwise leave it dark.
+  uint32_t since = millis() - sleepCmdAt_;
+  if (since < 120) delay(120 - since);
   asleep_ = sleep;
   // Sleep-in cuts the controller to a few uA; GRAM is retained, but we redraw
   // anyway on wake because the UI usually changed (it returns to home).
   tft.enableSleep(sleep);
+  sleepCmdAt_ = millis();
+  delay(5);
   if (!sleep) invalidate();
 }

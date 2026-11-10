@@ -5,7 +5,7 @@
 #pragma once
 #include <stdint.h>
 
-#define TASKLAMP_VERSION "1.0.0"
+#define TASKLAMP_VERSION "1.1.0"
 
 namespace cfg {
 
@@ -67,6 +67,13 @@ constexpr uint32_t kEngineIdleMs = 20;      // LED engine tick while steady
 constexpr uint32_t kUiFrameMs = 33;         // max display refresh (~30 fps)
 constexpr uint32_t kUiLiveMs = 100;         // live-bar refresh on home screen
 constexpr uint32_t kMenuTimeoutMs = 30000;  // menus fall back to home screen
+// Screens that show a test or preview light (channel calibration, colour
+// editors) wait much longer, so a meter reading isn't cut off mid-measurement.
+constexpr uint32_t kMenuHoldMs = 600000;
 constexpr uint32_t kSaveDelayMs = 5000;     // settings must be still this long before a flash write
+// A flash write pauses core 1 for a few tens of ms (the RP2040 cannot run
+// code from flash while erasing it). A steady light doesn't show that, a
+// running effect does, so while the light is animating we wait this long.
+constexpr uint32_t kSaveDelayBusyMs = 30000;
 
 }  // namespace cfg

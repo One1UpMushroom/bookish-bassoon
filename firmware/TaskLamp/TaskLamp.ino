@@ -9,7 +9,8 @@
 //
 // The two cores share one EngineInput snapshot (core 0 -> core 1) and one
 // LampStatus (core 1 -> core 0), each guarded by a mutex that is only held for
-// a memcpy. Core 1 never blocks on it.
+// a memcpy. Core 1 never blocks on it. (It is paused by the core itself for
+// the few tens of ms a flash write takes; see kSaveDelayBusyMs.)
 //
 // Build: arduino-pico core ("Raspberry Pi Pico/RP2040" by Earle Philhower),
 // board "Adafruit QT Py RP2040", Flash Size with at least 64 KB FS.
@@ -250,7 +251,12 @@ void loop() {
   }
 
   // Flash wear: only write after 5 s without changes, and only if different.
-  if (gStorageOk && gSaver.pending() && gSaver.due(now, settings::computeCrc(gSettings), cfg::kSaveDelayMs)) {
+  // A write pauses core 1, which shows as a hitch in a running effect, so
+  // while the light is animating (and on) the wait is longer.
+  bool steady = !st.busy || !gRuntime.on;
+  uint32_t saveDelay = steady ? cfg::kSaveDelayMs : cfg::kSaveDelayBusyMs;
+  if (gStorageOk && gSaver.waited(now, saveDelay) &&
+      gSaver.due(now, settings::computeCrc(gSettings), saveDelay)) {
     settings::seal(gSettings);
     if (storage::save(gSettings)) gSaver.markSaved(gSettings.crc);
     else gSaver.touch(now);  // try again later
@@ -322,6 +328,7 @@ void loop1() {
     gStatus.mA = r.mA;
     gStatus.limited = r.limited;
     gStatus.masterL = gEngine.masterL();
+    gStatus.busy = gEngine.busy();
     mutex_exit(&gLock);
   }
 

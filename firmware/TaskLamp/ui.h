@@ -15,6 +15,7 @@ struct LampStatus {
   float mA;        // estimated LED current
   float masterL;   // smoothed master lightness
   bool limited;    // power budget active
+  bool busy;       // the light is fading or animating right now
 };
 
 enum class Fmt : uint8_t { Permille, Kelvin, Degree, Deci, Ms, Int, MilliAmp, Hz, Pct, MinDuty, Sec };
@@ -101,6 +102,7 @@ class Ui {
   void rebuild();
   void settingsChanged() { settingsChanged_ = true; redraw_ = true; }
   void bumpEpoch() { rt->epoch++; runtimeChanged_ = true; }
+  void runtimeChanged() { runtimeChanged_ = true; }  // publish, without restarting the effect
   void setPower(bool on);
   void refreshPreview();
 

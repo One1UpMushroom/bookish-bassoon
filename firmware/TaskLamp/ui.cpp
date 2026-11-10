@@ -194,7 +194,7 @@ void actApplySleep(Ui& ui, int) {
     ui.rt->sleepEndMs = (ui.now + total) | 1u;  // never 0
     ui.rt->sleepFadeMs = total < 300000u ? total : 300000u;  // fade over the last 5 min
   }
-  ui.bumpEpoch();
+  ui.runtimeChanged();  // not bumpEpoch(): a running sweep must not start over
 }
 
 void actCaptureInto(Ui& ui, uint16_t* lvl) {
@@ -243,7 +243,7 @@ void actRecallFav(Ui& ui, int i) {
   ui.bumpEpoch();
   ui.settingsChanged();
   ui.goHome();
-  char t[20];
+  char t[24];
   snprintf(t, sizeof t, "Favorite %d", i + 1);
   ui.toast(t);
 }
@@ -253,7 +253,7 @@ void actSaveFav(Ui& ui, int i) {
   ui.s->favUsed |= (uint8_t)(1u << i);
   ui.settingsChanged();
   ui.pop();
-  char t[20];
+  char t[24];
   snprintf(t, sizeof t, "Saved to %d", i + 1);
   ui.toast(t);
 }
@@ -770,7 +770,9 @@ void Ui::update(uint32_t nowMs, const LampStatus& st) {
   }
   if (quickActive_ && idle > 1500) { quickActive_ = false; redraw_ = true; }
   if (toast_[0] && (int32_t)(nowMs - toastUntil_) >= 0) { toast_[0] = 0; redraw_ = true; }
-  if (screen_ == Screen::Menu && idle > cfg::kMenuTimeoutMs) goHome();
+  // A screen that is showing a test or preview light holds on for longer.
+  bool hold = screen_ == Screen::Menu && (menu_.calCh >= 0 || menu_.previewLvl);
+  if (screen_ == Screen::Menu && idle > (hold ? cfg::kMenuHoldMs : cfg::kMenuTimeoutMs)) goHome();
 
   // Display power: dim after the timeout, sleep 10 s later. With the lamp
   // off there is nothing to look at, so the screen goes dark sooner.
@@ -779,7 +781,7 @@ void Ui::update(uint32_t nowMs, const LampStatus& st) {
   if (timeout) {
     if (!asleep_ && idle >= timeout + 10000u) {
       asleep_ = true;
-      if (screen_ != Screen::Home) goHome();
+      if (screen_ != Screen::Home && !hold) goHome();
     } else if (!dimmed_ && idle >= timeout) {
       dimmed_ = true;
     }

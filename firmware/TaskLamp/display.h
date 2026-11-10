@@ -21,4 +21,5 @@ class Display {
   uint32_t hash_[5] = {};
   bool valid_[5] = {};
   bool asleep_ = false;
+  uint32_t sleepCmdAt_ = 0;  // millis() of the last sleep-in / sleep-out
 };

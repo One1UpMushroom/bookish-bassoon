@@ -129,6 +129,10 @@ class SaveScheduler {
  public:
   void markSaved(uint32_t crc) { savedCrc_ = crc; pending_ = false; }
   void touch(uint32_t nowMs) { lastChange_ = nowMs; pending_ = true; }
+  // Cheap test to run first: has the waiting time passed? (No CRC needed.)
+  bool waited(uint32_t nowMs, uint32_t delayMs) const {
+    return pending_ && (uint32_t)(nowMs - lastChange_) >= delayMs;
+  }
   // Returns true when a write should happen now.
   bool due(uint32_t nowMs, uint32_t currentCrc, uint32_t delayMs);
   bool pending() const { return pending_; }

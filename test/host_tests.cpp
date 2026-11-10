@@ -122,6 +122,15 @@ TEST(settings_save_scheduler) {
   CHECK(!sch.pending());
   sch.touch(7000);  // changed, then changed back
   CHECK(!sch.due(13000, 222, 5000));
+  // waited(): the cheap pre-check, and the longer wait used while animating
+  settings::SaveScheduler w;
+  w.markSaved(1);
+  CHECK(!w.waited(100000, 5000));  // nothing pending
+  w.touch(1000);
+  CHECK(!w.waited(5999, 5000));
+  CHECK(w.waited(6000, 5000));
+  CHECK(!w.waited(6000, 30000));
+  CHECK(w.waited(31000, 30000));
   CHECK(!sch.pending());
 }
 
@@ -667,7 +676,12 @@ TEST(ui_calibration_preview) {
   r.ev(Ev::Turn, 50, 1);
   CHECK(r.s.hw.chMin[CH_B] == 50);
   CHECK(r.shows("0.050%"));
-  r.wait(31000);  // menu times out back to home and the preview ends
+  r.wait(31000);  // a test light must outlast a meter reading...
+  CHECK(r.rt.preview == PREVIEW_RAW);
+  r.wait(80000);  // ...and the screen going to sleep
+  CHECK(r.ui.displayAsleep());
+  CHECK(r.rt.preview == PREVIEW_RAW);
+  r.wait(10 * 60000);  // but not for ever
   CHECK(r.rt.preview == PREVIEW_NONE);
 }
 
@@ -689,7 +703,11 @@ TEST(ui_favorites_and_sleep) {
 
   r.ev(Ev::Click);
   CHECK(r.open("Sleep"));
+  uint32_t epochBefore = r.rt.epoch;
+  r.ui.takeRuntimeChanged();
   r.ev(Ev::Turn, 1);  // 5 min
+  CHECK(r.ui.takeRuntimeChanged());     // the engine is told...
+  CHECK(r.rt.epoch == epochBefore);     // ...without restarting a running effect
   r.ev(Ev::Click);
   CHECK(r.rt.sleepEndMs != 0);
   r.ev(Ev::LongPress);
