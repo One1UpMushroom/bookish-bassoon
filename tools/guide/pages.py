@@ -209,7 +209,7 @@ HEAD = """<title>Task Lamp Driver Build</title>
   <div><span class="where">Not in the inventory</span><span class="v">24 V ≥ 3 A supply</span><p>Class 2, with a screw-terminal jack. Plus a second half-size breadboard and 22 AWG wire.</p></div>
 </div>
 
-<nav class="bags" aria-label="Bags">{nav}<a href="#controller"><b>c</b>Controller wiring</a><a href="#reference"><b>i</b>Why it changed</a></nav>
+<nav class="bags" aria-label="Bags">{nav}<a href="#controller"><b>c</b>Controller wiring</a><a href="#readings"><b>V</b>Meter readings</a><a href="#reference"><b>i</b>Why it changed</a></nav>
 
 {before}
 
@@ -250,7 +250,7 @@ CHECK1 = """<article class="check" id="check-1">
     <li>Board A red rail: <span class="read">23–25.5 V</span> Board B red rail: <span class="read">11.5–12.5 V</span></li>
     <li><b>Strip gates.</b> Warm at 100%: the resistor leg in A·c6 reads <span class="read">3.1–3.3 V</span> Warm at 0%: <span class="read">0 V</span> Same for Cool at A·h12.</li>
     <li><b>Set the RGB currents now, with nothing to damage.</b> Red at 100%: measure the resistor leg in B·a14 (op-amp pin 3) and turn the red pot until it reads <span class="read">2.50 V</span> That presets 50 mA. Do the same for Green at B·a16 and Blue at B·j16. The pot cannot go past 3.3 V, which is 66 mA.</li>
-    <li><b>Op-amp alive.</b> With Red at 100% the resistor leg in B·c12 (pin 1) reads <span class="read">10–11 V</span> and at 0% <span class="read">under 0.1 V</span> Same for Green at B·c18 and Blue at B·h18.</li>
+    <li><b>Op-amp alive</b>, LED strings still disconnected. With Red at 100% the resistor leg in B·c12 (pin 1) reads <span class="read">10–11 V</span> and at 0% <span class="read">under 0.1 V</span> Same for Green at B·c18 and Blue at B·h18. Strings already connected? Then 100% reads about 4–5 V instead, and that is correct: see <a href="#readings">What the meter should read</a>.</li>
     <li><b>Fail-safe.</b> Unplug the QT Py's USB cable. Both strip gates must read <span class="read">0 V</span></li>
   </ol>
   <div class="tablewrap"><table>
@@ -261,7 +261,7 @@ CHECK1 = """<article class="check" id="check-1">
 
 CHECK2 = """<article class="check" id="check-2">
   <header><span class="stopno">!</span><div><span class="where">Stop and check · strip connected</span><h3>Is 3.3 V enough for your MOSFET?</h3></div></header>
-  <p>It should be: the IRLB8721 starts to conduct at 1.35–2.35 V. But its datasheet only promises a low on-resistance at 4.5 V and above, so this measurement is what settles it for your parts.</p>
+  <p>It should be: the IRLB8721 starts to conduct at 1.35–2.35 V. But its datasheet only promises a low on-resistance at 4.5 V and above, so this measurement is what settles it for your parts. This test is for the two strip MOSFETs only. The three RGB MOSFETs are never fully on, by design (<a href="#readings">why</a>).</p>
   <ol>
     <li>Warm at 100%, Cool at 0%: the strip lights warm. Swap them: it lights cool.</li>
     <li>With Warm at 100%, measure across the warm MOSFET: red probe on the diode leg in A·a7, black probe on the thick wire in A·a8. <span class="read">under 0.10 V</span> means it is fully on. Above 0.3 V, swap in another IRLB8721. You have 19.</li>
@@ -289,12 +289,40 @@ CHECK3 = """<article class="check" id="check-3">
     <li>Red at 100%, the rest at 0%: all four red dies light. Measure across a red sense resistor, from the leg in B·a9 to the blue rail. It reads your preset, <span class="read">2.5 V = 50 mA</span></li>
     <li>Dark and 0 V means a die is the wrong way round or a joint in the chain is open.</li>
     <li>Repeat for Green at B·a23 and Blue at B·j23.</li>
+    <li>The op-amp outputs (B·c12, B·c18, B·h18) now read about 4–5 V, and each RGB MOSFET drops 9–13 V from drain to source. That is how a current sink works, not a weak MOSFET: see the <a href="#readings">readings table</a>.</li>
     <li>Run all three at 100% for five minutes. The three MOSFETs get hot: about 0.65 W on red and 0.45 W on green and blue at 50 mA. You should still be able to touch them briefly.</li>
     <li>Enter the firmware settings in the reference section, then calibrate Min duty on each channel.</li>
   </ol>
 </article>"""
 
 REFERENCE = """<header class="bag" id="reference"><span class="bagno">i</span><div><span class="where">Reference</span><h2>Why it changed, and the numbers</h2></div></header>
+
+<section class="sheet" id="readings">
+  <span class="where">RGB sinks · LED strings connected · 50 mA preset</span>
+  <h3>What the meter should read</h3>
+  <p>The three RGB MOSFETs are not switches. The op-amp holds each one partly on, with its gate at whatever voltage passes exactly the preset current. The voltage the string does not use is dropped across the MOSFET, which is why it runs warm. The strip test (under 0.1 V across a fully-on MOSFET) does not apply to these three. Readings with the black probe on Board B's blue rail; holes listed red, green, blue:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Test point</th><th>0%</th><th>100%</th></tr></thead>
+    <tbody>
+      <tr><td>Pot setting, op-amp + input<br><span class="mono">a14 · a16 · j16</span></td><td>0 V</td><td>2.5 V, the preset</td></tr>
+      <tr><td>Op-amp output, drives the gate<br><span class="mono">c12 · c18 · h18</span></td><td>under 0.1 V</td><td>about 4–5 V</td></tr>
+      <tr><td>Sense resistor, shows the current<br><span class="mono">a9 · a23 · j23</span></td><td>0 V</td><td>2.5 V = 50 mA</td></tr>
+      <tr><td>Across the MOSFET, drain to source<br><span class="mono">a8→a9 · a22→a23 · j22→j23</span></td><td>most of the 24 V</td><td>13 V red, 9 V green, blue</td></tr>
+    </tbody>
+  </table></div>
+  <p class="hint">The op-amp output sits 1.4–2.4 V above the sense resistor reading. That gap is the MOSFET's own gate threshold, and it varies from part to part, so at a 2.5 V preset the gate reads anywhere from 3.9 to 4.9 V. With the strings disconnected no current can flow, so the output runs up to 10–11 V instead. That is the figure on the first check card.</p>
+</section>
+
+<article class="check" id="fault-rgb">
+  <header><span class="stopno">?</span><div><span class="where">Fault-finding · RGB</span><h3>A colour stays lit at 0%</h3></div></header>
+  <p>If a colour goes completely dark at 0% and its sense resistor reads your preset at 100%, that channel works, whatever its gate reads. If it stays lit at 0%, the MOSFET is only doing what its gate is told, so find out what is telling it. Black probe on Board B's blue rail, colour at 0%:</p>
+  <ol>
+    <li><b>Pot setting</b> (a14, a16 or j16) must read <span class="read">0 V</span> If it doesn't, the pot isn't being fed by the QT Py pin. Check that <b>Menu ▸ Settings ▸ Channels ▸ (colour) ▸ Invert</b> is Off, and that the pot's top leg is wired to the QT Py's A0, A1 or A2 pad and nothing else.</li>
+    <li><b>Pot reads 0 V, op-amp output is high:</b> check the op-amp's power. LM324 pin 4 (the orange wire end in B·a15) reads <span class="read">11.5–12.5 V</span> and pin 11 (the black wire end in B·j15) reads <span class="read">0 V</span> A faint glow rather than full brightness usually means a 1 MΩ goes to the blue rail instead of the red one. That resistor adds the 12 mV that holds 0% dark.</li>
+    <li><b>Board to board.</b> Red probe on Board A's blue rail, black on Board B's: <span class="read">under 0.05 V</span> If not, the black wire between the boards is loose or in the wrong row. Fix it before lighting the RGB again: without it the LED current has no proper path back to the supply.</li>
+    <li><b>All of that is right and it's still lit:</b> swap the LM324 for another of your 12. When all three colours fail the same way, the cause is something they share, so swapping MOSFETs won't help.</li>
+  </ol>
+</article>
 
 <section class="sheet">
   <span class="where">Old guide against this one</span>

@@ -87,6 +87,10 @@ what to measure before going on. Revision 2 of that design:
   The reference is the PWM pin's own 3.3 V scaled by a pot, and the sense resistor is 50 Ω,
   so the current can never exceed 3.3 V ⁄ 50 Ω = 66 mA, whatever the pot or a loose wire
   does. Full 310 mA needs heatsinks or the LM3414 buck drivers (last section of the booklet).
+  These three MOSFETs are held partly on by design: with the LEDs lit, each gate sits at
+  about 4–5 V and each MOSFET drops 9–13 V, so they run warm. Only the strip MOSFETs are
+  meant to be fully on. The booklet's *Meter readings* card lists what every test point
+  should read.
 * The pin map is unchanged from §1.
 
 The booklet is generated, not hand-drawn. `tools/guide/layout.py` holds the placement of
