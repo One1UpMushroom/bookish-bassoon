@@ -3,7 +3,7 @@
 //   npm install pcb-stackup@4 playwright      (once, anywhere on NODE_PATH)
 //   node tools/pcb/render.js
 //
-// Reads hardware/tasklamp-driver/gerbers and writes img/board-top.png,
+// Reads hardware/tasklamp-driver/gerbers and writes img/board-top.png (and .svg),
 // img/board-bottom.png and img/schematic.png beside it. Because the pictures come
 // from the Gerber and drill files, they show what the factory will make.
 const fs = require('fs');
@@ -35,6 +35,8 @@ async function png(page, svg, out, width, background) {
   const stackup = await pcbStackup(
     files.map((f) => ({ filename: f, gerber: fs.createReadStream(path.join(fab, f)) })),
     { color: { fr4: '#5d5a4a', cu: '#c9b26b', cf: '#d8b24a', sm: 'rgba(8, 84, 44, 0.86)', ss: '#f4f4ee', sp: '#999', out: '#000' } });
+  // the vector render is what the build booklet (guide.py) draws on
+  fs.writeFileSync(path.join(img, 'board-top.svg'), stackup.top.svg);
   const browser = await chromium.launch();
   const page = await browser.newPage({ deviceScaleFactor: 1 });
   await png(page, stackup.top.svg, path.join(img, 'board-top.png'), 1930, 'transparent');

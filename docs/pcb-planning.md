@@ -21,9 +21,9 @@ surge) can protect them.
 The board keeps the IRLB8721, because with LED strips as the only load that advice does
 not bite:
 
-* When a MOSFET is **off**, the LED strings sit between the rail and its drain and take up
-  most of any surge voltage; what is left drives at most a few milliamps through the
-  strip's own resistors.
+* When a MOSFET is **off**, the only paths from the rail to its drain are its LED string
+  and the reverse leakage of its clamp diode. Even if a surge lifts the rail past 30 V,
+  those paths supply a few milliamps at most, which the MOSFET absorbs harmlessly.
 * When it is **on**, its drain is at ground.
 * The only thing that pushes a drain above the rail is the inductance of the strip wiring
   at turn-off, and a 1N5819 from each drain to the rail clamps that half a volt above it.

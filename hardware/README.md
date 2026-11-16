@@ -73,6 +73,9 @@ at checkout; see [`docs/pcb-planning.md`](../docs/pcb-planning.md) for the alter
 
 ## Building it
 
+The same steps, with a picture of the board for each one, are in the build booklet:
+[`docs/driver-build.html`](../docs/driver-build.html).
+
 Solder the low parts first so the board lies flat. Every position has its value printed
 inside the outline.
 
@@ -165,7 +168,9 @@ against it, above all the fuse holder, the converter and the screw terminals.
 To regenerate after a change (needs KiCad 7 or newer):
 
 ```
-/usr/bin/python3 tools/pcb/build.py
+/usr/bin/python3 tools/pcb/build.py     # KiCad project, checks, factory files
+node tools/pcb/render.js                # pictures, from the factory files
+/usr/bin/python3 tools/pcb/guide.py     # the build booklet, drawn on those pictures
 ```
 
 ## Design notes
@@ -173,10 +178,11 @@ To regenerate after a change (needs KiCad 7 or newer):
 * **Why the gates need no driver.** Each MOSFET switches at most 0.3 A. An IRLB8721 with
   3.3 V on its gate is far into conduction at that current, and dissipates a few
   milliwatts, so there are no heatsinks and the parts stay cold.
-* **Why a 30 V MOSFET is enough on a 24 V rail.** The drain is clamped to the rail by its
-  1N5819, and when the MOSFET is off the LED strings themselves sit between the rail and
-  the drain. A surge on the supply is seen by the rail (which the TVS holds down), not by
-  the MOSFETs.
+* **Why a 30 V MOSFET is enough on a 24 V rail.** A MOSFET that is on has its drain at
+  ground. One that is off is reached from the rail only through its LED string and the
+  leakage of its clamp diode, which can pass a few milliamps at most, far too little to
+  hurt it even if a surge lifts the rail. The kick from the strip wiring at turn-off is
+  clamped half a volt above the rail by the 1N5819.
 * **One ground plane.** The whole bottom layer is ground and everything else is routed on
   top, so the return current of every track runs directly underneath it. There are no
   vias to fail.

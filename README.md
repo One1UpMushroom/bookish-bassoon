@@ -91,8 +91,9 @@ The strips are never driven from the GPIO pins. The board in
   strip wire back to +24 V.
 
 `hardware/README.md` has the schematic, the files to send to PCBWay, the build order and
-the power-up checks. The parts not already in the inventory are listed with links in
-[`docs/parts-to-order.md`](docs/parts-to-order.md).
+the power-up checks. [`docs/driver-build.html`](docs/driver-build.html) is the same build
+as a step-by-step picture booklet. The parts not already in the inventory are listed with
+links in [`docs/parts-to-order.md`](docs/parts-to-order.md).
 
 What the firmware assumes about that hardware:
 

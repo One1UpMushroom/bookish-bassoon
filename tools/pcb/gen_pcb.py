@@ -227,7 +227,7 @@ def qtpy_footprint():
                  S('stroke', S('width', w), S('type', Sym('solid'))), S('fill', Sym('none')), S('layer', layer))
 
     def text(kind, s, x, y, layer, h=1.0, just=None, hide=False):
-        eff = S('effects', S('font', S('size', h, h), S('thickness', round(h * 0.15, 3))))
+        eff = S('effects', S('font', S('size', h, h), S('thickness', max(0.15, round(h * 0.15, 3)))))   # 0.15 mm: the thinnest line a fab prints reliably
         if just:
             eff.append(S('justify', Sym(just)))
         node = S('fp_text', Sym(kind), s, S('at', x, y), S('layer', layer))
@@ -459,7 +459,7 @@ def tidy_text(fp, part):
     r, v = fp.Reference(), fp.Value()
     for t in (r, v):
         t.SetTextSize(VECTOR2I(FromMM(0.9), FromMM(0.9)))
-        t.SetTextThickness(FromMM(0.14))
+        t.SetTextThickness(FromMM(0.15))
     v.SetLayer(pcbnew.F_Fab)
     pos = fp.GetPosition()
     px, py = pcbnew.ToMM(pos.x) - OX, pcbnew.ToMM(pos.y) - OY
