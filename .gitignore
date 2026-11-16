@@ -3,3 +3,8 @@
 test/host_tests
 *.o
 __pycache__/
+# KiCad per-user and scratch files
+*.kicad_prl
+fp-info-cache
+*-backups/
+*.lck

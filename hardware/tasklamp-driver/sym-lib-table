@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "TaskLamp")(type "KiCad")(uri "${KIPRJMOD}/TaskLamp.kicad_sym")(options "")(descr "Parts specific to the task lamp"))
+)
