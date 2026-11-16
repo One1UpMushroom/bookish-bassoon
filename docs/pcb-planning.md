@@ -1,131 +1,95 @@
-# PCB planning notes
+# PCB notes
 
-Research for when the task lamp's driver stage moves from breadboards to a printed
-circuit board. **Nothing here is a layout yet**: the circuit still has additions to come.
-These notes collect what to decide, what to watch for, and where to order, so the PCB
-work can start quickly once the schematic is frozen.
+Background for the task lamp's driver board: the decisions a circuit board forced on the
+design and how the finished board settled each one, general two-layer practice, and where
+to order. The board itself, with its files and build instructions, is in
+[`hardware/`](../hardware/README.md).
 
-Compiled November 2026. Prices, fees and tariffs change often; every number below is a
-starting point to re-check on the vendor's live quote page.
+The ordering research was compiled in November 2026. Prices, fees and tariffs change
+often; every number below is a starting point to re-check on the vendor's live quote page.
 
 ---
 
-## 1. Decisions the PCB forces on this design
-
-These came out of reviewing the current revision 2 circuit against PCB practice. They are
-worth settling in the schematic before any layout starts.
+## 1. Decisions, and what the board does
 
 ### 1.1 MOSFET voltage rating
 
-The IRLB8721 is a **30 V** part on a **24 V** bus. That is fine on a breadboard with a
-regulated supply, but it leaves no room for the protection a PCB should have: a TVS diode
-sized for a 24 V supply (standoff about 26–28 V) clamps at roughly 40–45 V during a surge,
-well above 30 V. For the PCB, choose **40–60 V** logic-level MOSFETs for all five channels
-so the TVS can actually protect them.
+The IRLB8721 is a **30 V** part on a **24 V** rail. The usual advice is to choose 40–60 V
+parts, so that a TVS diode sized for a 24 V supply (which clamps at 40 V or so during a
+surge) can protect them.
 
-### 1.2 Linear-mode MOSFETs for the RGB sinks
+The board keeps the IRLB8721, because with LED strips as the only load that advice does
+not bite:
 
-The RGB sinks run their MOSFETs partly on, dissipating 0.45–0.65 W each continuously.
-Modern high-density trench MOSFETs (the IRLB8721 is one) are optimised for switching and
-can suffer **thermal instability in linear mode**, known as the Spirito effect: current
-crowds into hot spots on the die at high V<sub>DS</sub> and low current, exactly where these
-sinks operate (9–13 V, 50 mA).
+* When a MOSFET is **off**, the LED strings sit between the rail and its drain and take up
+  most of any surge voltage; what is left drives at most a few milliamps through the
+  strip's own resistors.
+* When it is **on**, its drain is at ground.
+* The only thing that pushes a drain above the rail is the inductance of the strip wiring
+  at turn-off, and a 1N5819 from each drain to the rail clamps that half a volt above it.
 
-* When choosing the PCB part, look at the datasheet **SOA graph's DC line** at 15 V and
-  check 0.1 A is comfortably inside it. Parts marketed for "linear mode" or "hot swap" have
-  this line drawn honestly; many switching MOSFETs omit DC or extrapolate it.
-* Older planar MOSFETs, or a small bipolar transistor in place of the MOSFET, handle linear
-  operation better at these low currents.
-* The source resistor (the 50 Ω sense) is the feedback the onsemi note says linear MOSFETs
-  need, so the topology itself is sound.
+The TVS is there for the parts that do see the rail directly: the 5 V converter and the
+capacitors. If the board were ever used for a load without LEDs in series (a motor, a
+relay), this reasoning would no longer hold and 60 V MOSFETs would be the right change.
 
-### 1.3 The LM3414 becomes practical
+### 1.2 Gate drive from 3.3 V
 
-The breadboard needed SOIC adapter boards for the LM3414 (SO PowerPAD-8, exposed pad =
-PGND). A PCB removes that obstacle, so the full-power RGB option is mostly a matter of
-buying three inductors. If the PCB will use the LM3414s:
+The gates are driven straight from the QT Py pins. The IRLB8721's on-resistance is only
+guaranteed at 4.5 V, but its threshold is at most 2.35 V and each channel carries 0.3 A
+or less, far below where the last volt of gate drive matters. Rather than add a driver
+chip, the board's power-up procedure measures each MOSFET once: under 0.1 V from drain to
+source at 100 %.
 
-* Follow the layout section of the TI datasheet (SNVS678F, section 10 and its layout
-  figure). TI's own key point: place R<sub>FS</sub> and R<sub>IADJ</sub> right at the FS and IADJ pins.
-* Solder the exposed pad to a ground pour, with an array of small vias (0.3 mm) to a
-  bottom-side pour. TI's rule of thumb: one via is about 100 °C/W, ten or more in parallel
-  is about 10 °C/W.
-* Keep the **hot loop** tiny: VIN capacitor, LM3414 VIN/PGND, Schottky diode and LX node
-  within a few millimetres, on one side, over unbroken ground.
-* Decide early whether the linear sinks stay as a fallback on the same board
-  (footprint options) or are replaced outright. Footprint options cost little.
+### 1.3 Input protection
 
-### 1.4 Input protection
+In order from the connector inwards:
 
-The breadboard has none. Standard order for a 24 V input, from the connector inwards:
+1. **Fuse**, 2 A, in a holder for mini blade fuses. The lamp draws about 1 A.
+2. **Schottky diode** in series (SB560) against a reversed supply. A P-channel MOSFET or
+   an ideal-diode controller would waste less than its 0.45 W, at the cost of three or
+   four more parts; one diode was judged the better trade for a hand-built board.
+3. **TVS diode** (P6KE30A) across the rail.
+4. Bulk capacitance: 100 µF at the input and 100 µF beside the strip terminals.
 
-1. **Fuse** (or PPTC), sized above normal draw: the lamp draws about 1.5 A at most.
-2. **TVS diode** after the fuse, so a TVS that fails short blows the fuse. Standoff
-   above the supply's highest normal output.
-3. **Reverse-polarity protection.** A P-channel MOSFET in the + line with a 12 V zener
-   clamping its gate is the simple version. An ideal-diode controller with an N-MOSFET
-   (TI LM74700 family) wastes less and also blocks reverse current.
-4. Bulk capacitance.
+### 1.4 Logic power
 
-### 1.5 Grounding on one board
+The inventory holds no inductors, so 5 V has to come from either a linear regulator
+(about 2 W of heat from 24 V, and a heatsink) or a bought converter. The board uses a
+switching module with the 78xx pinout; several makes fit the same three holes. It feeds
+the QT Py's 5V pad through a diode, and the QT Py has its own diode from USB, so both
+sources can be connected at once.
 
-On two breadboards, ground discipline was mostly about keeping strip current off the
-breadboard. On a PCB:
+### 1.5 Grounding
 
-* Use **one solid ground plane** on the bottom layer, with no analog/digital split.
-  Analog Devices' and Würth's guidance agrees that a single plane plus careful placement
-  beats split planes for a design like this.
-* Route the **strip return current** (about 1 A) straight from the strip connector to the
-  MOSFET sources and on to the input connector's ground, through wide copper, away from
-  the LM324 and sense resistors.
-* Give each **sense resistor a Kelvin connection**: the op-amp's feedback trace leaves
-  from the resistor's pad, not from a point along the current path. Take the LM324's
-  ground pin to the same point where the three sense resistors return to ground. The
-  booklet already asks for this on the breadboard.
-* Keep plane cuts to short perpendicular crossings. Return current flows directly under
-  its trace, and a slot forces it around.
+* The whole bottom layer is **one ground plane**, with nothing routed on it.
+* Everything else is on the top layer, with **no vias**, so each track's return current
+  runs directly beneath it and strip current never shares a path with a signal.
+* The top layer has no ground fill. With a full plane underneath it would add nothing but
+  slivers between tracks.
 
 ### 1.6 Heat
 
-* **Linear sinks:** about 2 W total on a small board. A TO-220 standing in free air runs
-  around 40 °C above ambient at 0.65 W. An SMD part (DPAK/D2PAK) needs copper: TI's figures
-  for a TO-263 package are about 50 °C/W with 0.5 in² of copper and 37 °C/W with 1 in². Plan
-  roughly 1 in² of top and bottom copper per sink, stitched with vias. Keep the sinks away
-  from the LM324 and the QT Py.
-* **Strip MOSFETs:** fully on, they dissipate milliwatts, so no heat measures are needed.
-* **RGB stars:** they need an aluminium heatsink whichever driver is used. If custom LED
-  boards are ever made, aluminium-core PCBs (MCPCB) are a stock option at JLCPCB and
-  others. JLCPCB rates its 1 W/m·K aluminium board for low-power LEDs; for 3 W stars, look
-  for a 2–3 W/m·K dielectric.
+None to manage. A fully-on MOSFET at 0.3 A dissipates a few milliwatts; the input diode
+about half a watt; the converter about a tenth.
 
 ### 1.7 Connectors and the QT Py
 
-* **QT Py:** mount it on **female headers** rather than soldering it flat, so it can be
-  removed for reprogramming or replacement. Its castellated pads allow flat mounting, but
-  only commit to that once the design is final. The QT Py shares the Seeed Xiao footprint
-  (2 × 7 pads at 0.1 in, rows 0.675 in apart), so a KiCad Xiao footprint is a starting
-  point. Check its pad positions against Adafruit's drawing before ordering.
-* **Encoder and display:** keep the STEMMA QT cable and the TFT on connectors, so they can
-  be mounted where the enclosure wants them.
-* **24 V input and strip:** the strip draws about 1 A, so a JST XH (3 A per pin) is
-  adequate for the strip leads. JST VH (up to 10 A, derated in multi-pin housings) or a
-  5 mm screw terminal suits the 24 V input. Use **different, keyed connectors** for
-  input and outputs so nothing can be plugged into the wrong place.
-* **RGB stars:** one keyed connector carrying all six string wires (three +, three −) is
-  tidier than loose wires.
+* **QT Py:** on two 1×7 sockets, so it can be removed. The rows are **15.24 mm (0.6 in)**
+  apart at 2.54 mm pitch, with the first pad 2.73 mm from the USB end of the 17.78 ×
+  20.70 mm module. These figures are read from Adafruit's own board file
+  ([Adafruit-QT-Py-RP2040-PCB](https://github.com/adafruit/Adafruit-QT-Py-RP2040-PCB));
+  an earlier version of these notes gave 0.675 in for the row spacing, which was wrong.
+* **Encoder and display:** off the board, on a pin header and the QT Py's STEMMA QT
+  socket, so they can be mounted where the enclosure wants them.
+* **24 V input and strips:** 5.08 mm screw terminals, labelled on both sides of the board.
+  They are not keyed against each other, so the labels matter; the input terminal is on
+  the opposite edge from the strip terminals.
 
-### 1.8 Make the bring-up checks easy
+### 1.8 Bring-up
 
-The booklet's check cards and meter-readings card list every node worth measuring. On the
-PCB, give each of those a **labelled test point**: the 12 V and 24 V rails, each op-amp
-output, each sense resistor and each pot wiper. A 1 mm pad is enough for a probe tip. Also
-plan:
-
-* a jumper or 0 Ω link in each LED channel's path, to isolate a channel without
-  desoldering;
-* the three current-set pots reachable from above, or replaced by fixed resistors once
-  you've settled on currents;
-* board name, revision and date on the silkscreen.
+The board has test pads for +5 V and ground, every terminal is a place to put a meter
+probe, and each part's value is printed inside its outline. The power-up procedure in
+`hardware/README.md` checks the 5 V rail before the QT Py is plugged in.
 
 ---
 
@@ -145,13 +109,11 @@ plan:
 * **Decoupling:** a 100 nF ceramic at every IC supply pin, placed before routing anything
   else, with its via to ground right beside it.
 * **Placement before routing:** connectors on edges where the enclosure wants them, power
-  input → protection → regulators → drivers in a line, the noisy and hot parts away from
-  the op-amp.
+  input → protection → regulators → drivers in a line.
 * **Clean return paths:** keep the bottom layer as unbroken ground. If a trace must run
   there, keep it short and perpendicular to the current flow above it.
 * **Through-hole is fine.** For a few boards, through-hole parts and hand soldering are
-  simpler than SMD assembly. Use SMD only where it earns its place (LM3414, possibly
-  MOSFETs on copper pours).
+  simpler than SMD assembly. This board is entirely through-hole.
 * **Assembly aids if SMD parts are machine-placed:** three fiducials near the board corners,
   1 mm keep-out around them, and the fab's panel rules for rails and tooling holes.
 * **Before ordering:** ERC and DRC clean, Gerbers inspected in a viewer (KiCad's own, or the
@@ -222,30 +184,33 @@ handling fees.
 
 ---
 
-## 4. KiCad to factory workflow
+## 4. From this repository to the factory
 
-1. Schematic in KiCad, with manufacturer and supplier part numbers as symbol fields.
-2. ERC, then layout with the vendor's DRC rules loaded.
-3. Export with the **Fabrication Toolkit** plugin (installed from KiCad's Plugin and
-   Content Manager), which JLCPCB recommends. It writes Gerbers, drill files, the BOM and
-   the placement (CPL) file in one go. Bouni's **KiCad JLCPCB Tools** plugin adds a search
-   of JLCPCB's parts library inside KiCad.
-4. Upload the Gerber zip, check the vendor's viewer render, and for assembly upload
-   `bom.csv` and `positions.csv`. Check every part's rotation in the vendor's placement
-   preview before paying: a rotated IC or diode is the most common assembly mistake.
-5. Tag the commit in this repo with the board revision you ordered.
+1. `tools/pcb/design.py` is the circuit. Change it there (and the placement in
+   `gen_pcb.py`, the drawing in `gen_sch.py`), then run
+   `/usr/bin/python3 tools/pcb/build.py`. It regenerates the KiCad project and writes the
+   Gerber zip only if every check passes.
+2. Or open `hardware/tasklamp-driver/tasklamp-driver.kicad_pro` in KiCad and edit by hand.
+   The footprints are linked to their schematic symbols, so *Update PCB from Schematic*
+   works. Hand edits are overwritten the next time `build.py` runs, so pick one way.
+3. Upload the zip, compare the vendor's preview with `hardware/tasklamp-driver/img/`, and
+   order the minimum quantity first.
+4. Tag the commit in this repo with the board revision you ordered.
+
+For a board that a factory also assembles, the **Fabrication Toolkit** KiCad plugin writes
+the BOM and placement files JLCPCB wants, and Bouni's **KiCad JLCPCB Tools** searches
+JLCPCB's parts library inside KiCad. This board does not need either.
 
 ---
 
-## 5. Open questions before layout
+## 5. Still open
 
-* **Where are you based?** It decides the vendor shortlist and how much duty matters.
-* Which additions are still coming, and do they add parts to the board (more connectors,
-  sensors, a buck converter for logic power)?
-* RGB drivers on the PCB: linear sinks, LM3414 bucks, or footprints for both?
-* Through-hole, SMD, or mixed? This decides hand assembly versus factory assembly.
-* Will the board live inside the lamp's enclosure? Its size, mounting holes and connector
-  positions come from the enclosure, so a rough enclosure sketch should come first.
+* **The enclosure.** The board's outline, hole pattern and connector edges were chosen
+  without one. If the lamp's base cannot take 96.5 × 59 mm with USB on one long edge and
+  the strip terminals on the other, the placement in `gen_pcb.py` is the thing to change.
+* **The supply.** Its rating is not recorded anywhere in this repo. It needs 1.5 A or
+  more at 24 V; enter 80 % of its rating as the firmware's power budget.
+* **Where the boards are ordered from** decides how much import duty matters (3.4).
 
 ---
 
@@ -255,13 +220,9 @@ handling fees.
 * JLCPCB: [design guidance and capabilities](https://jlcpcb.com/blog/how-to-design-a-complete-pcb-layout-pcb-layout-engineer-must-know); [assembly pricing](https://jlcpcb.com/help/article/pcb-assembly-price); [assembly FAQ](https://jlcpcb.com/help/article/98-pcb-assembly-faqs); [metal-core PCBs](https://jlcpcb.com/pcb-fabrication/metal-core-pcb); [KiCad BOM/CPL export](https://jlcpcb.com/help/article/how-to-generate-the-bom-and-centroid-file-from-kicad); [community cost-optimizing guide (Hack Club)](https://hwdocs.hackclub.dev/user-contrib-guides/jlc-cost-optimizing/)
 * KiCad plugins: [Fabrication Toolkit](https://github.com/bennymeg/JLC-Plugin-for-KiCad); [KiCad JLCPCB Tools](https://github.com/Bouni/kicad-jlcpcb-tools)
 * Tariffs: [OurPCB, PCB tariffs from China to the US in 2026](https://www.ourpcb.com/blog/china-us-pcb-tariffs-2026); [Plainfreight, US-China tariffs in 2026](https://plainfreight.com/guides/us-china-tariffs-2026); [de minimis suspension](https://www.importcostcalculator.com/de-minimis-800-rule.html)
-* LM3414: [TI datasheet, layout section](https://www.ti.com/document-viewer/LM3414/datasheet/layout)
-* Thermal: [TI SLPA015, thermal vias](https://ti.com/lit/pdf/slpa015); [TI LM2576 datasheet, TO-263 θJA vs copper area](https://ti.com/document-viewer/LM2576/datasheet/GUID-876257A8-0F2C-47A8-8165-340E871DD683); [Electronic Design, MOSFET cooling with thermal vias](https://www.electronicdesign.com/technologies/thermal-management/article/21188672/enhance-mosfet-cooling-with-thermal-vias); [MPS, thermally optimized two-layer PCB](https://media.monolithicpower.com/mps_cms_document/a/-/a-thermally-optimized-two-layer-auto-pcb_r1.0.pdf)
-* Linear-mode MOSFETs: [Nexperia, power MOSFETs in linear mode](https://www.nexperia.com/applications/interactive-app-notes/IAN50006_Power_MOSFETs_in_linear_mode); [onsemi AN-4161](https://onsemi.com/pub/collateral/an-4161.pdf); [Electronic Design, the Spirito effect](https://www.electronicdesign.com/technologies/power/article/21795492/the-spirito-effect-improved-my-designand-i-didnt-even-know-it)
 * Grounding and layout: [Analog Devices, reducing ground bounce in DC-DC converters](https://www.analog.com/en/resources/analog-dialogue/articles/reducing-ground-bounce-in-dc-to-dc-converters.html); [Würth Elektronik, PCB layout optimization](https://www.we-online.com/files/pdf1/pcb-board-layout-optimization-v3.pdf); [Electronic Design, mixed-signal layout guidelines](https://www.electronicdesign.com/technologies/analog/article/21263439/analog-devices-basic-guidelines-for-mixedsignal-pcb-layout-design)
-* Current sensing: [Analog Devices, shunt pad layout](https://www.analog.com/en/resources/analog-dialogue/articles/optimize-high-current-sensing-accuracy.html); [Stackpole, Kelvin layout](https://stackpole-europe-website.pages.dev/article-kelvin-layout)
 * Track width: [mbedded.ninja IPC-2152 calculator](https://ninjacalc.mbedded.ninja/calculators/electronics/pcb-design/track-current-ipc2152); [Sierra Circuits calculator](https://www.protoexpress.com/pcb/trace-width-calculator/)
 * Input protection: [TI, reverse polarity protection (SSZTAP4)](https://ti.com/lit/pdf/ssztap4); [protection ordering example](https://industrialmonitordirect.com/blogs/knowledgebase/boat-control-panel-power-supply-protection-circuit-design)
 * DFM and assembly: [Altium, PCB design review checklist](https://resources.altium.com/p/pcb-design-and-review-checklist); [Sierra Circuits, design-for-assembly checklist](https://www.protoexpress.com/blog/pcb-design-for-assembly-checklist-important-checks-for-layout-engineers/); [DigiKey, prototyping with solder stencils](https://www.digikey.com/en/blog/prototyping-with-solder-stencils); [All About Circuits, reflow with a stencil](https://www.allaboutcircuits.com/projects/reflow-soldering-its-so-much-easier-with-a-solder-paste-stencil/)
 * Components: [Embedded Artistry, detecting counterfeit components](https://embeddedartistry.com/fieldatlas/detecting-counterfeit-electrical-components/); [Supply Chain Connect, authorized distributors](https://www.supplychainconnect.com/counterfeit/article/21263651/why-electronics-buyers-should-always-work-with-authorized-distributors)
-* Connectors and QT Py: [JST XH datasheet (DigiKey)](https://www.digikey.be/en/resources/datasheets/jst/xh-connector); [JST VH datasheet](https://www.mouser.lt/datasheet/3/1070/1/eVH.pdf); [Adafruit QT Py ESP32-S3 PCB (Xiao-compatible footprint)](https://github.com/adafruit/Adafruit-QT-Py-ESP32-S3-PCB)
+* QT Py: [Adafruit QT Py RP2040 board files](https://github.com/adafruit/Adafruit-QT-Py-RP2040-PCB)

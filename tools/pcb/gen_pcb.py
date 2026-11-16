@@ -48,7 +48,10 @@ DROP_X = X0 + 2 * PITCH + 12.7   # +24 V down to J2, between switches 3 and 4
 QX, QY0 = 68.58, 3.81       # QT Py pad 1 (A0); USB socket at the top edge
 J4_X = 88.9
 
-HOLES = [(3.5, 3.5), (W - 3.5, 3.5), (3.5, H - 3.5), (W - 3.5, H - 3.5)]
+# M3 mounting holes on a 88.9 x 50.8 mm (3.5 x 2.0 inch) rectangle.
+HOLE_X, HOLE_Y, HOLE_DX, HOLE_DY = 3.6, 4.1, 88.9, 50.8
+HOLES = [(HOLE_X, HOLE_Y), (HOLE_X + HOLE_DX, HOLE_Y), (HOLE_X, HOLE_Y + HOLE_DY),
+         (HOLE_X + HOLE_DX, HOLE_Y + HOLE_DY)]
 
 
 def gx(i):

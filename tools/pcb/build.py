@@ -26,6 +26,7 @@ import check  # noqa: E402
 import design  # noqa: E402
 import gen_pcb  # noqa: E402
 import gen_sch  # noqa: E402
+import verify_fab  # noqa: E402
 from kisch import uid  # noqa: E402
 
 PROJECT = gen_sch.PROJECT
@@ -139,22 +140,28 @@ def export(sch, pcb):
 
 
 def write_bom():
+    def stem(p):
+        # "Gate resistor, red" and "Gate resistor, green" are one line of the BOM
+        channel_part = p['ref'][0] in 'RQ' or p['ref'] in ('D1', 'D2', 'D3', 'D4', 'D5')
+        return p['note'].rsplit(',', 1)[0] if channel_part else p['note']
+
+    def number(ref):
+        return int(''.join(c for c in ref if c.isdigit()))
+
     groups = {}
     for p in design.parts():
         if not p['ref'].startswith(('H', 'TP')):
-            key = (p['value'], p['fp'], p['src'], p['mpn'])
-            groups.setdefault(key, []).append(p)
-    rows = []
-    for (value, fp, src, mpn), ps in groups.items():
-        note = ps[0]['note'] if len(ps) == 1 else ps[0]['note'].rsplit(',', 1)[0]
-        rows.append((ps[0]['ref'][0], [p['ref'] for p in ps], value, note, src, mpn, fp.split(':')[1]))
+            groups.setdefault((p['value'], p['fp'], p['src'], p['mpn'], stem(p)), []).append(p)
     order = 'JFUQDRC'
-    rows.sort(key=lambda r: (order.index(r[0]) if r[0] in order else 99, r[1][0]))
+    rows = sorted(groups.items(), key=lambda kv: (order.index(kv[1][0]['ref'][0]), number(kv[1][0]['ref'])))
+    source = {design.STOCK: 'in stock', design.ORDER: 'to order'}
     with open(os.path.join(OUT, PROJECT + '-bom.csv'), 'w', newline='') as f:
         w = csv.writer(f, lineterminator='\n')
         w.writerow(['Qty', 'References', 'Value', 'What it is', 'From', 'Part number', 'Footprint'])
-        for _, refs, value, note, src, mpn, fp in rows:
-            w.writerow([len(refs), ' '.join(refs), value, note, src, mpn, fp])
+        for (value, fp, src, mpn, note), ps in rows:
+            refs = sorted((p['ref'] for p in ps), key=number)
+            where = 'board in stock, sockets to order' if refs == ['U1'] else source[src]
+            w.writerow([len(refs), ' '.join(refs), value, note, where, mpn, fp.split(':')[1]])
 
 
 def main():
@@ -167,8 +174,18 @@ def main():
         return 1
     if '--no-export' not in sys.argv:
         fab, zpath = export(sch, pcb)
-        print('factory files: %s (%d files), %s' % (os.path.relpath(fab, ROOT), len(os.listdir(fab)),
-                                                    os.path.relpath(zpath, ROOT)))
+        print('factory files read back')
+        problems, notes = verify_fab.verify(pcb, fab, PROJECT)
+        for n in notes:
+            say(True, n)
+        for p in problems:
+            ok = say(False, p)
+        if not ok:
+            os.remove(zpath)
+            print('\nfactory files do not match the board: zip removed')
+            return 1
+        print('wrote %s (%d files) and %s' % (os.path.relpath(fab, ROOT), len(os.listdir(fab)),
+                                              os.path.relpath(zpath, ROOT)))
     print('\nall checks passed')
     return 0
 

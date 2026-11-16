@@ -1,15 +1,16 @@
 # LED Task Lamp Controller
 
-Firmware for a five-channel (R, G, B, warm/amber white, cool white) LED task lamp
-built from Adafruit breakout boards and controlled by a single push-button rotary encoder
-and a 240×240 color display.
+Firmware and a driver board for a five-channel LED task lamp (red, green, blue, warm
+white, cool white), built from two 24 V LED strips and Adafruit breakout boards, and
+controlled by a single push-button rotary encoder and a 240×240 color display.
 
 | Part | Role |
 |---|---|
 | Adafruit **QT Py RP2040** | Microcontroller. Dual-core, 8 hardware PWM slices, 8 MB flash |
 | Adafruit **I2C QT rotary encoder** (seesaw; PID 4991, or 5880 pre-soldered) | Encoder, push switch and an RGB "locator" pixel, all over I2C |
 | Adafruit **240×240 TFT** (ST7789) | User interface |
-| 1.6 m tunable-white strip (2700 K + 6500 K) + four 3 W RGB stars | The light. Driven through the **driver stage** in [`docs/driver-build.html`](docs/driver-build.html), never from the GPIO pins |
+| 1 m tunable-white strip (2700 K + 6500 K) and 0.8 m RGB strip, both 24 V | The light: about 15 W of white and 9 W of colour |
+| **Driver board** ([`hardware/`](hardware/README.md)) | Carries the QT Py, makes its 5 V from the 24 V supply, and switches each strip colour with a MOSFET |
 
 ---
 
@@ -18,24 +19,24 @@ and a 240×240 color display.
 ```
                           QT Py RP2040
                    ┌─────────────────────────┐
-   Red driver  ◄── │ A0  (GP29)    5V        │
- Green driver  ◄── │ A1  (GP28)    GND       │── common ground
-  Blue driver  ◄── │ A2  (GP27)    3V        │── TFT Vin, (encoder via STEMMA)
-  Warm driver  ◄── │ A3  (GP26)    MO (GP3)  │──► TFT MOSI (SI)
+     Red gate  ◄── │ A0  (GP29)    5V        │◄── 5 V from the board's converter
+   Green gate  ◄── │ A1  (GP28)    GND       │── common ground
+    Blue gate  ◄── │ A2  (GP27)    3V        │── TFT Vin, (encoder via STEMMA)
+    Warm gate  ◄── │ A3  (GP26)    MO (GP3)  │──► TFT MOSI (SI)
      TFT TCS   ◄── │ SDA (GP24)    MI (GP4)  │◄── Encoder INT (extra wire)
      TFT D/C   ◄── │ SCL (GP25)    SCK (GP6) │──► TFT SCK
-  Cool driver  ◄── │ TX  (GP20)    RX (GP5)  │──► TFT Lite (backlight PWM)
+    Cool gate  ◄── │ TX  (GP20)    RX (GP5)  │──► TFT Lite (backlight PWM)
                    │   [STEMMA QT port]──────│──► Rotary encoder breakout
                    └─────────────────────────┘
 ```
 
 | QT Py pad | GPIO | Connects to | Notes |
 |---|---|---|---|
-| A0 | GP29 | Red driver PWM/DIM input | PWM slice 6B |
-| A1 | GP28 | Green driver | PWM slice 6A |
-| A2 | GP27 | Blue driver | PWM slice 5B |
-| A3 | GP26 | Warm (amber) white driver | PWM slice 5A |
-| TX | GP20 | Cool white driver | PWM slice 2A |
+| A0 | GP29 | Red MOSFET gate (through 220 Ω) | PWM slice 6B |
+| A1 | GP28 | Green MOSFET gate | PWM slice 6A |
+| A2 | GP27 | Blue MOSFET gate | PWM slice 5B |
+| A3 | GP26 | Warm white MOSFET gate | PWM slice 5A |
+| TX | GP20 | Cool white MOSFET gate | PWM slice 2A |
 | RX | GP5 | TFT **Lite** | PWM slice 2B: dimmable backlight |
 | SCK | GP6 | TFT **SCK** | SPI0 |
 | MO | GP3 | TFT **SI / MOSI** | SPI0 |
@@ -44,10 +45,12 @@ and a 240×240 color display.
 | SCL | GP25 | TFT **D/C** | Used as a plain GPIO |
 | STEMMA QT | GP22/23 | Encoder breakout | I2C1 (`Wire1`), 400 kHz |
 | 3V / GND | | TFT Vin / GND | |
+| 5V | | The board's 5 V converter, through a diode | USB may be connected at the same time |
 | – | – | TFT **RST**, **CCS**, **SO**, **TE** | Leave unconnected. The display resets itself at power-up, and the microSD slot isn't used (leave it empty) |
 
-The same connections are drawn as a picture on the *Controller wiring* card of the driver
-booklet (`docs/driver-build.html`).
+On the driver board the LED pins and the 5 V feed are copper. The only wires are the
+eight from the board's **J4** header (seven to the TFT, one to the encoder's INT pad),
+the encoder's STEMMA QT cable, the 24 V supply and the two strips.
 
 This uses all 11 pads, and every LED channel gets its own hardware PWM output.
 If you don't run the INT wire, the firmware notices within a couple of knob turns and
@@ -73,57 +76,39 @@ day-to-day use. (The second knob has no INT wire, so it's simply polled.)
 
 ---
 
-## 2. Circuit notes (hardware limits to respect)
+## 2. The driver board
 
-The driver stage for this build (1.6 m NFLS tunable-white strip plus four 3 W RGB stars)
-is in [`docs/driver-build.html`](docs/driver-build.html), a step-by-step build booklet for
-two half-size breadboards: every step shows the parts to add, where each leg goes, and
-what to measure before going on. Revision 2 of that design:
+The strips are never driven from the GPIO pins. The board in
+[`hardware/`](hardware/README.md) does that, and also powers the QT Py from the lamp's
+24 V supply:
 
-* **Strip (warm, cool):** one logic-level IRLB8721 per channel, gate driven straight from
-  the QT Py pin through 220 Ω, with a 100 kΩ pull-down and a 1N5819 clamp. Four parts per
-  channel, full strip power.
-* **RGB stars:** one LM324 section plus an IRLB8721 per colour as a constant-current sink.
-  The reference is the PWM pin's own 3.3 V scaled by a pot, and the sense resistor is 50 Ω,
-  so the current can never exceed 3.3 V ⁄ 50 Ω = 66 mA, whatever the pot or a loose wire
-  does. Full 310 mA needs heatsinks or the LM3414 buck drivers (last section of the booklet).
-  These three MOSFETs are held partly on by design: with the LEDs lit, each gate sits at
-  about 4–5 V and each MOSFET drops 9–13 V, so they run warm. Only the strip MOSFETs are
-  meant to be fully on. The booklet's *Meter readings* card lists what every test point
-  should read.
-* The pin map is unchanged from §1.
+* **24 V input**: a 2 A fuse, a Schottky diode against a supply wired backwards, a TVS
+  diode against spikes, and bulk capacitors.
+* **5 V for the QT Py** from a small switching converter, through a diode to the 5V pad.
+  USB can be plugged in while the lamp is powered.
+* **Five identical switches**: a logic-level MOSFET per colour (IRLB8721), its gate driven
+  straight from the QT Py pin through 220 Ω, a 100 kΩ pull-down, and a 1N5819 from the
+  strip wire back to +24 V.
 
-The booklet is generated, not hand-drawn. `tools/guide/layout.py` holds the placement of
-every part and wire, and `python3 tools/guide/build.py` refuses to write the page unless
-that placement implements the schematic: one lead per hole, every net in one piece, no two
-nets touching. `tools/sink_sim.py` is the small time-step model behind the RGB sink's
-turn-on figures.
+`hardware/README.md` has the schematic, the files to send to PCBWay, the build order and
+the power-up checks. The parts not already in the inventory are listed with links in
+[`docs/parts-to-order.md`](docs/parts-to-order.md).
 
-If you change the drivers, these are the constraints the firmware assumes:
+What the firmware assumes about that hardware:
 
-* **The GPIOs only provide a logic signal.** RP2040 pins are 3.3 V and rated for a few
-  mA. Each channel needs a driver stage:
-  * **Constant-voltage arrays/strips (12/24 V with on-board resistors):** use a low-side
-    N-MOSFET per channel that is *fully on at 3.3 V gate drive* (look for R<sub>DS(on)</sub>
-    specified at V<sub>GS</sub> = 2.5 V or 4.5 V). Add about 100 Ω in series with the gate
-    and 100 kΩ from gate to source.
-  * **High-power LEDs/COBs:** use constant-current buck drivers with a PWM **DIM** input,
-    and check that the DIM "high" threshold accepts 3.3 V logic.
-* **Match the PWM frequency to the driver.** The setting is under *Settings ▸ PWM freq*.
-  The default is 2 kHz. Many CC drivers accept only 100 Hz–1 kHz on DIM (Mean Well LDD
-  series, for example); set those to 1000 Hz. MOSFET-switched arrays can run at 1–20 kHz.
-  Resolution depends on frequency and on the CPU speed chosen in the Tools menu: 15–16
-  bits at 2 kHz, about 13 bits at 20 kHz. The revision 2 drivers want 2 kHz or lower: the
-  RGB sinks take about 5 µs to turn on, which is 1 % of a 2 kHz cycle.
-* **Active-low DIM inputs** are handled per channel with *Settings ▸ Channels ▸ (ch) ▸ Invert*.
-* **Pull-downs:** fit 10–100 kΩ from each driver input to GND. The pins float during
-  reset and USB bootloader mode, and the pull-downs keep the LEDs dark until the firmware
-  starts them. The firmware then fades in rather than switching on hard.
-* **Grounds:** use one common ground between the LED supply and the QT Py, star-wired.
-  Keep LED return currents out of the logic ground path.
-* **Logic power:** don't run LED current through the QT Py. Power it from USB or a
-  separate 5 V buck converter. If you feed its 5V pad while USB may also be connected,
-  add a Schottky diode so the two sources can't back-feed each other.
+* **A high pin means light.** Each pin switches its MOSFET on directly.
+* **The pull-downs keep the lamp dark** whenever the pins are not driven: during reset,
+  in USB bootloader mode, or with the QT Py unplugged. The firmware then fades in rather
+  than switching on hard.
+* **PWM frequency.** The default is 2 kHz, under *Settings ▸ PWM freq* (500 Hz to 20 kHz).
+  Lower frequencies dim further down; higher ones move any flicker beyond what a camera
+  picks up. Resolution depends on frequency and on the CPU speed chosen in the Tools
+  menu: 15–16 bits at 2 kHz, about 13 bits at 20 kHz.
+* **The bottom of the dimming range.** A MOSFET gate driven through a resistor needs a
+  fraction of a microsecond before the strip lights, so the very shortest pulses give no
+  light. *Min duty* (§4) sets where light starts; the default is an estimate.
+* **Currents.** The defaults are the catalogue figures for these strips: about 0.13 A per
+  RGB colour and 0.30 A per white, 1.0 A with everything at 100 %.
 * **The 3V rail** (QT Py regulator, 500 mA available) feeds the TFT and the encoder,
   tens of mA in total.
 * **Display glass:** the 1.54" panel's backlight can slowly peel away from the TFT if
@@ -215,7 +200,7 @@ Menu
     ├── Display ▸ Brightness · Follow lamp · Timeout · Knob glow
     ├── Knob dir
     ├── Power ▸ Budget · R/G/B/WW/CW current at 100 %
-    ├── Channels ▸ Red/Green/Blue/Warm/Cool ▸ Test level · Min duty · Trim · Invert
+    ├── Channels ▸ Red/Green/Blue/Warm/Cool ▸ Test level · Min duty · Trim
     ├── PWM freq
     ├── Factory reset
     └── Firmware
@@ -223,21 +208,21 @@ Menu
 
 ### One-time calibration (recommended)
 
-1. **PWM freq**: set it to suit your drivers (§2).
-2. **Channels ▸ each channel**: on this screen the lamp shows *only* that channel at the
+1. **Channels ▸ each channel**: on this screen the lamp shows *only* that channel at the
    *Test level* (default 0.1 %). Test and preview screens stay up for 10 minutes instead of
    the usual 30 s, so there is time to take a meter reading.
-   * Set **Invert** if the LED is lit when it should be dark.
-   * Raise **Min duty** until the LED just starts to glow. This removes the dead zone at
-     the bottom of the knob, so the first step above zero is the dimmest real light.
-   * Use **Trim** to cap a channel. This is useful for balancing the warm and cool whites,
-     or for under-driving an LED that runs hot.
-3. **White LEDs**: enter the color temperature of your warm and cool LEDs. The defaults,
-   2700 K and 6500 K, match the strip in this build.
-4. **Power**: measure each channel's current at 100 % and enter it, then set **Budget**
-   to about 80 % of your supply's rating. The home screen then shows estimated current
-   draw. Above the budget, all channels are scaled down together, so the color stays
-   the same, and the header shows **LIMIT**.
+   * Set **Min duty** so the strip just glows at the test level: lower it until the light
+     goes out, then back up one step. The default, 0.030 %, is an estimate. This puts the
+     dimmest real light on the first step of the knob.
+   * Use **Trim** to cap a channel. This is useful for balancing the warm and cool whites.
+2. **White LEDs**: the color temperatures of the warm and cool LEDs. The defaults, 2700 K
+   and 6500 K, match the strip in this build.
+3. **Power**: the defaults are catalogue figures. Measure each channel's current at 100 %
+   and enter it, then set **Budget** to about 80 % of your supply's rating. The home
+   screen shows the estimated current draw. Above the budget, all channels are scaled
+   down together, so the color stays the same, and the header shows **LIMIT**.
+4. **PWM freq**: leave it at 2 kHz unless a camera shows banding (raise it) or you want
+   deeper dimming (lower it). Changing it moves the *Min duty* point, so redo step 1.
 
 ---
 
@@ -263,12 +248,12 @@ Menu
   linear light, which is how LED light physically adds up.
 * **Deep, smooth dimming.** Hardware PWM runs at the highest resolution the chosen
   frequency allows, and the per-channel *Min duty* floor puts the bottom of the knob
-  exactly where your LEDs start to emit.
+  exactly where each strip starts to emit.
 * **Less stress on the power supply.** The three PWM slices start a third of a period
   apart, and the second channel in each slice is end-aligned. Channels therefore don't
   all switch on at the same instant, which lowers peak current, ripple and EMI. Every
   on/off and mode change ramps instead of stepping, so there are no inrush spikes. The
-  power budget keeps total current inside what your supply and drivers can handle.
+  power budget keeps total current inside what your supply can deliver.
 * **Low idle power.** The engine ticks at 250 Hz only while something is changing, and
   drops to 50 Hz when the light is steady. PWM registers are written only when a value
   changes. The display is drawn into a 23 KB band buffer, and each band is hashed: bands
@@ -313,9 +298,9 @@ Menu
 | `pwm_hw.*` | RP2040 PWM setup and phase staggering | – |
 | `storage.*` | LittleFS load/save | – |
 
-Outside the firmware: `tools/guide/` (the driver booklet's layout, checker and renderer),
-`tools/sink_sim.py` (RGB sink timing model) and `tools/rp2040_build_check.sh` (full build
-with the real core and libraries).
+Outside the firmware: `hardware/` (the driver board's KiCad project and factory files),
+`tools/pcb/` (the generator and checks that produce it) and `tools/rp2040_build_check.sh`
+(full build with the real core and libraries).
 
 ---
 
@@ -323,12 +308,15 @@ with the real core and libraries).
 
 * All hardware-independent logic is covered by the host tests (`make -C test`).
 * The whole sketch builds and links cleanly with the real arduino-pico toolchain and the
-  current Adafruit libraries (§3). It **has not yet been run on hardware**, and neither has the
-  driver stage: its layout is machine-checked against the schematic and its timing is
-  modelled, but nothing has been measured. Expect to confirm the following on the bench:
+  current Adafruit libraries (§3).
+* Firmware 1.1 ran on a breadboard build: the display, the encoder and the two white
+  channels worked there. **Firmware 1.2.0 has not yet been run on hardware.** It differs
+  in its defaults and in dropping one menu option, not in how it drives the pins.
+* The driver board passes KiCad's design-rule check and the checks described in
+  `hardware/README.md`, but **no board has been built yet**. Its power-up section lists
+  what to measure on the first one.
+* Still worth confirming on the bench:
   * Clockwise turns brighten. If not, use *Knob dir*.
   * The display orientation (`kTftRotation` in `config.h`).
   * INT works: the encoder's red INT LED (on the back) blinks when you turn the knob.
   * No white flash on the display at power-up.
-  * The stop-and-check cards in the driver booklet, above all that the strip MOSFETs drop
-    under 0.1 V when on (that is the test of driving them from 3.3 V).
