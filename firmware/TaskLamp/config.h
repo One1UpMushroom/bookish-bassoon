@@ -1,16 +1,20 @@
 // Hardware configuration for the LED task lamp.
 //
 // Board: Adafruit QT Py RP2040 (arduino-pico core by Earle Philhower).
+// Light: two 24 V LED strips, 0.8 m of RGB tape and 1 m of tunable-white tape
+// (2700 K + 6500 K). Each of the five colours is switched to ground by its own
+// logic-level MOSFET, whose gate is driven straight from a pin below.
 // All numbers below are RP2040 GPIO numbers, with the QT Py pad name beside them.
 #pragma once
 #include <stdint.h>
 
-#define TASKLAMP_VERSION "1.1.0"
+#define TASKLAMP_VERSION "1.2.0"
 
 namespace cfg {
 
 // ---------------------------------------------------------------------------
-// LED channel outputs (hardware PWM). Order is R, G, B, Warm(amber), Cool.
+// LED channel outputs (hardware PWM). Order is R, G, B, Warm white, Cool white.
+// A high pin switches that colour on.
 //
 // The pins are chosen so every LED channel gets its own PWM output and the
 // pairs that share a PWM slice (R+G, B+WW) can be phase-shifted against each
@@ -18,11 +22,11 @@ namespace cfg {
 //   GP29 = slice 6B, GP28 = 6A, GP27 = 5B, GP26 = 5A, GP20 = 2A, GP5 = 2B
 // ---------------------------------------------------------------------------
 constexpr uint8_t kLedPins[5] = {
-    29,  // A0  -> Red driver
-    28,  // A1  -> Green driver
-    27,  // A2  -> Blue driver
-    26,  // A3  -> Warm / amber white driver
-    20,  // TX  -> Cool white driver
+    29,  // A0  -> Red MOSFET gate
+    28,  // A1  -> Green MOSFET gate
+    27,  // A2  -> Blue MOSFET gate
+    26,  // A3  -> Warm white MOSFET gate
+    20,  // TX  -> Cool white MOSFET gate
 };
 
 // ---------------------------------------------------------------------------

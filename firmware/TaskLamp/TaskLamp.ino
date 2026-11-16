@@ -1,7 +1,8 @@
 // LED Task Lamp controller
 // ------------------------
 // Adafruit QT Py RP2040 + STEMMA QT rotary encoder + 240x240 ST7789 TFT
-// driving five LED channels (R, G, B, warm/amber white, cool white).
+// driving two 24 V LED strips as five channels: R, G, B, warm white and
+// cool white, each through its own MOSFET.
 //
 // Core 0: encoder polling, UI, display, settings persistence.
 // Core 1: light engine + PWM output. Keeps fades and effects perfectly smooth
@@ -280,13 +281,11 @@ static PwmBank gPwm;
 static EngineInput gIn1;  // core 1's private copy (static: core 1 stack is small)
 static uint32_t gGen1;
 static uint16_t gAppliedHz;
-static uint8_t gAppliedInvert[kCh];
 
 static void applyHw(const HwCfg& hw, bool force) {
-  if (force || hw.pwmHz != gAppliedHz || memcmp(hw.chInvert, gAppliedInvert, kCh) != 0) {
-    gPwm.begin(hw.pwmHz, hw.chInvert);
+  if (force || hw.pwmHz != gAppliedHz) {
+    gPwm.begin(hw.pwmHz);
     gAppliedHz = hw.pwmHz;
-    memcpy(gAppliedInvert, hw.chInvert, kCh);
   }
   gOut.configure(hw, gPwm.top());
 }

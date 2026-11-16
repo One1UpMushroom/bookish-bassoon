@@ -21,7 +21,8 @@ void OutputStage::process(const Rgbww& in, OutputResult& r) const {
   }
 
   // Power budget: scale every channel by the same factor so the colour is kept
-  // and only the brightness is limited. Protects the PSU, drivers and LEDs.
+  // and only the brightness is limited. Keeps the lamp inside what the power
+  // supply can deliver.
   r.limited = false;
   if (budget_ > 0.f && demand > budget_) {
     float k = budget_ / demand;
@@ -35,7 +36,7 @@ void OutputStage::process(const Rgbww& in, OutputResult& r) const {
     uint32_t lvl = 0;
     if (y[i] > 0.f) {
       // Map (0, 1] onto (minDuty, 1]: the bottom of the knob starts exactly
-      // where this LED/driver combination begins to emit light.
+      // where this strip and its MOSFET begin to emit light.
       duty = minDuty_[i] + (1.f - minDuty_[i]) * y[i];
       lvl = (uint32_t)lroundf(duty * (float)full_);
       if (lvl == 0) lvl = 1;

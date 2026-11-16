@@ -17,7 +17,7 @@
 //  * Compare registers are double-buffered by the RP2040, so updates never
 //    produce runt pulses, and unchanged values are not rewritten at all.
 
-uint16_t PwmBank::begin(uint32_t hz, const uint8_t invert[kCh]) {
+uint16_t PwmBank::begin(uint32_t hz) {
   uint32_t sys = clock_get_hz(clk_sys);
   if (hz < 100) hz = 100;
   uint32_t cycles = sys / hz;
@@ -44,8 +44,7 @@ uint16_t PwmBank::begin(uint32_t hz, const uint8_t invert[kCh]) {
     uint slice = pwm_gpio_to_slice_num(pin);
     bool chanB = pwm_gpio_to_channel(pin) == PWM_CHAN_B;
     endAligned_[i] = chanB && ledOnA[slice];
-    bool hwInvert = endAligned_[i] != (invert[i] != 0);
-    (chanB ? polB : polA)[slice] = hwInvert;
+    (chanB ? polB : polA)[slice] = endAligned_[i];
     if (!(sliceMask & (1u << slice))) ledSlices[nLedSlices++] = (uint8_t)slice;
     sliceMask |= 1u << slice;
   }

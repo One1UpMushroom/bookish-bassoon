@@ -89,6 +89,23 @@ TEST(settings_basics) {
   settings::seal(s);
   CHECK(s.crc == crc);  // defaults are already in range
 
+  // The defaults describe this build: 0.8 m of RGB tape and 1 m of
+  // tunable-white tape, about 1 A in total with everything at 100 %.
+  uint32_t totalmA = 0;
+  for (int c = 0; c < kCh; c++) totalmA += s.hw.chmA[c];
+  CHECK(totalmA > 900 && totalmA < 1100);
+  CHECK(s.hw.chmA[CH_R] == s.hw.chmA[CH_G] && s.hw.chmA[CH_G] == s.hw.chmA[CH_B]);
+  CHECK(s.hw.chmA[CH_WW] == s.hw.chmA[CH_CW] && s.hw.chmA[CH_WW] > s.hw.chmA[CH_R]);
+  CHECK(s.hw.warmK == 2700 && s.hw.coolK == 6500);
+  CHECK(s.hw.budgetmA == 0);  // no limit until the supply's rating is entered
+
+  // Settings written by firmware 1.1 (layout version 1) must not be accepted:
+  // their calibration belongs to different hardware.
+  Settings old = s;
+  old.version = 1;
+  settings::seal(old);
+  CHECK(!settings::valid(old));
+
   Settings t = s;
   ((uint8_t*)&t)[100] ^= 0x40;
   CHECK(!settings::valid(t));
@@ -103,7 +120,7 @@ TEST(settings_basics) {
     CHECK(t.scene.bright >= 1 && t.scene.bright <= 1000);
     CHECK(t.scene.hue < 360);
     CHECK(t.sweep.count >= 1 && t.sweep.count <= kMaxSweepSteps);
-    CHECK(t.hw.pwmHz >= 200 && t.hw.pwmHz <= 20000);
+    CHECK(t.hw.pwmHz >= kPwmHzMin && t.hw.pwmHz <= kPwmHzMax);
     CHECK(t.flash.onMs >= 20 && t.flash.burst >= 1);
     CHECK(t.hw.warmK < t.hw.coolK);
     CHECK(t.scene.cct >= t.hw.warmK && t.scene.cct <= t.hw.coolK);
@@ -672,10 +689,12 @@ TEST(ui_calibration_preview) {
   CHECK(r.open("Blue"));
   CHECK(r.rt.preview == PREVIEW_RAW);
   CHECK(r.rt.previewLvl[CH_B] == 1 && r.rt.previewLvl[CH_R] == 0);
+  CHECK(!r.shows("Invert"));  // the strip switches are never inverted
   CHECK(r.open("Min duty"));
+  CHECK(r.s.hw.chMin[CH_B] == 30);  // default: estimated gate-charge dead band
   r.ev(Ev::Turn, 50, 1);
-  CHECK(r.s.hw.chMin[CH_B] == 50);
-  CHECK(r.shows("0.050%"));
+  CHECK(r.s.hw.chMin[CH_B] == 80);
+  CHECK(r.shows("0.080%"));
   r.wait(31000);  // a test light must outlast a meter reading...
   CHECK(r.rt.preview == PREVIEW_RAW);
   r.wait(80000);  // ...and the screen going to sleep

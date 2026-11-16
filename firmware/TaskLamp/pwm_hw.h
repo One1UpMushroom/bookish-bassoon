@@ -9,7 +9,7 @@ class PwmBank {
  public:
   // (Re)configures all slices for `hz`. Returns the counter top; a channel
   // level of top+1 means 100 % duty. Resolution = log2(top+1) bits.
-  uint16_t begin(uint32_t hz, const uint8_t invert[kCh]);
+  uint16_t begin(uint32_t hz);
   void write(const uint16_t level[kCh]);   // only touches registers that changed
   void setBacklight(float fraction);       // 0..1 linear
   void allOff();

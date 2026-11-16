@@ -420,7 +420,7 @@ void settingsMenu(Ui& ui, Menu& m, int) {
   m.enm("Knob dir", &hw.knobReverse, kDirNames, 2);
   m.sub("Power", powerMenu);
   m.sub("Channels", channelsMenu);
-  m.num("PWM freq", &hw.pwmHz, 200, 20000, 100, Fmt::Hz);
+  m.num("PWM freq", &hw.pwmHz, kPwmHzMin, kPwmHzMax, 100, Fmt::Hz);
   m.sub("Factory reset", resetMenu);
   m.act("Firmware", nullptr, 0, TASKLAMP_VERSION);
   m.back();
@@ -473,7 +473,6 @@ void channelMenu(Ui& ui, Menu& m, int ch) {
   m.num("Test level", &ui.calTest, 0, 1000, 1, Fmt::Permille, Item::F_NOSAVE).change = refreshCal;
   m.num("Min duty", &hw.chMin[ch], 0, 5000, 1, Fmt::MinDuty);
   m.num("Trim", &hw.chTrim[ch], 100, 1000, 5, Fmt::Permille);
-  m.enm("Invert", &hw.chInvert[ch], kOffOn, 2);
   m.back();
 }
 
@@ -879,7 +878,7 @@ void Ui::drawHome(Painter& p) {
     p.text(10, 116, "Mix: Menu>Adjust", 2, C_DIM);
   }
 
-  // Channel bars: what each driver is actually receiving (perceptual scale).
+  // Channel bars: what each strip channel is actually receiving (perceptual scale).
   const int top = 146, H = 62;
   for (int i = 0; i < kCh; i++) {
     int x = 12 + i * 46;

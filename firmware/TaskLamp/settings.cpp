@@ -67,11 +67,17 @@ void defaults(Settings& s) {
   HwCfg& hw = s.hw;
   hw.pwmHz = 2000;
   hw.budgetmA = 0;
+  // Catalogue figures for this build: 0.8 m of RGB tape at 0.5 A/m shared by
+  // three colours, and 1 m of tunable-white tape at 0.6 A/m shared by two.
+  // Settings > Power replaces them with measured values.
+  static const uint16_t kStripmA[kCh] = {133, 133, 133, 300, 300};
   for (int i = 0; i < kCh; i++) {
-    hw.chmA[i] = 0;
-    hw.chMin[i] = 0;
+    hw.chmA[i] = kStripmA[i];
+    // A strip MOSFET needs its gate charged before it conducts, so the very
+    // shortest pulses give no light. 0.03 % is a cautious estimate of that
+    // dead band at 2 kHz; Settings > Channels > Min duty sets it exactly.
+    hw.chMin[i] = 30;
     hw.chTrim[i] = 1000;
-    hw.chInvert[i] = 0;
   }
   hw.whiteBoost = 1;
   hw.pastelWhite = 1;
@@ -110,13 +116,12 @@ static void sanitizeScene(Scene& sc, const HwCfg& hw) {
 
 void sanitize(Settings& s) {
   HwCfg& hw = s.hw;
-  clampT<uint16_t>(hw.pwmHz, 200, 20000);
+  clampT<uint16_t>(hw.pwmHz, kPwmHzMin, kPwmHzMax);
   clampT<uint16_t>(hw.budgetmA, 0, 30000);
   for (int i = 0; i < kCh; i++) {
     clampT<uint16_t>(hw.chmA[i], 0, 10000);
     clampT<uint16_t>(hw.chMin[i], 0, 5000);
     clampT<uint16_t>(hw.chTrim[i], 100, 1000);
-    hw.chInvert[i] = hw.chInvert[i] ? 1 : 0;
   }
   hw.whiteBoost = hw.whiteBoost ? 1 : 0;
   hw.pastelWhite = hw.pastelWhite ? 1 : 0;

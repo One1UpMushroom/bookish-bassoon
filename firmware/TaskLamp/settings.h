@@ -69,14 +69,13 @@ struct FxCfg {
   uint16_t candleSpeed;      // percent
 };
 
-// Hardware calibration: describes your drivers, LEDs and power supply.
+// Hardware calibration: describes the LED strips and the power supply.
 struct HwCfg {
-  uint16_t pwmHz;        // PWM carrier frequency (match your driver's DIM spec)
+  uint16_t pwmHz;        // PWM frequency of the strip switches
   uint16_t budgetmA;     // total LED current budget, 0 = no limit
   uint16_t chmA[kCh];    // current drawn by each channel at 100% duty, 0 = unknown
   uint16_t chMin[kCh];   // duty floor in 0.001% units (removes the dead band)
   uint16_t chTrim[kCh];  // per-channel ceiling, permille (white balance)
-  uint8_t chInvert[kCh]; // 1 = active-low driver input
   uint8_t whiteBoost;    // White mode: 1 = max output, 0 = constant flux
   uint8_t pastelWhite;   // Color mode: route the white part of pastels to W LEDs
   uint8_t knobReverse;
@@ -94,7 +93,14 @@ struct UiCfg {
 };
 
 constexpr uint32_t kSettingsMagic = 0x4C414D50;  // "LAMP"
-constexpr uint16_t kSettingsVersion = 1;
+// Version 2: the per-channel "invert" flags are gone. Settings saved by older
+// firmware are replaced by the defaults on first boot.
+constexpr uint16_t kSettingsVersion = 2;
+
+// PWM frequency range offered in the menu. Below about 500 Hz a moving hand
+// or a camera shows the flicker; above about 20 kHz the MOSFET gates, driven
+// through a resistor from a 3.3 V pin, no longer switch cleanly.
+constexpr uint16_t kPwmHzMin = 500, kPwmHzMax = 20000;
 
 struct Settings {
   uint32_t magic;
