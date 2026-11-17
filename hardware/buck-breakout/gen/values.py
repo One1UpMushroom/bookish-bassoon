@@ -20,7 +20,7 @@ REV = "REV A  2026-11"
 # r2_exact is the single E96 part that replaces r2 + r3 when r1 = 100k.
 _ROWS = [
     # label, vout, r1,    r2,    r3,    r2_exact, L uH, typical VIN used for ripple
-    ("3V3", 3.3, 100e3, 22e3, 22e3, 43.2e3, 10, 12),
+    ("3.3V", 3.3, 100e3, 22e3, 22e3, 43.2e3, 10, 12),
     ("5V",  5.0, 100e3, 22e3, 2.2e3, 24.9e3, 10, 12),
     ("9V",  9.0, 100e3, 10e3, 2.2e3, 12.4e3, 15, 24),
     ("12V", 12.0, 220e3, 10e3, 10e3, 9.09e3, 15, 24),
