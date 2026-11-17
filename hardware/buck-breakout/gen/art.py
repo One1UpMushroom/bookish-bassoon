@@ -86,6 +86,40 @@ class Silk:
             x += pitch
 
 
+    def sunrise(self, cx, cy, r, half_len, bottom=False, rays=5, lw=0.15):
+        """A half sun on a horizon line: the maker's mark.  (cx, cy) is the
+        middle of the horizon; on the bottom side cx is a view coordinate."""
+        import math
+        ln = self.bl if bottom else self.line
+        pl = self.bp if bottom else self.poly
+        pl([(cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a)))
+            for a in range(180, 361, 12)])
+        for i in range(rays):
+            a = math.radians(200 + i * 140 / (rays - 1))
+            ln([(cx + 1.4 * r * math.cos(a), cy + 1.4 * r * math.sin(a)),
+                (cx + 2.05 * r * math.cos(a), cy + 2.05 * r * math.sin(a))], lw)
+        ln([(cx - half_len, cy), (cx + half_len, cy)], lw)
+
+    def sprig(self, x, y, size=1.0, bottom=False, lw=0.15):
+        """Two leaves on a short stem growing up from (x, y)."""
+        import math
+        ln = self.bl if bottom else self.line
+        pl = self.bp if bottom else self.poly
+        top = y - 0.45 * size
+        ln([(x, y), (x, top)], lw)
+        for ang in (-48, -132):
+            ca, sa = math.cos(math.radians(ang)), math.sin(math.radians(ang))
+            pts = []
+            n = 8
+            for sgn in (1, -1):
+                rng = range(n + 1) if sgn == 1 else range(n - 1, 0, -1)
+                for i in rng:
+                    t = i / n
+                    u, v = t * 1.15 * size, sgn * 0.27 * size * math.sin(math.pi * t)
+                    pts.append((x + u * ca - v * sa, top + u * sa + v * ca))
+            pl(pts)
+
+
 def decorate(board, W, H, ox=0.0, oy=0.0):
     k = Silk(board, W, H, ox, oy)
     top(k)
@@ -132,8 +166,10 @@ def top(k):
     k.poly([(24.6, 0.9), (25.2, 0.9), (24.7, 2.1), (24.1, 2.1)])
     k.poly([(37.5, 0.9), (38.1, 0.9), (37.6, 2.1), (37.0, 2.1)])
     # warning stripes over the input side
-    k.hazard(5.7, 0.75, 9.6, 1.35, 0.9)
-    k.text("降圧", 12.6, 1.45, 1.25, 1.25, 0.14)
+    k.hazard(5.7, 0.75, 8.5, 1.35, 0.9)
+    # maker's mark: sunrise + HANDMADE
+    k.sunrise(10.15, 1.9, 0.45, 1.05)
+    k.text("HANDMADE", 11.7, 1.5, 0.75, 0.62, 0.13, just="l")
 
     # limits, upper right
     k.text("VIN > VOUT", 37.85, 3.85, 0.72, 0.52, 0.115, just="l")
@@ -194,7 +230,7 @@ def bottom(k):
     # ---- title, input-side half ----
     k.hazard(W - 20.6, 2.5, W - 6.2, 2.9, 0.8, bottom=True)
     k.bt("BUCK//33630", W - 13.4, 4.25, 1.55, 1.3, 0.24, just="c")
-    k.bt("降圧モジュール", 33.2, 6.35, 1.05, 1.05, 0.13)
+    k.bt("BUILT, NOT BOUGHT", 33.2, 6.3, 0.85, 0.68, 0.14)
     # thermal pad call-out
     k.bl([(28.95, 6.6), (28.95, 9.5), (32.95, 9.5), (32.95, 7.4)], 0.12)
     k.bt("SOLDER U1 PAD", 31.0, 10.3, **C)
@@ -206,7 +242,9 @@ def bottom(k):
         k.text(s, bx, y, 0.72, 0.6, 0.115, BS, "c", a)
     k.text("+", 2.35, 6.3, 1.0, 1.0, 0.15, BS)
     # limits
-    k.hazard(W - 12.9, 11.75, W - 1.2, 12.35, 0.9, bottom=True)
+    k.sunrise(W - 7.05, 12.4, 0.8, 5.75, bottom=True, rays=7)
+    k.sprig(W - 10.9, 12.4, 1.0, bottom=True)
+    k.sprig(W - 3.2, 12.4, 1.0, bottom=True)
     k.bt("IN 3.8-36V  3A MAX", W - 7.3, 13.3, 0.72, 0.56, 0.115, just="c")
     k.bt("KEEP VIN > VOUT", W - 7.3, 14.45, 0.72, 0.56, 0.115, just="c")
     k.bt(values.REV, W - 7.3, 15.6, 0.72, 0.56, 0.115, just="c")

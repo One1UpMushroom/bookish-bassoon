@@ -237,6 +237,9 @@ SMBJ24A for vehicle builds.
   reference label beside each through-hole part for checking from the solder side.
 * **Front:** part references, pin names, limits, and a white box to write in the
   voltage the board was built for.
+* **Maker's marks:** a sunrise and HANDMADE on the front, BUILT, NOT BOUGHT and a
+  sunrise with two sprigs on the back. All lettering is English; the artwork lives
+  in `gen/art.py` if you want your own wording or initials.
 
 ### Layout
 
@@ -273,6 +276,10 @@ minimum of five panels gives 40 boards.
 | Panel | Tell the service the file is already panelized: 8 boards, 1 design |
 
 For single boards instead, upload `fab/buck33630-gerbers.zip`.
+
+The smallest lettering is 0.72 mm tall with 0.12 mm strokes. That is under the
+1 mm / 0.15 mm that some services guarantee; it normally prints legibly, but
+expect the fine print to be the first thing to suffer at a budget fab.
 
 To separate, flex each board against its neighbour until the tabs snap. The
 perforations sit 0.25 mm inside the board edge so the stubs do not stick out;
