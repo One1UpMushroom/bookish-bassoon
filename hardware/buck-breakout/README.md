@@ -237,9 +237,10 @@ SMBJ24A for vehicle builds.
   reference label beside each through-hole part for checking from the solder side.
 * **Front:** part references, pin names, limits, and a white box to write in the
   voltage the board was built for.
-* **Maker's marks:** a sunrise and HANDMADE on the front, BUILT, NOT BOUGHT and a
-  sunrise with two sprigs on the back. All lettering is English; the artwork lives
-  in `gen/art.py` if you want your own wording or initials.
+* **Maker's marks:** a sunrise, HANDMADE and a pixel-art thumbs-up on the front;
+  HACK THE PLANET and a sunrise with two sprigs on the back. The artwork lives in
+  `gen/art.py` (the thumbs-up is the `THUMBS_UP` bitmap) if you want your own
+  wording or icon.
 
 ### Layout
 

@@ -100,6 +100,22 @@ class Silk:
                 (cx + 2.05 * r * math.cos(a), cy + 2.05 * r * math.sin(a))], lw)
         ln([(cx - half_len, cy), (cx + half_len, cy)], lw)
 
+    def pixels(self, x0, y0, rows, px=0.2, layer=FS):
+        """Pixel art: one filled rectangle per horizontal run of 'X'.  Runs
+        overlap their neighbours by a hair so no seams show in the plot."""
+        e = 0.01
+        for r, row in enumerate(rows):
+            c = 0
+            while c < len(row):
+                if row[c] != "X":
+                    c += 1
+                    continue
+                c0 = c
+                while c < len(row) and row[c] == "X":
+                    c += 1
+                self.box(x0 + c0 * px - e, y0 + r * px - e,
+                         x0 + c * px + e, y0 + (r + 1) * px + e, layer)
+
     def sprig(self, x, y, size=1.0, bottom=False, lw=0.15):
         """Two leaves on a short stem growing up from (x, y)."""
         import math
@@ -124,6 +140,24 @@ def decorate(board, W, H, ox=0.0, oy=0.0):
     k = Silk(board, W, H, ox, oy)
     top(k)
     bottom(k)
+
+
+# 11 x 13 pixel thumbs-up: thumb, three curled fingers, shirt cuff
+THUMBS_UP = [
+    ".....XX....",
+    "....XXX....",
+    "....XXX....",
+    "....XXX....",
+    "...XXXX....",
+    "...XXXXXXX.",
+    "XX.XXXXXXXX",
+    "XX.XXXX....",
+    "XX.XXXXXXXX",
+    "XX.XXXXXXXX",
+    "XX.XXXX....",
+    "XX.XXXXXXX.",
+    "XX..XXXXXX.",
+]
 
 
 # ------------------------------------------------------------------ top ---
@@ -170,6 +204,7 @@ def top(k):
     # maker's mark: sunrise + HANDMADE
     k.sunrise(10.15, 1.9, 0.45, 1.05)
     k.text("HANDMADE", 11.7, 1.5, 0.75, 0.62, 0.13, just="l")
+    k.pixels(17.1, 0.45, THUMBS_UP)
 
     # limits, upper right
     k.text("VIN > VOUT", 37.85, 3.85, 0.72, 0.52, 0.115, just="l")
@@ -230,7 +265,7 @@ def bottom(k):
     # ---- title, input-side half ----
     k.hazard(W - 20.6, 2.5, W - 6.2, 2.9, 0.8, bottom=True)
     k.bt("BUCK//33630", W - 13.4, 4.25, 1.55, 1.3, 0.24, just="c")
-    k.bt("BUILT, NOT BOUGHT", 33.2, 6.3, 0.85, 0.68, 0.14)
+    k.bt("HACK THE PLANET", 33.2, 6.3, 0.95, 0.74, 0.15)
     # thermal pad call-out
     k.bl([(28.95, 6.6), (28.95, 9.5), (32.95, 9.5), (32.95, 7.4)], 0.12)
     k.bt("SOLDER U1 PAD", 31.0, 10.3, **C)
