@@ -98,7 +98,9 @@ You're sizing the drivers. These are the constraints the firmware assumes:
   Keep LED return currents out of the logic ground path.
 * **Logic power:** don't run LED current through the QT Py. Power it from USB or a
   separate 5 V buck converter. If you feed its 5V pad while USB may also be connected,
-  add a Schottky diode so the two sources can't back-feed each other.
+  add a Schottky diode so the two sources can't back-feed each other. The adjustable
+  buck breakout in [`hardware/buck-breakout`](hardware/buck-breakout/README.md) is
+  designed for this: build one for 5 V and run it from the lamp's 24 V supply.
 * **The 3V rail** (QT Py regulator, 500 mA available) feeds the TFT and the encoder,
   tens of mA in total.
 * **Display glass:** the 1.54" panel's backlight can slowly peel away from the TFT if

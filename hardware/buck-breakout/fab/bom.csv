@@ -1,0 +1,25 @@
+Ref,Qty,Value,Package,Source,Part number to search,Note
+U1,1,LMR33630ADDAR,HSOIC-8 (SO PowerPAD),buy,Texas Instruments LMR33630ADDAR,400 kHz 'A' version. LMR33620ADDAR (2 A) and LMR33640ADDAR (4 A) fit the same pads.
+L1,1,"10 uH (3.3 V, 5 V out)",12.5 mm shielded SMD,buy,Bourns SRP1265A-100M (alt: Bourns SRR1260-100M),"Isat >= 4.5 A, Irms >= 3.5 A, DCR <= 40 mOhm"
+L1,1,"15 uH (9 V, 12 V out)",12.5 mm shielded SMD,buy,Bourns SRP1265A-150M (alt: Bourns SRR1260-150M),same limits
+L1,1,22 uH (24 V out),12.5 mm shielded SMD,buy,Bourns SRP1265A-220M (alt: Wurth 7447709220),SRR1260-220M saturates at 3.7 A: too low for 3 A loads
+C1 C2,2,10 uF 50 V X7R,1210,buy,"Murata GRM32ER71H106KA12L (alt: Samsung CL32B106KBJNNNE, TDK C3225X7R1H106K250AC)",Input capacitors. Fit both.
+C3,1,220 nF 50 V X7R,0805 or 1206,buy,KEMET C0805C224K5RACTU (alt: any 220 nF 50 V X7R 0805/1206),High-frequency input bypass; the one small chip part. 100 nF also works.
+C4,1,"100 nF, 10 V or more","radial 5.08 mm, or 0805/1206",inventory C-021,(if buying: KEMET C1206C104K5RACTU),Bootstrap capacitor
+C5,1,"1 uF, 16 V or more","radial 5.08 mm, or 0805/1206",inventory C-027,"(if buying: KEMET C1206C105K5RACTU, a chip part)",VCC capacitor. Use an X7R chip for vehicle / outdoor temperatures.
+C6-C9,4,22 uF 25 V X7R (3.3-12 V out),1210,buy,Murata GRM32ER71E226KE15L (alt: Samsung CL32B226KAJNNNE),Output capacitors
+C6-C9,4,10 uF 50 V X7R (24 V out),1210,buy,same part as C1/C2,Use instead of the 22 uF parts for 24 V out
+C10,1,47-100 uF 50 V electrolytic,"radial, up to 8 mm dia",inventory C-042 / C-044,,Input damping. C-043 (100 uF 25 V) is fine up to 20 V in.
+D1,1,"TVS, 24 V standoff (optional)",SMB,buy,Littelfuse SMBJ24A,For vehicle or long-lead inputs up to 24 V nominal. Leave out above 24 V in.
+R1,1,100k (220k for the 12 V kit recipe),axial 1/4 W,inventory R-014 / R-015,,Top feedback resistor
+R2 R3,2,see table,axial 1/4 W,inventory R-009 / R-011 / R-012,"exact option: Yageo MFR-25FBF52-43K2 / -24K9 / -12K4 / -9K09 / -4K32 in R2, 0 Ohm (R-001) in R3",Bottom feedback resistors
+R4,1,100k,axial 1/4 W,inventory R-014,,EN pull-up
+R5,1,"optional, sets turn-on voltage",axial 1/4 W,inventory,,Leave out for always-on above 3.8 V
+J1-J4,10,2.54 mm header pins,1x2 + 1x3 at each end,inventory E-007,(more: any 1x40 2.54 mm breakaway header),E-007 is one 40-pin strip = 4 boards. 2.54 mm screw terminals also fit.
+
+VOUT,R1,R2,R3,Kit result (V),"R2 exact (R1 100k, R3 0R)",Exact result (V),L1 (uH),C6-C9
+3.3,100k,22k,22k,3.273,43k2,3.315,10,4x 22u 25V
+5.0,100k,22k,2k2,5.132,24k9,5.016,10,4x 22u 25V
+9.0,100k,10k,2k2,9.197,12k4,9.065,15,4x 22u 25V
+12.0,220k,10k,10k,12.000,9k09,12.001,15,4x 22u 25V
+24.0,100k,2k2,2k2,23.727,4k32,24.148,22,4x 10u 50V
