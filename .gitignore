@@ -2,3 +2,9 @@
 .vscode/
 test/host_tests
 *.o
+
+# KiCad / Python
+*.kicad_prl
+*-backups/
+fp-info-cache
+__pycache__/
