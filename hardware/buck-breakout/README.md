@@ -428,6 +428,10 @@ python3 gen/bom.py && python3 gen/schematic.py
 `python3 gen/values.py` prints the design numbers: resistor results, inductor
 ripple and the turn-on voltage examples.
 
+`python3 gen/theme_render.py looks.json out_dir` draws both sides of the board in
+any solder-mask, silkscreen and pad-finish colours, to preview a look before
+ordering. The format of `looks.json` is described at the top of that script.
+
 ## Sources
 
 * [LMR33630 datasheet, TI SNVSAN3F](https://www.ti.com/lit/ds/symlink/lmr33630.pdf):
