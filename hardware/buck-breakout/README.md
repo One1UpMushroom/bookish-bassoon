@@ -241,6 +241,13 @@ SMBJ24A for vehicle builds.
   HACK THE PLANET and a sunrise with two sprigs on the back. The artwork lives in
   `gen/art.py` (the thumbs-up is the `THUMBS_UP` bitmap) if you want your own
   wording or icon.
+* **Buck marks:** four 10 × 10 mm drawings of a buck, one for each theme in
+  the design library, are ready in `gen/deer.py` but not yet on the board.
+  `deer.add_to_board()` places one on either side; the top of `gen/deer.py`
+  says how. All four meet the silkscreen limits below (0.20 mm lines and gaps,
+  0.25 mm holes), checked on KiCad's own plot.
+
+  ![The four buck marks: Dawnworks, Mahogany Lounge, Neon Noir Chartreuse, Parkside 98](img/deer-marks.png)
 
 ### Layout
 
@@ -427,6 +434,10 @@ python3 gen/bom.py && python3 gen/schematic.py
 
 `python3 gen/values.py` prints the design numbers: resistor results, inductor
 ripple and the turn-on voltage examples.
+
+`/usr/bin/python3 gen/deer_check.py out_dir --kicad` draws the four buck marks
+and re-checks them against the silkscreen limits, on the drawing and on KiCad's
+plot of it. The top of that script explains each check.
 
 ## Sources
 
