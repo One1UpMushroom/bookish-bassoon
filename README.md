@@ -213,8 +213,9 @@ Menu
    *Test level* (default 0.1 %). Test and preview screens stay up for 10 minutes instead of
    the usual 30 s, so there is time to take a meter reading.
    * Set **Min duty** so the strip just glows at the test level: lower it until the light
-     goes out, then back up one step. The default, 0.030 %, is an estimate. This puts the
-     dimmest real light on the first step of the knob.
+     goes out, then back up one step. The defaults (0.12 % for red, 0.16 % for the others)
+     come from simulating the driver board. This puts the dimmest real light on the first
+     step of the knob.
    * Use **Trim** to cap a channel. This is useful for balancing the warm and cool whites.
 2. **White LEDs**: the color temperatures of the warm and cool LEDs. The defaults, 2700 K
    and 6500 K, match the strip in this build.
@@ -309,12 +310,14 @@ Outside the firmware: `hardware/` (the driver board's KiCad project and factory 
 
 * All hardware-independent logic is covered by the host tests (`make -C test`).
 * The whole sketch builds and links cleanly with the real arduino-pico toolchain and the
-  current Adafruit libraries (§3).
+  current Adafruit libraries (§3). That was last run on 1.2.0; 1.2.1 changes only default
+  values, and the host tests compile it.
 * Firmware 1.1 ran on a breadboard build: the display, the encoder and the two white
-  channels worked there. **Firmware 1.2.0 has not yet been run on hardware.** It differs
+  channels worked there. **Firmware 1.2.1 has not yet been run on hardware.** It differs
   in its defaults and in dropping one menu option, not in how it drives the pins.
-* The driver board passes KiCad's design-rule check and the checks described in
-  `hardware/README.md`, but **no board has been built yet**. Its power-up section lists
+* The driver board passes KiCad's design-rule check, 17 circuit simulations and 22 checks
+  of its factory files (`hardware/tasklamp-driver/test-report.md`), but **no board has been
+  built yet**. Its power-up section lists
   what to measure on the first one.
 * Still worth confirming on the bench:
   * Clockwise turns brighten. If not, use *Knob dir*.

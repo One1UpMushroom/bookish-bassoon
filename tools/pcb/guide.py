@@ -338,7 +338,7 @@ def icon(kind, arg=None):
         return ('<svg class="ic-m" viewBox="0 0 40 40"><rect x="5" y="5" width="30" height="30" rx="4" fill="#11161B"/>'
                 '<circle cx="20" cy="20" r="10" fill="#AEB6BD"/><circle cx="20" cy="20" r="6" fill="#8A9299"/></svg>')
     if kind == 'pcb':
-        return ('<svg class="ic-m" viewBox="0 0 40 40"><rect x="1" y="8" width="38" height="24" rx="2.5" fill="#0F5C36"/>'
+        return ('<svg class="ic-m" viewBox="0 0 40 40"><rect x="1" y="8" width="38" height="24" rx="2.5" fill="#141614"/>'
                 + ''.join('<circle cx="%d" cy="%d" r="1.5" fill="#F4F4EE"/>' % (x, y) for x in (5, 35) for y in (12, 28))
                 + '<rect x="9" y="24" width="12" height="5" fill="#F4F4EE" opacity=".7"/><rect x="24" y="12" width="7" height="9" fill="#F4F4EE" opacity=".7"/></svg>')
     raise ValueError(kind)
@@ -557,8 +557,8 @@ section.sheet { background: var(--card); border-radius: 16px; padding: 18px; dis
 .legend > div { display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: start; font-size: 14.5px; min-width: 0; }
 .legend .sw { width: 44px; height: 30px; border-radius: 8px; display: grid; place-items: center; font: 600 12px var(--mono); box-sizing: border-box; }
 .sw.new { border: 4px solid var(--new); }
-.sw.old { background: #0F5C36; color: #F4F4EE; }
-.sw.top { background: #0F5C36; color: #F4F4EE; }
+.sw.old { background: #141614; color: #F4F4EE; }
+.sw.top { background: #141614; color: #F4F4EE; }
 .sw.stop { background: var(--check); color: var(--check-ink); border: 2px solid var(--check-line); }
 
 .bag { display: flex; align-items: center; gap: 14px; margin-top: 22px; scroll-margin-top: 12px; }
@@ -719,9 +719,9 @@ def build():
                       tray([('conv', 1)]), pic(7, [(22.0, 9.8, '5 V converter')]),
                       '<div class="tip text"><p><b>Not sure which pin is pin 1?</b> Test the loose module with a 9 V battery: + on the pin you believe is pin 1, − on the middle pin. The third pin then reads 5 V. Wrong way round, it reads nothing.</p></div>'))
     steps.append(step(9, 'Five MOSFETs',
-                      'IRLB8721 only. Other parts in your drawers have the same shape, so read the printing on each one. Metal tab toward the resistors, printed face toward the screw terminals.',
+                      'IRLB8721 only. Other parts in your drawers have the same shape, so read the printing on each one. Metal tab toward the resistors, printed face toward the screw terminals. Leave them standing straight: the tabs are connected to the strips and must not touch each other.',
                       tray([('fet', 5)]), pic(8),
-                      tip(TIP_FET, 'Leave them standing straight. The tabs are connected to the strips and must not touch each other.')))
+                      tip(TIP_FET, '<b>Pick the best five first.</b> Clip G and D together. 9 V battery: + through a 1 kΩ resistor to G and D, − to S. The meter from G to S reads about 2.0–2.2 V. Measure every one you have, fit the five lowest, and set aside any above 2.6 V.')))
     steps.append(step(10, 'The fuse',
                       'Push the 2 A fuse into its holder. The soldering is finished: look over the back of the board once for joints that touch their neighbours, above all the three pins of each MOSFET.',
                       tray([('fuse', 1)]), pic(9, [(36.0, 11.2, '2 A')])))
@@ -754,16 +754,16 @@ def build():
                    '<tr><td class="n">INT</td><td>Encoder board <b>INT</b> pad</td></tr><tr><td class="n">SCK</td><td>TFT <b>SCK</b></td></tr>'
                    '<tr><td class="n">LITE</td><td>TFT <b>Lite</b></td></tr><tr><td class="n">CS</td><td>TFT <b>TCS</b></td></tr>'
                    '<tr><td class="n">DC</td><td>TFT <b>D/C</b></td></tr><tr><td class="n">GND</td><td>TFT <b>GND</b></td></tr></tbody></table></div>',
-                   '<div class="tip text"><p>The QT Py needs firmware 1.2.0. Load it over USB before or after it goes into the board. USB and the 24 V supply can be connected at the same time.</p></div>')
+                   '<div class="tip text"><p>The QT Py needs firmware 1.2.1. Load it over USB before or after it goes into the board. USB and the 24 V supply can be connected at the same time.</p></div>')
     check3 = ('<article class="check" id="check-3"><header><span class="stopno">!</span><div><span class="where">Stop and check · everything connected</span><h3>First light</h3></div></header>'
               '<p>Plug in the supply. The display starts and the lamp fades up.</p><ol>'
               '<li><b>One colour at a time.</b> In <b>Menu ▸ Settings ▸ Channels</b> open Red, Green, Blue, Warm and Cool in turn. Only that colour lights. If another one does, two wires are swapped at the terminal.</li>'
-              '<li><b>Is each MOSFET fully on?</b> In <b>Menu ▸ Mode ▸ Mixer</b> set one colour to 100 %. Red probe on that colour’s screw, black on <b>GND</b>: <span class="read">under 0.10 V</span> The gates are driven from 3.3 V, which this MOSFET handles easily at these currents, but its datasheet only promises 4.5 V, so each one is checked once. One that reads higher gets swapped for another from the bag.</li>'
+              '<li><b>Is each MOSFET fully on?</b> In <b>Menu ▸ Mode ▸ Mixer</b> set one colour to 100 %. Red probe on that colour’s screw, black on <b>GND</b>: <span class="read">under 0.10 V</span> Simulated, a typical part reads about 0.004 V. The gates are driven from 3.3 V and the datasheet only promises 4.5 V, so each one is checked once. One that reads higher gets swapped for another from the bag.</li>'
               '<li>A colour that never lights: its MOSFET is in backwards, or its 220 Ω is not soldered.</li>'
               '<li>After five minutes with everything at 100 %, the MOSFETs are cold and the SB560 is warm. That is normal.</li>'
               '</ol></article>')
     calibrate = ('<section class="sheet" id="calibrate"><span class="where">Once, when it all works</span><h3>Calibrate</h3><ol class="plain">'
-                 '<li><b>Settings ▸ Channels ▸ each colour ▸ Min duty.</b> The lamp shows only that colour at its dimmest. Lower Min duty until the light goes out, then go back up one step.</li>'
+                 '<li><b>Settings ▸ Channels ▸ each colour ▸ Min duty.</b> The lamp shows only that colour at its dimmest. Lower Min duty until the light goes out, then go back up one step. It starts at 0.12 % for red and 0.16 % for the others, from a simulation of this board, so expect to end up near there.</li>'
                  '<li><b>Settings ▸ Power.</b> The currents already entered are catalogue figures: 133 mA for each RGB colour, 300 mA for each white. If you can measure the real ones, enter them. Set Budget to about 80 % of your supply’s rating.</li>'
                  '</ol></section>')
 
@@ -793,13 +793,13 @@ def build():
                 '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
                 '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Nunito+Sans:wght@400;600;700&family=Rubik:wght@600;800&display=swap">\n'
                 '<style>' + CSS + '</style>\n<svg class="defs" aria-hidden="true" focusable="false"><defs>' + defs + '</defs></svg>\n\n<div class="page">\n')
-    page.append('<header class="cover"><div class="band"><span class="where">Build booklet · driver board · revision A</span><h1>Task Lamp Driver Build</h1>'
+    page.append('<header class="cover"><div class="band"><span class="where">Build booklet · driver board · revision B</span><h1>Task Lamp Driver Build</h1>'
                 '<div class="chips"><span><b>5</b> channels</span><span><b>35</b> parts to solder</span><span><b>%d</b> steps</span><span><b>1</b> board</span><span><b>24 V</b></span></div></div>'
                 '<figure class="plate hero">%s</figure>'
                 '<p class="lede">One board, every part through-hole. The low parts go in first and the tall ones last. Then it is powered up in three stages, so a mistake shows on the meter before it can reach the QT Py or the strips.</p></header>\n'
                 % (N_STEPS, hero))
     page.append('<div class="facts">'
-                '<div><span class="where">The board</span><span class="v">5 from PCBWay</span><p>Upload <b>tasklamp-driver-gerbers.zip</b> and keep the standard options. About $5 plus shipping.</p></div>'
+                '<div><span class="where">The board</span><span class="v">5 from PCBWay</span><p>Upload <b>tasklamp-driver-gerbers.zip</b>, then choose matte black mask, white silkscreen and ENIG. <a href="#pcbway">Options below.</a></p></div>'
                 '<div><span class="where">To buy</span><span class="v">9 lines, about $17</span><p>The converter, sockets, screw terminals, fuse holder and fuses, and two diodes. <a href="#order">Links are below.</a></p></div>'
                 '<div><span class="where">From your inventory</span><span class="v">%d parts</span><p>Five IRLB8721, six 1N5819, ten resistors, four capacitors, a pin header and the QT Py.</p></div></div>\n' % n_stock)
     page.append('<nav class="bags" aria-label="Sections"><a href="#step-1"><b>1</b>Soldering</a><a href="#check-1"><b>!</b>Power-up</a>'
@@ -825,7 +825,7 @@ def build():
                 '<tr><td>QT Py socket, 5V</td><td class="n">4.6–5.0 V</td><td>Lower: D6 is backwards</td></tr>'
                 '<tr><td>QT Py socket, 3V, QT Py in</td><td class="n">3.3 V</td><td>The QT Py is not seated</td></tr>'
                 '<tr><td>A colour’s screw, that colour at 100 %</td><td class="n">under 0.10 V</td><td>Swap that MOSFET</td></tr>'
-                '<tr><td>A colour’s screw, that colour off</td><td class="n">20–24 V</td><td>0 V: a bridge at the MOSFET’s pins</td></tr>'
+                '<tr><td>A colour’s screw, that colour off</td><td class="n">5–24 V</td><td>0 V: a bridge at the MOSFET’s pins. Anything clearly above 0 is fine: the strip’s LEDs hold back part of the 24 V</td></tr>'
                 '</tbody></table></div>'
                 '<p class="hint">Loads at 100 %: about 0.13 A for each of red, green and blue, 0.30 A for each white, 1.0 A with everything on.</p></section>\n')
     page.append('<section class="sheet" id="order"><span class="where">One Digi-Key order</span><h3>Parts to order</h3>'
@@ -833,9 +833,9 @@ def build():
                 '<p class="hint">Stock and prices were not checked live. If a line is out of stock: any 5.08 mm screw terminal with the same number of ways fits, any “78xx replacement” 5 V switching module rated for 28 V or more fits the converter’s holes, and any Mini (ATM) 2 A blade fuse from a car-parts shop fits the holder.</p></section>\n' % order_table)
     page.append('<section class="sheet" id="pcbway"><span class="where">The circuit board</span><h3>Ordering from PCBWay</h3><ol class="plain">'
                 '<li>Choose <b>PCB Instant Quote</b> and upload <b>tasklamp-driver-gerbers.zip</b> from the repository’s <b>hardware/tasklamp-driver</b> folder. The size, 96.5 × 59 mm, and the two layers are read from the file.</li>'
-                '<li>Keep the standard options: FR-4, 1.6 mm thick, 1 oz copper, HASL finish, any solder-mask colour. Nothing on the board needs a special process.</li>'
+                '<li>Keep FR-4, 1.6 mm thick and 1 oz copper. For the look the board was drawn for, choose <b>solder mask: matte black</b> (plain black if matte isn’t offered), <b>silkscreen: white</b> and <b>surface finish: ENIG</b>. Black and ENIG cost more than green and HASL, and the board works the same with either; the quote shows the difference. Nothing needs a special process.</li>'
                 '<li>Quantity 5 is the minimum.</li><li>Compare PCBWay’s preview with the picture at the top of this page before paying.</li></ol>'
-                '<p class="hint">The mounting holes are 3.2 mm, for M3 screws, on a 88.9 × 50.8 mm rectangle. No board has been built from these files yet, so before ordering, print the top layer at full size and hold the fuse holder, converter and terminals against it.</p></section>\n')
+                '<p class="hint">The mounting holes are 3.2 mm, for M3 screws, on a 88.9 × 50.8 mm rectangle. No board has been built from these files yet. They pass 22 checks against the board maker’s limits and the circuit (see <b>hardware/tasklamp-driver/test-report.md</b>), but before ordering, print the top layer at full size and hold the fuse holder, converter and terminals against it.</p></section>\n')
     page.append('<section class="sheet" id="schematic"><span class="where">The whole circuit</span><h3>Schematic</h3>'
                 '<figure class="schem"><div class="scroll"><img alt="Schematic of the driver board: 24 V input with fuse, Schottky diode and TVS, a 5 V converter feeding the QT Py through a diode, and five identical MOSFET switches" src="data:image/png;base64,%s"></div>'
                 '<figcaption>24 V comes in through the fuse and the SB560. The converter makes 5 V for the QT Py. Each colour is one MOSFET with a 220 Ω gate resistor, a 100 kΩ pull-down and a 1N5819 back to +24 V.</figcaption></figure></section>\n'

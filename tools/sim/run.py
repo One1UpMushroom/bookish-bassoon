@@ -64,6 +64,7 @@ I_STRIP_W = 0.271        # white channel current on the 23.4 V rail (test T1)
 # swing. n = 2.0 (118 mV/decade) is taken as the central value and n = 1.3-2.5 as the range.
 K_B_Q = 8.617333e-5      # Boltzmann's constant over the electron charge, V/K
 N_CENTRAL, N_RANGE = 2.0, (1.3, 1.6, 2.0, 2.5)
+SCREEN_V, SCREEN_R = 9.0, 1000.0   # the MOSFET screening test: 9 V battery, 1 kohm, gate tied to drain
 
 
 def ekv(vg, vd, vt0, k, n, t_c=25.0):
@@ -454,8 +455,8 @@ def t2_gate_margin():
 
     # The EKV bound: every curve through the datasheet's two typical points, for subthreshold
     # swings from 77 to 148 mV/decade. Gate voltage needed to be fully on (VDS 0.1 V at the
-    # white strip's current) for a part at the maximum VGS(th); and what that part would read
-    # in the screening test (gate tied to drain, fed from 5 V through 470 ohm, at room temperature).
+    # white strip's current) for a part at the maximum VGS(th); and what a part would read in the
+    # screening test (gate tied to drain, fed from a 9 V battery through 1 kohm, at room temperature).
     bound = []
     for n in N_RANGE:
         vt0, k = ekv_fit(n)
@@ -464,7 +465,7 @@ def t2_gate_margin():
             kt = k * ((t_c + 273.15) / 298.15) ** -1.5
             vt = vt0 + shift + VTH_TC * (t_c - 25)
             return solve_rising(I_STRIP_W, lambda vg: ekv(vg, 0.1, vt, kt, n, t_c), 0, 6)
-        reading = solve_rising(0, lambda vg: ekv(vg, vg, vt0, k, n) - (5 - vg) / 470, 0, 5)
+        reading = solve_rising(0, lambda vg: ekv(vg, vg, vt0, k, n) - (SCREEN_V - vg) / SCREEN_R, 0, 5)
         bound.append({'n': n, 'swing_mV': 2.302585 * n * K_B_Q * 298.15 * 1e3, 'typ_25C': full_on(0, 25),
                       'max_25C': full_on(VTH_MAX - VTH_TYP, 25), 'max_0C': full_on(VTH_MAX - VTH_TYP, 0),
                       'reading_typ': reading, 'offset_0C': full_on(0, 0) - reading})
@@ -478,7 +479,7 @@ def t2_gate_margin():
     limit = math.floor(limit * 20) / 20                      # round down to 0.05 V
     results['curves']['screening_limit_V'] = limit
     record('T2e screening limit', True,
-           'gate tied to drain, 5 V through 470 ohm: a typical part reads %.2f-%.2f V. A part reading %.2f V or less '
+           'gate tied to drain, 9 V through 1 kohm: a typical part reads %.2f-%.2f V. A part reading %.2f V or less '
            'keeps 0.1 V of margin at 0 C on every curve' % (
                min(b['reading_typ'] for b in bound), max(b['reading_typ'] for b in bound), limit),
            {'limit_V': limit}, info=True)
