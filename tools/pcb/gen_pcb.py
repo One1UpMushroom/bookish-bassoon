@@ -28,7 +28,14 @@ KICAD_FOOTPRINTS = '/usr/share/kicad/footprints/'
 OX, OY = 100.0, 60.0
 
 W, H = 96.52, 59.0          # board size
-CORNER = 2.0                # corner radius
+CUT = 3.0                   # 45-degree cut on every corner (the theme's cut corner, as a chamfer)
+
+# Look of the board (Neon Noir Chartreuse): matte black mask, white silkscreen, ENIG.
+# Signage text is Oswald Bold in capitals; small part labels keep KiCad's stroke font,
+# because Oswald's strokes get thinner than the 0.15 mm a fab prints reliably below 1.2 mm.
+SIGNAGE_FONT = 'Oswald'
+SIGNAGE_MIN = 1.2           # mm: smallest signage text
+MASK_COLOR, SILK_COLOR, FINISH = 'Black', 'White', 'ENIG'
 
 # ---------------------------------------------------------------------------
 # Placement
@@ -164,45 +171,61 @@ def routes():
 # Silkscreen text: (text, x, y, height, rotation, layer)
 # ---------------------------------------------------------------------------
 def silk():
+    """Silkscreen text: (text, x, y, height, rotation, layer, justify, signage?)."""
     t = []
 
-    def add(text, x, y, h=1.0, rot=0, layer='F.SilkS', just='center'):
-        t.append((text, x, y, h, rot, layer, just))
+    def add(text, x, y, h=1.0, rot=0, layer='F.SilkS', just='center', sign=False):
+        if sign:
+            assert h >= SIGNAGE_MIN, text
+        t.append((text, x, y, h, rot, layer, just, sign))
+
+    def sign(text, x, y, h=SIGNAGE_MIN, rot=0, layer='F.SilkS', just='center'):
+        add(text, x, y, h, rot, layer, just, True)
 
     # input
-    add('+', 47.5, 12.2, 1.4)
-    add('-', 52.58, 12.1, 1.4)
-    add('24V IN', 50.04, 14.6, 1.2)
-    add('FUSE 2A', 33.4, 10.3, 1.1)
-    add('+5V', 39.34, 11.3, 0.9)
-    add('GND', 43.5, 11.3, 0.9)
+    sign('+', 47.5, 12.1, 1.6)
+    sign('-', 52.58, 12.0, 1.6)
+    sign('24V IN', 50.04, 14.6, 1.3)
+    sign('FUSE 2A', 33.4, 10.4)
+    sign('+5V', 39.34, 11.7)
+    sign('GND', 43.5, 11.7)
     # strip terminals
     for x, s in ((TRUNK_X, '+24'), (TRUNK_X + 5.08, 'R'), (TRUNK_X + 10.16, 'G'), (TRUNK_X + 15.24, 'B')):
-        add(s, x, TY - 6.2, 1.1 if len(s) < 3 else 0.9)
+        sign(s, x, TY - 6.2)
     for x, s in ((DROP_X, '+24'), (DROP_X + 5.08, 'WW'), (DROP_X + 10.16, 'CW')):
-        add(s, x - (0.9 if s == '+24' else 0), TY - 6.2, 1.1 if len(s) < 3 else 0.9)
-    add('< RGB STRIP', 37.3, 55.6, 1.2)
-    add('< WHITE STRIP', 81.0, 55.6, 1.2)
+        sign(s, x - (0.9 if s == '+24' else 0), TY - 6.2)
+    sign('< RGB STRIP', 37.3, 55.6, 1.3)
+    sign('< WHITE STRIP', 81.0, 55.6, 1.3)
     # display header
     for k, s in enumerate(design.J4_LABELS):
         add(s, J4_X + 1.9, QY0 + (2 + k) * 2.54, 0.9, just='left')
-    add('TFT + INT', J4_X + 1.2, 29.3, 0.8)
+    sign('TFT + INT', J4_X + 1.2, 29.6)
     # channel names beside each MOSFET
     names = {'R': 'RED', 'G': 'GRN', 'B': 'BLU', 'WW': 'WARM', 'CW': 'COOL'}
     for i, ch in enumerate(design.CHANNELS):
-        add(names[ch], gx(i) + 6.95, RY2 - 1.35, 0.9, rot=90)
+        sign(names[ch], gx(i) + 6.95, RY2 - 1.6, rot=90)
         add('IRLB8721', gx(i) + 2.54, GY + 2.3, 0.8)     # which TO-220 goes here
     # back of the board: every line sits in a band that has no pads, so no
     # letter is cut by a solder-mask opening
-    add('TASK LAMP DRIVER   rev A', W / 2 + 2, RY1 + 2.4, 2.0, layer='B.SilkS')
-    add('RGB + tunable white strip, 24 V, 1 A', W / 2 + 2, BUS_Y + 2.7, 1.3, layer='B.SilkS')
+    sign('TASK LAMP DRIVER', W / 2 + 2, RY1 + 2.4, 2.0, layer='B.SilkS')   # glyphs 2.34 mm tall: centred in the pad-free band
+    sign('REV B  /  RGB + TUNABLE WHITE  /  24 V  1 A', W / 2 + 2, BUS_Y + 2.7, layer='B.SilkS')
     for x, s in ((TRUNK_X, '+24'), (TRUNK_X + 5.08, 'R'), (TRUNK_X + 10.16, 'G'), (TRUNK_X + 15.24, 'B'),
                  (DROP_X, '+24'), (DROP_X + 5.08, 'WW'), (DROP_X + 10.16, 'CW')):
-        add(s, x, TY - 3.2, 1.2, layer='B.SilkS')
-    add('+', 47.5, 9.2, 1.5, layer='B.SilkS')
-    add('-', 52.58, 9.1, 1.5, layer='B.SilkS')
-    add('24V IN', 50.04, 11.4, 1.1, layer='B.SilkS')
+        sign(s, x, TY - 3.2, 1.3, layer='B.SilkS')
+    sign('+', 47.5, 9.1, 1.6, layer='B.SilkS')
+    sign('-', 52.58, 9.0, 1.6, layer='B.SilkS')
+    sign('24V IN', 50.04, 11.4, layer='B.SilkS')
     return t
+
+
+def frames():
+    """Signage panels round the connector labels: thin rectangles cut at 45 degrees
+    top-left and bottom-right, like the theme's tiles. (x0, y0, x1, y1, cut, layer)."""
+    return [
+        (45.6, 13.45, 54.5, 15.75, 0.8, 'F.SilkS'),     # 24V IN
+        (31.6, 54.4, 43.0, 56.8, 0.8, 'F.SilkS'),       # RGB STRIP
+        (74.2, 54.4, 87.8, 56.8, 0.8, 'F.SilkS'),       # WHITE STRIP
+    ]
 
 
 # Value text printed inside each part's outline, so the bare board says what goes where.
@@ -253,11 +276,15 @@ def qtpy_footprint():
     # module outline (silk, broken where it would cross the pads) and courtyard
     fp.append(rect(left, top, right, bottom, 'F.Fab', 0.1))
     fp.append(rect(left - 0.25, top - 0.25, right + 0.25, bottom + 0.25, 'F.CrtYd', 0.05))
-    fp.append(line(left, top, right, top, 'F.SilkS'))
-    fp.append(line(left, bottom, right, bottom, 'F.SilkS'))
-    for x in (left, right):
-        fp.append(line(x, top, x, -1.33, 'F.SilkS'))
-        fp.append(line(x, 16.57, x, bottom, 'F.SilkS'))
+    c = 1.5   # the theme's 45-degree cut, top-left and bottom-right
+    fp.append(line(left + c, top, right, top, 'F.SilkS'))
+    fp.append(line(left, top + c, left + c, top, 'F.SilkS'))
+    fp.append(line(left, bottom, right - c, bottom, 'F.SilkS'))
+    fp.append(line(right - c, bottom, right, bottom - c, 'F.SilkS'))
+    fp.append(line(left, top + c, left, -1.33, 'F.SilkS'))
+    fp.append(line(right, top, right, -1.33, 'F.SilkS'))
+    fp.append(line(left, 16.57, left, bottom, 'F.SilkS'))
+    fp.append(line(right, 16.57, right, bottom - c, 'F.SilkS'))
     # the two socket strips
     for x in (0.0, 15.24):
         inner = x + (1.33 if x == 0 else -1.33)
@@ -281,6 +308,12 @@ def qtpy_footprint():
 # ---------------------------------------------------------------------------
 # Board construction
 # ---------------------------------------------------------------------------
+def outline():
+    """Board outline, clockwise from the top-left cut."""
+    c = CUT
+    return [(c, 0), (W - c, 0), (W, c), (W, H - c), (W - c, H), (c, H), (0, H - c), (0, c)]
+
+
 def P(x, y):
     return VECTOR2I(FromMM(OX + x), FromMM(OY + y))
 
@@ -380,10 +413,10 @@ def build(project_dir, project, sym_uuid=None, extra_tracks=(), drop_route=None,
     zone.SetNet(nets['GND'])
     zone.SetLayer(pcbnew.B_Cu)
     zone.SetZoneName('GND')
-    outline = zone.Outline()
-    outline.NewOutline()
-    for x, y in ((0, 0), (W, 0), (W, H), (0, H)):
-        outline.Append(FromMM(OX + x), FromMM(OY + y))
+    zpoly = zone.Outline()
+    zpoly.NewOutline()
+    for x, y in outline():
+        zpoly.Append(FromMM(OX + x), FromMM(OY + y))
     zone.SetLocalClearance(FromMM(0.5))
     zone.SetMinThickness(FromMM(0.3))
     zone.SetPadConnection(pcbnew.ZONE_CONNECTION_THERMAL)
@@ -392,30 +425,30 @@ def build(project_dir, project, sym_uuid=None, extra_tracks=(), drop_route=None,
     zone.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
     board.Add(zone)
 
-    # --- outline with rounded corners
-    def edge(shape):
-        shape.SetLayer(pcbnew.Edge_Cuts)
-        shape.SetWidth(FromMM(0.1))
-        board.Add(shape)
-
-    c = CORNER
-    for a, b in (((c, 0), (W - c, 0)), ((W, c), (W, H - c)), ((W - c, H), (c, H)), ((0, H - c), (0, c))):
+    # --- outline: a rectangle with every corner cut at 45 degrees
+    pts = outline()
+    for a, b in zip(pts, pts[1:] + pts[:1]):
         s = pcbnew.PCB_SHAPE(board)
         s.SetShape(pcbnew.SHAPE_T_SEGMENT)
         s.SetStart(P(*a))
         s.SetEnd(P(*b))
-        edge(s)
-    k = c * (1 - 0.5 ** 0.5)
-    for start, mid, end in (((0, c), (k, k), (c, 0)), ((W - c, 0), (W - k, k), (W, c)),
-                            ((W, H - c), (W - k, H - k), (W - c, H)), ((c, H), (k, H - k), (0, H - c))):
-        s = pcbnew.PCB_SHAPE(board)
-        s.SetShape(pcbnew.SHAPE_T_ARC)
-        s.SetArcGeometry(P(*start), P(*mid), P(*end))
-        edge(s)
+        s.SetLayer(pcbnew.Edge_Cuts)
+        s.SetWidth(FromMM(0.1))
+        board.Add(s)
 
     # --- silkscreen
-    for text, x, y, h, rot, layer, just in silk():
+    for text, x, y, h, rot, layer, just, _ in silk():
         add_text(board, text, x, y, h, rot, layer, just)
+    for x0, y0, x1, y1, c, layer in frames():
+        corners = [(x0 + c, y0), (x1, y0), (x1, y1 - c), (x1 - c, y1), (x0, y1), (x0, y0 + c)]
+        for a, b in zip(corners, corners[1:] + corners[:1]):
+            s = pcbnew.PCB_SHAPE(board)
+            s.SetShape(pcbnew.SHAPE_T_SEGMENT)
+            s.SetStart(P(*a))
+            s.SetEnd(P(*b))
+            s.SetLayer(pcbnew.F_SilkS if layer == 'F.SilkS' else pcbnew.B_SilkS)
+            s.SetWidth(FromMM(0.15))
+            board.Add(s)
 
     return board
 
@@ -427,10 +460,55 @@ def write(board, path):
     asked to fill its zones, so the fill is done on the copy read back from disk.
     """
     pcbnew.SaveBoard(path, board)
+    style_file(path)
     loaded = pcbnew.LoadBoard(path)
     pcbnew.ZONE_FILLER(loaded).Fill(loaded.Zones())
     pcbnew.SaveBoard(path, loaded)
     return loaded
+
+
+STACKUP = """    (stackup
+      (layer "F.SilkS" (type "Top Silk Screen") (color "{silk}"))
+      (layer "F.Paste" (type "Top Solder Paste"))
+      (layer "F.Mask" (type "Top Solder Mask") (color "{mask}") (thickness 0.01))
+      (layer "F.Cu" (type "copper") (thickness 0.035))
+      (layer "dielectric 1" (type "core") (thickness 1.51) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
+      (layer "B.Cu" (type "copper") (thickness 0.035))
+      (layer "B.Mask" (type "Bottom Solder Mask") (color "{mask}") (thickness 0.01))
+      (layer "B.Paste" (type "Bottom Solder Paste"))
+      (layer "B.SilkS" (type "Bottom Silk Screen") (color "{silk}"))
+      (copper_finish "{finish}")
+      (dielectric_constraints no)
+    )
+"""
+
+
+def style_file(path):
+    """What the pcbnew Python API can't set: the signage font on silkscreen text, and the
+    board's stack-up with its mask, silkscreen and finish (KiCad's 3D view shows them)."""
+    import re
+    # a text is signage by its words and its place, so a small label that happens to share
+    # its words with a sign ("GND" on the display header) keeps the stroke font
+    signage = {(text, round(OX + x, 2), round(OY + y, 2)) for text, x, y, *_rest, sign in silk() if sign}
+    src = open(path).read()
+    pattern = re.compile(r'(\(gr_text "([^"]*)" \(at ([-\d.]+) ([-\d.]+)[^)]*\).*?\(effects )'
+                         r'\(font \(size ([\d.]+) ([\d.]+)\) \(thickness ([\d.]+)\)\)', re.S)
+
+    def restyle(m):
+        if (m.group(2), round(float(m.group(3)), 2), round(float(m.group(4)), 2)) not in signage:
+            return m.group(0)
+        return '%s(font (face "%s") (size %s %s) (thickness %s) bold)' % (
+            m.group(1), SIGNAGE_FONT, m.group(5), m.group(6), m.group(7))
+
+    src, n = pattern.subn(restyle, src)
+    styled = src.count('(face "%s")' % SIGNAGE_FONT)
+    expected = sum(1 for *_r, sign in silk() if sign)
+    assert styled == expected, 'signage font set on %d texts, expected %d' % (styled, expected)
+    if '(stackup' not in src:
+        src = src.replace('(setup\n', '(setup\n' + STACKUP.format(mask=MASK_COLOR, silk=SILK_COLOR, finish=FINISH), 1)
+    assert '(stackup' in src, 'stack-up not written'
+    with open(path, 'w') as fh:
+        fh.write(src)
 
 
 def add_text(board, text, x, y, h, rot=0, layer='F.SilkS', just='center'):

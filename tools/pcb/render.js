@@ -34,7 +34,8 @@ async function png(page, svg, out, width, background) {
   const files = fs.readdirSync(fab).filter((f) => /\.(g[a-z0-9]+|drl)$/i.test(f));
   const stackup = await pcbStackup(
     files.map((f) => ({ filename: f, gerber: fs.createReadStream(path.join(fab, f)) })),
-    { color: { fr4: '#5d5a4a', cu: '#c9b26b', cf: '#d8b24a', sm: 'rgba(8, 84, 44, 0.86)', ss: '#f4f4ee', sp: '#999', out: '#000' } });
+    // Neon Noir Chartreuse: matte black mask, white silkscreen, ENIG (gold) pads
+    { color: { fr4: '#3b382e', cu: '#9a7b4f', cf: '#d6b25c', sm: 'rgba(11, 13, 12, 0.93)', ss: '#f1f2ee', sp: '#999', out: '#000' } });
   // the vector render is what the build booklet (guide.py) draws on
   fs.writeFileSync(path.join(img, 'board-top.svg'), stackup.top.svg);
   const browser = await chromium.launch();

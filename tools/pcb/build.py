@@ -30,7 +30,7 @@ import verify_fab  # noqa: E402
 from kisch import uid  # noqa: E402
 
 PROJECT = gen_sch.PROJECT
-REV = 'A'
+REV = 'B'
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, 'hardware', 'tasklamp-driver')
 
