@@ -1,0 +1,1414 @@
+{
+ "tests": {
+  "T0a on-resistance, body diode": {
+   "status": "PASS",
+   "detail": "at 10 V/31 A and 4.5 V/25 A: vendor 6.4/13.6 mohm; fitted 13.1 mohm at 4.5 V (datasheet typ 6.5/13.1, max 8.7/16; the fitted model is for gates up to 4.5 V and reads 12 mohm at 10 V); body diode 0.79 V at 25 A (max 1.0)",
+   "data": {
+    "vendor": {
+     "rds10_mohm": 6.430751,
+     "rds45_mohm": 13.615409999999999
+    },
+    "fit": {
+     "rds10_mohm": 12.39906,
+     "rds45_mohm": 13.094980000000001
+    },
+    "dsmax": {
+     "rds10_mohm": 8.757605,
+     "rds45_mohm": 16.65055
+    }
+   }
+  },
+  "T0b worst-case model": {
+   "status": "PASS",
+   "detail": "maximum-resistance model: 8.76 mohm at 10 V (max 8.7), 16.65 mohm at 4.5 V (max 16)",
+   "data": {
+    "rds10_mohm": 8.757605,
+    "rds45_mohm": 16.65055
+   }
+  },
+  "T0c capacitances": {
+   "status": "PASS",
+   "detail": "Ciss 1080 pF (datasheet 1077), Coss 262 pF (360), Crss 106 pF (110)",
+   "data": {
+    "ciss_pF": 1080.367,
+    "coss_pF": 261.8679,
+    "crss_pF": 106.4291
+   }
+  },
+  "T0d gate charge, fitted model": {
+   "status": "PASS",
+   "detail": "to the 25 A plateau: 3.0 nC at 2.88 V (datasheet: Qgs1 + Qgs2 = 3.1 nC, so ~2.88 V); to 4.5 V: 9.3 nC (typ 7.6, max 13). It starts conducting (0.25 A) at 2.31 V",
+   "data": {
+    "q_on_nC": 2.504929,
+    "v_on": 2.308516,
+    "q_pl_nC": 3.031556,
+    "v_pl": 2.882724,
+    "qg_nC": 9.317383999999999
+   }
+  },
+  "T0e gate charge, vendor model": {
+   "status": "INFO",
+   "detail": "to the 25 A plateau: 3.8 nC at 3.63 V; to 4.5 V: 9.3 nC. Its plateau sits 0.75 V above the datasheet's, so it under-rates a 3.3 V gate drive",
+   "data": {
+    "q_on_nC": 2.978135,
+    "v_on": 2.749039,
+    "q_pl_nC": 3.840128,
+    "v_pl": 3.630465,
+    "qg_nC": 9.291695
+   }
+  },
+  "T0f fitted model parameters": {
+   "status": "INFO",
+   "detail": "VTO 2.272 V, KP 903.1, THETA 7.04: carries 0.271 A at 2.299 V (the central EKV curve, 118 mV/decade, through 25 uA at 1.80 V and 25 A at the plateau)",
+   "data": {
+    "vto": 2.2723855015049965,
+    "kp": 903.1464480987999,
+    "theta": 7.037610140356223,
+    "v_strip": 2.2990855015049965
+   }
+  },
+  "T1 all channels on, 3.29 V gates": {
+   "status": "PASS",
+   "detail": "supply 0.951 A; rail 23.40 V; strip currents R 0.127, G 0.126, B 0.126, WW 0.271, CW 0.271 A; MOSFET VDS 1.7, 1.7, 1.7, 3.6, 3.6 mV (vendor model: up to 7.6 mV; maximum-resistance model: up to 6.5 mV)",
+   "data": {
+    "fit": {
+     "i_total": 0.9506501,
+     "rail": 23.40395,
+     "sb560_v": 0.4481263,
+     "vds_mV": {
+      "R": 1.6730390000000002,
+      "G": 1.658744,
+      "B": 1.658744,
+      "WW": 3.584485,
+      "CW": 3.584485
+     },
+     "i_ch": {
+      "R": 0.1266081,
+      "G": 0.1255265,
+      "B": 0.1255265,
+      "WW": 0.2711654,
+      "CW": 0.2711654
+     }
+    },
+    "vendor": {
+     "i_total": 0.9499716,
+     "rail": 23.40411,
+     "sb560_v": 0.4480772,
+     "vds_mV": {
+      "R": 3.540806,
+      "G": 3.509967,
+      "B": 3.509967,
+      "WW": 7.598887,
+      "CW": 7.598887
+     },
+     "i_ch": {
+      "R": 0.1265896,
+      "G": 0.1254897,
+      "B": 0.1254897,
+      "WW": 0.2708724,
+      "CW": 0.2708724
+     }
+    },
+    "dsmax": {
+     "i_total": 0.9501556,
+     "rail": 23.40407,
+     "sb560_v": 0.4480905,
+     "vds_mV": {
+      "R": 3.038096,
+      "G": 3.0117999999999996,
+      "B": 3.0117999999999996,
+      "WW": 6.508877,
+      "CW": 6.508877
+     },
+     "i_ch": {
+      "R": 0.1265946,
+      "G": 0.1254996,
+      "B": 0.1254996,
+      "WW": 0.270952,
+      "CW": 0.270952
+     }
+    }
+   }
+  },
+  "T9 temperatures": {
+   "status": "PASS",
+   "detail": "SB560 0.45 V x 0.95 A = 0.43 W, about 17 K above ambient at ~40 K/W; F1 50 mW; worst MOSFET 1.0 mW (<0.2 K, no heatsink needed)",
+   "data": {
+    "sb560_w": 0.42601131190763,
+    "sb560_rise_K": 17.040452476305198,
+    "fuse_mW": 50.24770006222856,
+    "mos_mW": 0.971988308819
+   }
+  },
+  "T2a typical part": {
+   "status": "PASS",
+   "detail": "VDS at 0.27 A, 3.29 V gate, 25 C: fitted model 3.6 mV, vendor model 7.6 mV",
+   "data": {
+    "rows": [
+     {
+      "model": "fit",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 10,
+      "vds_mV": 3.580907,
+      "id": 0.2708656
+     },
+     {
+      "model": "vendor",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 34,
+      "vds_mV": 7.617193,
+      "id": 0.2705592
+     }
+    ]
+   }
+  },
+  "T2b part at the maximum VGS(th), fitted model": {
+   "status": "PASS",
+   "detail": "VGS(th) 2.35 V, 3.20 V gate, worst of 0/25/85 C (85 C): VDS 4.5 mV, 0.271 A",
+   "data": {
+    "rows": [
+     {
+      "model": "fit",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 0,
+      "vgs": 3.2,
+      "k": 1,
+      "vds_mV": 3.244158,
+      "id": 0.2708912
+     },
+     {
+      "model": "fit",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 0,
+      "vgs": 3.29,
+      "k": 2,
+      "vds_mV": 3.228767,
+      "id": 0.2708923
+     },
+     {
+      "model": "fit",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 25,
+      "vgs": 3.2,
+      "k": 3,
+      "vds_mV": 3.502934,
+      "id": 0.2708715
+     },
+     {
+      "model": "fit",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 4,
+      "vds_mV": 3.4894320000000003,
+      "id": 0.2708725
+     },
+     {
+      "model": "fit",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 85,
+      "vgs": 3.2,
+      "k": 5,
+      "vds_mV": 4.172791999999999,
+      "id": 0.2708207
+     },
+     {
+      "model": "fit",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 85,
+      "vgs": 3.29,
+      "k": 6,
+      "vds_mV": 4.162184,
+      "id": 0.2708215
+     },
+     {
+      "model": "fit",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 0,
+      "vgs": 3.2,
+      "k": 7,
+      "vds_mV": 3.376572,
+      "id": 0.2708811
+     },
+     {
+      "model": "fit",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 0,
+      "vgs": 3.29,
+      "k": 8,
+      "vds_mV": 3.33873,
+      "id": 0.270884
+     },
+     {
+      "model": "fit",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 25,
+      "vgs": 3.2,
+      "k": 9,
+      "vds_mV": 3.609893,
+      "id": 0.2708634
+     },
+     {
+      "model": "fit",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 10,
+      "vds_mV": 3.580907,
+      "id": 0.2708656
+     },
+     {
+      "model": "fit",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 85,
+      "vgs": 3.2,
+      "k": 11,
+      "vds_mV": 4.247155,
+      "id": 0.270815
+     },
+     {
+      "model": "fit",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 85,
+      "vgs": 3.29,
+      "k": 12,
+      "vds_mV": 4.228547,
+      "id": 0.2708164
+     },
+     {
+      "model": "fit",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 0,
+      "vgs": 3.2,
+      "k": 13,
+      "vds_mV": 3.6122680000000003,
+      "id": 0.2708632
+     },
+     {
+      "model": "fit",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 0,
+      "vgs": 3.29,
+      "k": 14,
+      "vds_mV": 3.5140089999999997,
+      "id": 0.2708707
+     },
+     {
+      "model": "fit",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 25,
+      "vgs": 3.2,
+      "k": 15,
+      "vds_mV": 3.7669140000000003,
+      "id": 0.2708515
+     },
+     {
+      "model": "fit",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 16,
+      "vds_mV": 3.70595,
+      "id": 0.2708561
+     },
+     {
+      "model": "fit",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 85,
+      "vgs": 3.2,
+      "k": 17,
+      "vds_mV": 4.3323670000000005,
+      "id": 0.2708085
+     },
+     {
+      "model": "fit",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 85,
+      "vgs": 3.29,
+      "k": 18,
+      "vds_mV": 4.302066,
+      "id": 0.2708108
+     },
+     {
+      "model": "fit",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 0,
+      "vgs": 3.2,
+      "k": 19,
+      "vds_mV": 4.352749,
+      "id": 0.270807
+     },
+     {
+      "model": "fit",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 0,
+      "vgs": 3.29,
+      "k": 20,
+      "vds_mV": 3.9382200000000003,
+      "id": 0.2708385
+     },
+     {
+      "model": "fit",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 25,
+      "vgs": 3.2,
+      "k": 21,
+      "vds_mV": 4.090382,
+      "id": 0.2708269
+     },
+     {
+      "model": "fit",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 22,
+      "vds_mV": 3.933733,
+      "id": 0.2708388
+     },
+     {
+      "model": "fit",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 85,
+      "vgs": 3.2,
+      "k": 23,
+      "vds_mV": 4.452614,
+      "id": 0.2707994
+     },
+     {
+      "model": "fit",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 85,
+      "vgs": 3.29,
+      "k": 24,
+      "vds_mV": 4.401482,
+      "id": 0.2708033
+     },
+     {
+      "model": "vendor",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 0,
+      "vgs": 3.2,
+      "k": 25,
+      "vds_mV": 5.544633999999999,
+      "id": 0.2707165
+     },
+     {
+      "model": "vendor",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 0,
+      "vgs": 3.29,
+      "k": 26,
+      "vds_mV": 5.111885,
+      "id": 0.2707494
+     },
+     {
+      "model": "vendor",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 25,
+      "vgs": 3.2,
+      "k": 27,
+      "vds_mV": 5.2813859999999995,
+      "id": 0.2707365
+     },
+     {
+      "model": "vendor",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 28,
+      "vds_mV": 4.940455,
+      "id": 0.2707624
+     },
+     {
+      "model": "vendor",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 85,
+      "vgs": 3.2,
+      "k": 29,
+      "vds_mV": 4.976705,
+      "id": 0.2707596
+     },
+     {
+      "model": "vendor",
+      "corner": "min",
+      "vth_25C": 1.35,
+      "temp_C": 85,
+      "vgs": 3.29,
+      "k": 30,
+      "vds_mV": 4.749267,
+      "id": 0.2707769
+     },
+     {
+      "model": "vendor",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 0,
+      "vgs": 3.2,
+      "k": 31,
+      "vds_mV": 10.91572,
+      "id": 0.2703088
+     },
+     {
+      "model": "vendor",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 0,
+      "vgs": 3.29,
+      "k": 32,
+      "vds_mV": 8.986632,
+      "id": 0.2704552
+     },
+     {
+      "model": "vendor",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 25,
+      "vgs": 3.2,
+      "k": 33,
+      "vds_mV": 8.688284,
+      "id": 0.2704779
+     },
+     {
+      "model": "vendor",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 34,
+      "vds_mV": 7.617193,
+      "id": 0.2705592
+     },
+     {
+      "model": "vendor",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 85,
+      "vgs": 3.2,
+      "k": 35,
+      "vds_mV": 6.7520109999999995,
+      "id": 0.2706249
+     },
+     {
+      "model": "vendor",
+      "corner": "typ",
+      "vth_25C": 1.8,
+      "temp_C": 85,
+      "vgs": 3.29,
+      "k": 36,
+      "vds_mV": 6.275397,
+      "id": 0.270661
+     },
+     {
+      "model": "vendor",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 0,
+      "vgs": 3.2,
+      "k": 37,
+      "vds_mV": 969.8584,
+      "id": 0.1989806
+     },
+     {
+      "model": "vendor",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 0,
+      "vgs": 3.29,
+      "k": 38,
+      "vds_mV": 24.87233,
+      "id": 0.2692497
+     },
+     {
+      "model": "vendor",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 25,
+      "vgs": 3.2,
+      "k": 39,
+      "vds_mV": 18.234759999999998,
+      "id": 0.2697533
+     },
+     {
+      "model": "vendor",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 40,
+      "vds_mV": 13.49197,
+      "id": 0.2701132
+     },
+     {
+      "model": "vendor",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 85,
+      "vgs": 3.2,
+      "k": 41,
+      "vds_mV": 9.280315000000002,
+      "id": 0.2704329
+     },
+     {
+      "model": "vendor",
+      "corner": "high",
+      "vth_25C": 2.1,
+      "temp_C": 85,
+      "vgs": 3.29,
+      "k": 42,
+      "vds_mV": 8.308997999999999,
+      "id": 0.2705067
+     },
+     {
+      "model": "vendor",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 0,
+      "vgs": 3.2,
+      "k": 43,
+      "vds_mV": 9218.267000000002,
+      "id": 3.80369e-07
+     },
+     {
+      "model": "vendor",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 0,
+      "vgs": 3.29,
+      "k": 44,
+      "vds_mV": 9218.274,
+      "id": 3.803637e-07
+     },
+     {
+      "model": "vendor",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 25,
+      "vgs": 3.2,
+      "k": 45,
+      "vds_mV": 9218.285,
+      "id": 3.803544e-07
+     },
+     {
+      "model": "vendor",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 25,
+      "vgs": 3.29,
+      "k": 46,
+      "vds_mV": 243.77519999999998,
+      "id": 0.2527099
+     },
+     {
+      "model": "vendor",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 85,
+      "vgs": 3.2,
+      "k": 47,
+      "vds_mV": 14.245199999999999,
+      "id": 0.2700561
+     },
+     {
+      "model": "vendor",
+      "corner": "max",
+      "vth_25C": 2.35,
+      "temp_C": 85,
+      "vgs": 3.29,
+      "k": 48,
+      "vds_mV": 11.87768,
+      "id": 0.2702358
+     }
+    ]
+   }
+  },
+  "T2c the same part, vendor model": {
+   "status": "INFO",
+   "detail": "at 3.29 V it carries 93 % of the strip current at 25 C and 0 % at 0 C. The vendor model puts the threshold 0.85 V above the datasheet, so this is the pessimistic bound",
+   "data": {}
+  },
+  "T2d maximum-VGS(th) part, every datasheet-consistent curve": {
+   "status": "PASS",
+   "detail": "gate needed to be fully on, at 25 C / 0 C: 77 mV/dec 2.70 / 2.87 V; 95 mV/dec 2.76 / 2.94 V; 118 mV/dec 2.85 / 3.03 V; 148 mV/dec 2.96 / 3.16 V; available 3.20 V",
+   "data": {
+    "rows": [
+     {
+      "n": 1.3,
+      "swing_mV": 76.90714914461488,
+      "typ_25C": 2.15039093338612,
+      "max_25C": 2.70039093338612,
+      "max_0C": 2.873287979633501,
+      "reading_typ": 1.9902898380227474,
+      "offset_0C": 0.3329981416107537
+     },
+     {
+      "n": 1.6,
+      "swing_mV": 94.65495279337217,
+      "typ_25C": 2.214962199951521,
+      "max_25C": 2.764962199951521,
+      "max_0C": 2.9412450506803536,
+      "reading_typ": 2.03164212678354,
+      "offset_0C": 0.3596029238968139
+     },
+     {
+      "n": 2.0,
+      "swing_mV": 118.31869099171521,
+      "typ_25C": 2.300948958544984,
+      "max_25C": 2.8509489585449836,
+      "max_0C": 3.0336400986934198,
+      "reading_typ": 2.086314432306783,
+      "offset_0C": 0.3973256663866369
+     },
+     {
+      "n": 2.5,
+      "swing_mV": 147.89836373964403,
+      "typ_25C": 2.4064377824904364,
+      "max_25C": 2.956437782490436,
+      "max_0C": 3.1552638599662943,
+      "reading_typ": 2.153756770712115,
+      "offset_0C": 0.4515070892541795
+     }
+    ]
+   }
+  },
+  "T2e screening limit": {
+   "status": "INFO",
+   "detail": "gate tied to drain, 5 V through 470 ohm: a typical part reads 1.99-2.15 V. A part reading 2.60 V or less keeps 0.1 V of margin at 0 C on every curve",
+   "data": {
+    "limit_V": 2.6
+   }
+  },
+  "T3a switching": {
+   "status": "PASS",
+   "detail": "white channel, 0.27 A: on after 0.54 us, rising over 1.22 us; off after 0.31 us, falling over 0.20 us. Switching loss at 20 kHz, the firmware maximum: 14.0 mW per MOSFET",
+   "data": {
+    "loss_20k_mW": 13.990101521368542
+   }
+  },
+  "T3b Min duty defaults (2 kHz)": {
+   "status": "PASS",
+   "detail": "dead time (fitted model) white 0.80, green/blue 0.79, red 0.58 us, so Min duty R 0.117, G 0.158, B 0.158, WW 0.160, CW 0.160 %; firmware defaults R 0.120, G 0.160, B 0.160, WW 0.160, CW 0.160 %",
+   "data": {
+    "sim_pct": {
+     "R": 0.11677015872083096,
+     "G": 0.1576238020473956,
+     "B": 0.1576238020473956,
+     "WW": 0.1598499609816809,
+     "CW": 0.1598499609816809
+    },
+    "firmware_pct": {
+     "R": 0.12,
+     "G": 0.16,
+     "B": 0.16,
+     "WW": 0.16,
+     "CW": 0.16
+    }
+   }
+  },
+  "T3c dead time, vendor model": {
+   "status": "INFO",
+   "detail": "white 1.87, green/blue 1.71, red 1.37 us: Min duty would be 0.374, 0.341, 0.274 % at 2 kHz. At 20 kHz every floor is ten times larger",
+   "data": {}
+  },
+  "T4 drain spike at turn-off": {
+   "status": "PASS",
+   "detail": "peak drain voltage with D1-D5: 14.0 V (1 uH lead), 23.7 V (3 uH); without them: 15.0 V, 30.0 V (MOSFET rated 30 V; the model clamps at 30 V)",
+   "data": {
+    "clamped_1uH": 14.04816,
+    "bare_1uH": 15.03847,
+    "clamped_3uH": 23.69037,
+    "bare_3uH": 29.99658
+   }
+  },
+  "T5 hot-plug": {
+   "status": "PASS",
+   "detail": "general-purpose capacitors, 1.5 m lead: 68 A peak, rail peaks at 23.7 V, 0.19 A2s; low-ESR capacitors, short heavy lead: 139 A peak, rail peaks at 23.7 V, 0.49 A2s; general-purpose capacitors, 5 m lead: 39 A peak, rail peaks at 23.7 V, 0.11 A2s. Fuse melts at ~5.8 A2s; the TVS starts at 28.5 V, the converter is rated 36 V",
+   "data": {
+    "general-purpose capacitors, 1.5 m lead": {
+     "ipk": 67.88333,
+     "vpk": 23.68038,
+     "i2t": 0.19077
+    },
+    "low-ESR capacitors, short heavy lead": {
+     "ipk": 138.7735,
+     "vpk": 23.68275,
+     "i2t": 0.489646
+    },
+    "general-purpose capacitors, 5 m lead": {
+     "ipk": 39.29739,
+     "vpk": 23.6736,
+     "i2t": 0.114411
+    }
+   }
+  },
+  "T6 reverse polarity": {
+   "status": "PASS",
+   "detail": "current drawn 0.6 uA; rail -0.017 V; D7 holds off 24.0 V",
+   "data": {
+    "i_uA": 0.55146,
+    "rail": -0.0173337
+   }
+  },
+  "T7 5 V path": {
+   "status": "PASS",
+   "detail": "24 V only: 5V pin 4.71 V (converter 85 mA, USB -0 mA); USB only: 5V pin 4.67 V (converter -0 mA, USB 85 mA); both: 5V pin 4.73 V (converter 58 mA, USB 27 mA); both, USB at 5.25 V: 5V pin 4.92 V (converter 0 mA, USB 85 mA); at most 31.7 uA flows back into either source",
+   "data": {
+    "24 V only": {
+     "v5": 4.713585,
+     "i_oki": 0.085057,
+     "i_usb": -2e-06
+    },
+    "USB only": {
+     "v5": 4.667997,
+     "i_oki": -3.17e-05,
+     "i_usb": 0.0850867
+    },
+    "both": {
+     "v5": 4.728796,
+     "i_oki": 0.05844132,
+     "i_usb": 0.02661368
+    },
+    "both, USB at 5.25 V": {
+     "v5": 4.918256,
+     "i_oki": 0.0002848797,
+     "i_usb": 0.08477012
+    }
+   }
+  },
+  "T8 gate held off by 100k": {
+   "status": "PASS",
+   "detail": "with 1 uA of pin leakage the gate sits at 0.100 V (VGS(th) min 1.35 V); strip current 3.8e-07 A",
+   "data": {
+    "vg": 0.1000009,
+    "i_strip": 3.803813e-07
+   }
+  },
+  "T10 rail ripple": {
+   "status": "PASS",
+   "detail": "rail ripple 0.24 V p-p (low point 23.41 V); each bulk capacitor carries 121 mA rms; supply lead 0.59 A rms, 0.93 A peak",
+   "data": {
+    "vpp": 0.2399691,
+    "vmin": 23.40817,
+    "ic_rms_mA": 120.785,
+    "isup_rms": 0.587329,
+    "ipk": 0.9303299
+   }
+  }
+ },
+ "curves": {
+  "ekv_bound": [
+   {
+    "n": 1.3,
+    "swing_mV": 76.90714914461488,
+    "typ_25C": 2.15039093338612,
+    "max_25C": 2.70039093338612,
+    "max_0C": 2.873287979633501,
+    "reading_typ": 1.9902898380227474,
+    "offset_0C": 0.3329981416107537
+   },
+   {
+    "n": 1.6,
+    "swing_mV": 94.65495279337217,
+    "typ_25C": 2.214962199951521,
+    "max_25C": 2.764962199951521,
+    "max_0C": 2.9412450506803536,
+    "reading_typ": 2.03164212678354,
+    "offset_0C": 0.3596029238968139
+   },
+   {
+    "n": 2.0,
+    "swing_mV": 118.31869099171521,
+    "typ_25C": 2.300948958544984,
+    "max_25C": 2.8509489585449836,
+    "max_0C": 3.0336400986934198,
+    "reading_typ": 2.086314432306783,
+    "offset_0C": 0.3973256663866369
+   },
+   {
+    "n": 2.5,
+    "swing_mV": 147.89836373964403,
+    "typ_25C": 2.4064377824904364,
+    "max_25C": 2.956437782490436,
+    "max_0C": 3.1552638599662943,
+    "reading_typ": 2.153756770712115,
+    "offset_0C": 0.4515070892541795
+   }
+  ],
+  "screening_limit_V": 2.6,
+  "threshold_sweep": {
+   "fit": [
+    [
+     1.35,
+     0.003489432
+    ],
+    [
+     1.4,
+     0.003496721
+    ],
+    [
+     1.4500000000000002,
+     0.003504544
+    ],
+    [
+     1.5,
+     0.003512963
+    ],
+    [
+     1.55,
+     0.003522047
+    ],
+    [
+     1.6,
+     0.00353188
+    ],
+    [
+     1.6500000000000001,
+     0.003542557
+    ],
+    [
+     1.7,
+     0.003554193
+    ],
+    [
+     1.75,
+     0.003566922
+    ],
+    [
+     1.8,
+     0.003580907
+    ],
+    [
+     1.85,
+     0.003596342
+    ],
+    [
+     1.9000000000000001,
+     0.003613466
+    ],
+    [
+     1.95,
+     0.003632572
+    ],
+    [
+     2.0,
+     0.003654026
+    ],
+    [
+     2.05,
+     0.003678288
+    ],
+    [
+     2.1,
+     0.00370595
+    ],
+    [
+     2.15,
+     0.003737778
+    ],
+    [
+     2.2,
+     0.003774792
+    ],
+    [
+     2.25,
+     0.003818372
+    ],
+    [
+     2.3,
+     0.003870437
+    ],
+    [
+     2.35,
+     0.003933733
+    ],
+    [
+     2.4,
+     0.004012339
+    ],
+    [
+     2.45,
+     0.004112579
+    ],
+    [
+     2.5,
+     0.004244826
+    ],
+    [
+     2.55,
+     0.004427362
+    ],
+    [
+     2.6,
+     0.004695724
+    ],
+    [
+     2.65,
+     0.005129494
+    ],
+    [
+     2.7,
+     0.005952352
+    ],
+    [
+     2.75,
+     0.008151893
+    ],
+    [
+     2.8,
+     2.137565
+    ],
+    [
+     2.85,
+     9.218265
+    ],
+    [
+     2.9000000000000004,
+     9.218264
+    ],
+    [
+     2.95,
+     9.218269
+    ],
+    [
+     3.0,
+     9.218264
+    ],
+    [
+     3.05,
+     9.218267
+    ],
+    [
+     3.1,
+     9.218274
+    ],
+    [
+     3.1500000000000004,
+     9.218257
+    ],
+    [
+     3.2,
+     9.218279
+    ],
+    [
+     3.25,
+     9.218264
+    ],
+    [
+     3.3,
+     9.218256
+    ]
+   ],
+   "vendor": [
+    [
+     1.35,
+     0.004940455
+    ],
+    [
+     1.4,
+     0.005122524
+    ],
+    [
+     1.4500000000000002,
+     0.005323123
+    ],
+    [
+     1.5,
+     0.005545241
+    ],
+    [
+     1.55,
+     0.005792545
+    ],
+    [
+     1.6,
+     0.006069591
+    ],
+    [
+     1.6500000000000001,
+     0.006382106
+    ],
+    [
+     1.7,
+     0.006737394
+    ],
+    [
+     1.75,
+     0.007144923
+    ],
+    [
+     1.8,
+     0.007617193
+    ],
+    [
+     1.85,
+     0.008171064
+    ],
+    [
+     1.9000000000000001,
+     0.008829848
+    ],
+    [
+     1.95,
+     0.009626764
+    ],
+    [
+     2.0,
+     0.01061087
+    ],
+    [
+     2.05,
+     0.01185796
+    ],
+    [
+     2.1,
+     0.01349197
+    ],
+    [
+     2.15,
+     0.01573163
+    ],
+    [
+     2.2,
+     0.01900675
+    ],
+    [
+     2.25,
+     0.02431538
+    ],
+    [
+     2.3,
+     0.03482892
+    ],
+    [
+     2.35,
+     0.2437752
+    ],
+    [
+     2.4,
+     3.341207
+    ],
+    [
+     2.45,
+     9.21827
+    ],
+    [
+     2.5,
+     9.218274
+    ],
+    [
+     2.55,
+     9.218256
+    ],
+    [
+     2.6,
+     9.21826
+    ],
+    [
+     2.65,
+     9.218266
+    ],
+    [
+     2.7,
+     9.218259
+    ],
+    [
+     2.75,
+     9.218264
+    ],
+    [
+     2.8,
+     9.218268
+    ],
+    [
+     2.85,
+     9.218264
+    ],
+    [
+     2.9000000000000004,
+     9.218264
+    ],
+    [
+     2.95,
+     9.218275
+    ],
+    [
+     3.0,
+     9.218272
+    ],
+    [
+     3.05,
+     9.218274
+    ],
+    [
+     3.1,
+     9.218265
+    ],
+    [
+     3.1500000000000004,
+     9.218271
+    ],
+    [
+     3.2,
+     9.218258
+    ],
+    [
+     3.25,
+     9.218267
+    ],
+    [
+     3.3,
+     9.218272
+    ]
+   ]
+  },
+  "edges": {
+   "fit/white": {
+    "i_on": 0.270865557,
+    "delay_on_us": 0.5362284171823002,
+    "rise_us": 1.2198321611866103,
+    "delay_off_us": 0.3081002714800579,
+    "fall_us": 0.2030538497858818,
+    "e_sw_nJ": 699.505076068427,
+    "dead_us": 0.7992498049084045
+   },
+   "fit/green/blue": {
+    "i_on": 0.125440806,
+    "delay_on_us": 0.7103681422518469,
+    "rise_us": 0.9254087003313873,
+    "delay_off_us": 0.3039567235663743,
+    "fall_us": 0.22424138892933926,
+    "e_sw_nJ": 216.84404300013452,
+    "dead_us": 0.7881190102369781
+   },
+   "fit/red": {
+    "i_on": 0.126565382,
+    "delay_on_us": 0.7599095632704066,
+    "rise_us": 0.7124748246862211,
+    "delay_off_us": 0.3611691557603544,
+    "fall_us": 0.26415866856352715,
+    "e_sw_nJ": 335.12389718623564,
+    "dead_us": 0.5838507936041549
+   },
+   "vendor/white": {
+    "i_on": 0.270558695,
+    "delay_on_us": 0.9161162227709656,
+    "rise_us": 2.1038458429379996,
+    "delay_off_us": 0.19528280327693492,
+    "fall_us": 0.20719966118692307,
+    "e_sw_nJ": 839.7069948863269,
+    "dead_us": 1.8684996916769148
+   },
+   "vendor/green/blue": {
+    "i_on": 0.12540035,
+    "delay_on_us": 1.638020441253962,
+    "rise_us": 1.1471753059377383,
+    "delay_off_us": 0.1944998456874932,
+    "fall_us": 0.22710263202775063,
+    "e_sw_nJ": 301.2200791976785,
+    "dead_us": 1.7060355257784592
+   },
+   "vendor/red": {
+    "i_on": 0.126545025,
+    "delay_on_us": 1.3133858126887212,
+    "rise_us": 1.2134657761228218,
+    "delay_off_us": 0.24208926185559612,
+    "fall_us": 0.2635372498654525,
+    "e_sw_nJ": 505.40553224574154,
+    "dead_us": 1.37229678311684
+   }
+  },
+  "single_pulse": {
+   "fit": [
+    [
+     0.1,
+     -1.014462684157366e-05
+    ],
+    [
+     0.2,
+     -1.0926841466225991e-05
+    ],
+    [
+     0.3,
+     -6.150049807427776e-06
+    ],
+    [
+     0.4,
+     -4.702415892619378e-06
+    ],
+    [
+     0.5,
+     0.6830687594584055
+    ],
+    [
+     0.6,
+     2.674740221769873
+    ],
+    [
+     0.7,
+     5.210001654067815
+    ],
+    [
+     0.8,
+     7.849881408140792
+    ],
+    [
+     1.0,
+     12.817096564256047
+    ],
+    [
+     1.25,
+     18.26190105078587
+    ],
+    [
+     1.5,
+     28.611980370763792
+    ],
+    [
+     2.0,
+     53.24634168972618
+    ],
+    [
+     2.5,
+     65.8559921666231
+    ],
+    [
+     3.0,
+     72.60182339585293
+    ],
+    [
+     4.0,
+     79.91409184594112
+    ],
+    [
+     5.0,
+     83.99739063169261
+    ],
+    [
+     7.0,
+     88.58005417900259
+    ],
+    [
+     10.0,
+     92.006160827602
+    ],
+    [
+     20.0,
+     96.00316218868684
+    ]
+   ],
+   "vendor": [
+    [
+     0.1,
+     3.418008798423573e-05
+    ],
+    [
+     0.2,
+     1.1674768020299625e-05
+    ],
+    [
+     0.3,
+     9.010478607362196e-06
+    ],
+    [
+     0.4,
+     6.695284732948611e-06
+    ],
+    [
+     0.5,
+     5.35411364251295e-06
+    ],
+    [
+     0.6,
+     1.6197655989827518e-06
+    ],
+    [
+     0.7,
+     0.36217385552619447
+    ],
+    [
+     0.8,
+     1.0404673928516694
+    ],
+    [
+     1.0,
+     2.83320778140211
+    ],
+    [
+     1.25,
+     5.286335373549905
+    ],
+    [
+     1.5,
+     7.576667729467476
+    ],
+    [
+     2.0,
+     11.59114476065905
+    ],
+    [
+     2.5,
+     21.34812189273754
+    ],
+    [
+     3.0,
+     33.61193030591754
+    ],
+    [
+     4.0,
+     52.72220136928144
+    ],
+    [
+     5.0,
+     62.54546725988606
+    ],
+    [
+     7.0,
+     73.30281618084493
+    ],
+    [
+     10.0,
+     81.31322484387353
+    ],
+    [
+     20.0,
+     90.6566687867858
+    ]
+   ]
+  },
+  "fw_min_duty_white_us": 0.8
+ }
+}

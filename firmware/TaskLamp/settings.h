@@ -95,7 +95,7 @@ struct UiCfg {
 constexpr uint32_t kSettingsMagic = 0x4C414D50;  // "LAMP"
 // Version 2: the per-channel "invert" flags are gone. Settings saved by older
 // firmware are replaced by the defaults on first boot.
-constexpr uint16_t kSettingsVersion = 2;
+constexpr uint16_t kSettingsVersion = 3;  // 3: Min duty defaults from simulation
 
 // PWM frequency range offered in the menu. Below about 500 Hz a moving hand
 // or a camera shows the flicker; above about 20 kHz the MOSFET gates, driven

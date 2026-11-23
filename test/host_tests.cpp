@@ -417,6 +417,7 @@ TEST(engine_sleep_timer_and_preview) {
 TEST(output_stage) {
   Settings s;
   settings::defaults(s);
+  for (int i = 0; i < kCh; i++) s.hw.chMin[i] = 0;  // the duty floor is tested on its own below
   OutputStage os;
   os.configure(s.hw, 999);  // 1000 counts per period
   OutputResult r;
@@ -438,7 +439,7 @@ TEST(output_stage) {
 
   // trim + power budget
   settings::defaults(s);
-  for (int i = 0; i < kCh; i++) s.hw.chmA[i] = 1000;
+  for (int i = 0; i < kCh; i++) s.hw.chmA[i] = 1000, s.hw.chMin[i] = 0;
   s.hw.chTrim[1] = 500;
   s.hw.budgetmA = 2000;
   os.configure(s.hw, 9999);
@@ -691,10 +692,10 @@ TEST(ui_calibration_preview) {
   CHECK(r.rt.previewLvl[CH_B] == 1 && r.rt.previewLvl[CH_R] == 0);
   CHECK(!r.shows("Invert"));  // the strip switches are never inverted
   CHECK(r.open("Min duty"));
-  CHECK(r.s.hw.chMin[CH_B] == 30);  // default: estimated gate-charge dead band
+  CHECK(r.s.hw.chMin[CH_B] == 160);  // default: the simulated gate-charge dead band
   r.ev(Ev::Turn, 50, 1);
-  CHECK(r.s.hw.chMin[CH_B] == 80);
-  CHECK(r.shows("0.080%"));
+  CHECK(r.s.hw.chMin[CH_B] == 210);
+  CHECK(r.shows("0.210%"));
   r.wait(31000);  // a test light must outlast a meter reading...
   CHECK(r.rt.preview == PREVIEW_RAW);
   r.wait(80000);  // ...and the screen going to sleep

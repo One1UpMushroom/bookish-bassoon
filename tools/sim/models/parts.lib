@@ -1,0 +1,70 @@
+* Models for the task-lamp driver board simulations (ngspice).
+* Each block says where its numbers come from. "published" = a model file found in public
+* SPICE libraries; "fitted" = parameters chosen here to match the datasheet points named.
+
+* ---------------------------------------------------------------------------------------
+* 1N5819 Schottky, 40 V 1 A (D1-D6). Published: the widely copied LTspice standard-library
+* parameters (also in azorg/spice-labs models/d/1N5819.mod). Vf ~0.42 V at 1 A.
+.model D1N5819 D(Is=31.7u Rs=0.051 N=1.373 Cjo=110p M=0.35 Eg=0.69 Xti=2 BV=40 IBV=1m)
+
+* ---------------------------------------------------------------------------------------
+* SB560 Schottky, 60 V 5 A (D7, reverse-polarity). Published: Vishay SB560 model by
+* Thomatronik GmbH (A. Buermen), as found in public libraries. Kept as published.
+.SUBCKT SB560 1 2
+.MODEL DIO D(N=1.09755 IS=5.51411E-007 RS=0.0425717 EG=0.656024 XTI=2.04158 CJO=1.08891E-009
++ VJ=0.279874 M=0.345573 FC=0.5 TT=1.4427E-009 BV=60 IBV=0.0005 KF=0 AF=1)
+.MODEL GR D(N=1.03547 IS=1.30736E-012 RS=0.00880338 EG=1.15943 XTI=3.01552)
+DD 1 2 DIO
+DG 1 2 GR
+.ENDS
+
+* ---------------------------------------------------------------------------------------
+* P6KE30A unidirectional TVS (D8). Published: STMicroelectronics P6KE transil model
+* (P6KE.LIB rev 1.0, 2011): VBR nom 30 V, max 31.5 V; clamp 53.5 V at 76 A (ST rating).
+* The Littelfuse part we order is rated 41.4 V max at 14.7 A (10/1000 us); ST's slope gives
+* 35.8 V at 14.7 A, so clamp voltages from this model are typical, not worst case.
+.SUBCKT P6KE30A Anode Cathode
+Drev A_int Cathode TRANSR
+Dfwd Anode Cathode TRANSF
+Dr A_int Anode DTRANS
+.MODEL TRANSR D(IS=2.5u RS=0.2895 BV=30 IBV=1m IKF=1000 Cjo=1p M=.3333 VJ=.6 TT=1u)
+.MODEL TRANSF D(IS=27.04f N=1.016 RS=13.69m IKF=41.7 Cjo=1075p M=.3333 VJ=0.6 BV=1000 IBV=1n TT=1u)
+.MODEL DTRANS D(IS=1n N=.01 RS=1u IKF=1000 Cjo=1p M=.3333 VJ=.6 BV=1000 IBV=1u TT=1u)
+.ENDS
+
+* ---------------------------------------------------------------------------------------
+* NSR0320 Schottky inside the QT Py RP2040 (USB VBUS -> 5V). Fitted: ~0.24 V at 10 mA,
+* ~0.33 V at 100 mA (onsemi NSR0320 typical curve, from memory; only used for the USB case).
+.model DNSR0320 D(Is=2u N=1.05 Rs=0.3 Cjo=20p BV=20 IBV=1m)
+
+* ---------------------------------------------------------------------------------------
+* LED strips. One model per colour channel: the strip's identical series strings are folded
+* into one diode (N times the LEDs per string; Is times the number of strings) and one
+* resistor (the string resistor over the number of strings). Fitted to the catalogue figures:
+*   RGB tape 0.8 m: 8 segments of 6 LEDs per colour; about 16.5 mA per segment at 24 V
+*                   (133 mA per colour).
+*   Tunable-white tape 1 m: about 0.31 A per colour at 24 V, modelled as 20 strings of
+*                   7 LEDs (string layout assumed; only the total matters here).
+* Per-LED values: red Vf 2.0 V, green and blue 3.0 V, white 2.9 V at ~16 mA (typical).
+.model LEDR_1 D(Is=2.5e-19 N=2.0 Cjo=30p)
+.model LEDG_1 D(Is=1.1e-22 N=2.5 Cjo=30p)
+.model LEDW_1 D(Is=4.7e-22 N=2.5 Cjo=30p)
+
+* Red: 8 strings x 6 LEDs, 720 ohm per string -> 90 ohm
+.SUBCKT STRIP_R pos neg
+.model LEDR6 D(Is=2.0e-18 N=12.0 Cjo=40p)
+D1 pos a LEDR6
+R1 a neg 90
+.ENDS
+* Green / blue: 8 strings x 6 LEDs, 345 ohm per string -> 43 ohm
+.SUBCKT STRIP_GB pos neg
+.model LEDG6 D(Is=8.8e-22 N=15.0 Cjo=40p)
+D1 pos a LEDG6
+R1 a neg 43
+.ENDS
+* White, one colour: 20 strings x 7 LEDs, 230 ohm per string -> 11.5 ohm
+.SUBCKT STRIP_W pos neg
+.model LEDW7 D(Is=9.4e-21 N=17.5 Cjo=200p)
+D1 pos a LEDW7
+R1 a neg 11.5
+.ENDS

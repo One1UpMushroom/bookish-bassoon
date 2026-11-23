@@ -8,7 +8,7 @@
 #pragma once
 #include <stdint.h>
 
-#define TASKLAMP_VERSION "1.2.0"
+#define TASKLAMP_VERSION "1.2.1"
 
 namespace cfg {
 

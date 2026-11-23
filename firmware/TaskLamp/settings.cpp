@@ -71,12 +71,16 @@ void defaults(Settings& s) {
   // three colours, and 1 m of tunable-white tape at 0.6 A/m shared by two.
   // Settings > Power replaces them with measured values.
   static const uint16_t kStripmA[kCh] = {133, 133, 133, 300, 300};
+  // A strip MOSFET needs its gate charged before it conducts, so the very
+  // shortest pulses give no light. These floors are that dead band at 2 kHz,
+  // from the circuit simulation (tools/sim/run.py, test T3b), in 0.001 %
+  // units: red 0.12 %, the others 0.16 %. Settings > Channels > Min duty sets
+  // each one exactly. The dead band is a time, so it scales with the PWM
+  // frequency: set Min duty again after changing that.
+  static const uint16_t kMinDuty[kCh] = {120, 160, 160, 160, 160};
   for (int i = 0; i < kCh; i++) {
     hw.chmA[i] = kStripmA[i];
-    // A strip MOSFET needs its gate charged before it conducts, so the very
-    // shortest pulses give no light. 0.03 % is a cautious estimate of that
-    // dead band at 2 kHz; Settings > Channels > Min duty sets it exactly.
-    hw.chMin[i] = 30;
+    hw.chMin[i] = kMinDuty[i];
     hw.chTrim[i] = 1000;
   }
   hw.whiteBoost = 1;
