@@ -190,7 +190,13 @@ def new_board():
     return board
 
 
-def outline_pts(ox=0.0, oy=0.0):
+def outline_pts(ox=0.0, oy=0.0, corners=None):
+    """The board outline as a list of points, clockwise from the top left.
+    corners: None for the standard small chamfers, or a function that takes
+    the board's width and height and returns the outline's points (the
+    themed boards in gen/themes use this for their own corner shapes)."""
+    if corners is not None:
+        return [(ox + x, oy + y) for x, y in corners(W, H)]
     c = CHAMFER
     return [(ox + x, oy + y) for x, y in
             [(c, 0), (W - c, 0), (W, c), (W, H - c), (W - c, H), (c, H),
@@ -209,9 +215,11 @@ def edge(board, pts, closed=True):
         board.Add(s)
 
 
-def add_unit(board, ox=0.0, oy=0.0, tag=""):
+def add_unit(board, ox=0.0, oy=0.0, tag="", decorate=None):
     """Place one converter with its top-left corner at (ox, oy).  Net names
-    get `tag` appended so the units of a panel stay electrically separate."""
+    get `tag` appended so the units of a panel stay electrically separate.
+    decorate: the function that draws the silkscreen (default art.decorate).
+    Everything copper is the same whichever function draws the artwork."""
     def Q(x, y):
         return P(x + ox, y + oy)
 
@@ -284,29 +292,37 @@ def add_unit(board, ox=0.0, oy=0.0, tag=""):
         v.SetNet(nets["GND"])
         board.Add(v)
 
-    art.decorate(board, W, H, ox, oy)
+    (decorate or art.decorate)(board, W, H, ox, oy)
 
 
 def finish(board, path):
     """Filling a board that only exists in memory crashes KiCad 7, so save,
     reload from disk, fill, save again."""
-    os.makedirs(KICAD, exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     pcbnew.SaveBoard(path, board)
     board = pcbnew.LoadBoard(path)
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
     pcbnew.SaveBoard(path, board)
 
 
-def build_unit():
+def build_unit(out=OUT, decorate=None, corners=None, setup=None):
+    """The single board. The keyword arguments are hooks for the themed
+    boards: decorate draws the artwork, corners shapes the outline, setup
+    adjusts the new board first (colours, rule limits). Left out, they give
+    the standard board."""
     fplib.write_all()
     board = new_board()
-    add_unit(board)
-    edge(board, outline_pts())
-    finish(board, OUT)
+    if setup:
+        setup(board)
+    add_unit(board, decorate=decorate)
+    edge(board, outline_pts(corners=corners))
+    finish(board, out)
 
 
-def build_panel():
+def build_panel(out=OUT_PANEL, decorate=None, corners=None, setup=None):
     board = new_board()
+    if setup:
+        setup(board)
     shape = pcbnew.SHAPE_POLY_SET()
 
     def add_poly(pts):
@@ -331,8 +347,8 @@ def build_panel():
     for r in range(ROWS):
         for c in range(COLS):
             ox, oy = c * (W + GAP), r * (H + GAP)
-            add_unit(board, ox, oy, f"/{r * COLS + c + 1}")
-            add_poly(outline_pts(ox, oy))
+            add_unit(board, ox, oy, f"/{r * COLS + c + 1}", decorate)
+            add_poly(outline_pts(ox, oy, corners))
             if r + 1 < ROWS:                 # tabs to the board below
                 for tx in TABS_LONG:
                     x0, x1 = ox + tx - TAB_W / 2, ox + tx + TAB_W / 2
@@ -358,18 +374,21 @@ def build_panel():
             pts = [(pcbnew.ToMM(ring.CPoint(j).x), pcbnew.ToMM(ring.CPoint(j).y))
                    for j in range(ring.PointCount())]
             edge(board, pts)
-    finish(board, OUT_PANEL)
+    finish(board, out)
 
 
-def drc(board_path, name):
+def drc(board_path, name, fab=FAB):
+    """Run KiCad's design-rule check; write the report to fab/name and return
+    the counts it found, e.g. {"DRC violations": 0, ...}."""
     board = pcbnew.LoadBoard(board_path)
-    os.makedirs(FAB, exist_ok=True)
-    rpt = os.path.join(FAB, name)
+    os.makedirs(fab, exist_ok=True)
+    rpt = os.path.join(fab, name)
     pcbnew.WriteDRCReport(board, rpt, pcbnew.EDA_UNITS_MILLIMETRES, True)
     import re
     found = re.findall(r"\*\* Found (\d+) (.*?) \*\*", open(rpt).read())
     print(f"{os.path.basename(board_path)}: " +
           ", ".join(f"{n} {what}" for n, what in found))
+    return {what: int(n) for n, what in found}
 
 
 if __name__ == "__main__":

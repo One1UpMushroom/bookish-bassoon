@@ -170,9 +170,11 @@ def fp_smb():
     s = _hdr("D_SMB", "SMB / DO-214AA diode, pad 1 = cathode", True)
     s.append(smd(1, -2.15, 0, 2.5, 2.3, 0.15))
     s.append(smd(2, 2.15, 0, 2.5, 2.3, 0.15))
-    s.append(line(-3.6, -1.45, 1.2, -1.45))
-    s.append(line(-3.6, 1.45, 1.2, 1.45))
-    s.append(line(-3.6, -1.45, -3.6, 1.45))
+    # the cathode-side line stands 0.175 mm off pad 1 (at -3.6 it was 0.125,
+    # under the board houses' 0.15 mm silkscreen-to-pad minimum)
+    s.append(line(-3.65, -1.45, 1.2, -1.45))
+    s.append(line(-3.65, 1.45, 1.2, 1.45))
+    s.append(line(-3.65, -1.45, -3.65, 1.45))
     s.append(rect(-2.3, -1.9, 2.3, 1.9, "F.Fab", 0.1))
     s.append(rect(-3.5, -2.0, 3.5, 2.0))
     return "D_SMB", s

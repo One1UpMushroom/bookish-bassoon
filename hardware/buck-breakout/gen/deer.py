@@ -506,7 +506,8 @@ def add_to_board(board, art, x, y, layer=None, flip=False):
 
     x, y: board position (mm) for the top-left corner of the 10 x 10 mm box.
     layer: pcbnew.F_SilkS (default) or pcbnew.B_SilkS.
-    flip: mirror left-right inside the box; use it on the bottom side."""
+    flip: mirror left-right inside the box; use it on the bottom side.
+    Returns the list of KiCad shapes it added (so a caller can group them)."""
     import pcbnew
     from pcbnew import FromMM, VECTOR2I
     if layer is None:
@@ -517,9 +518,12 @@ def add_to_board(board, art, x, y, layer=None, flip=False):
             px_ = BOX - px_
         return VECTOR2I(FromMM(x + px_), FromMM(y + py_))
 
+    added = []
+
     def put(shape):
         shape.SetLayer(layer)
         board.Add(shape)
+        added.append(shape)
 
     for s in art.shapes:
         kind = s[0]
@@ -551,6 +555,7 @@ def add_to_board(board, art, x, y, layer=None, flip=False):
                 cir.SetFilled(False)
                 cir.SetWidth(FromMM(s[3]))
             put(cir)
+    return added
 
 
 # ============================================================== output: SVG ===

@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "buck33630")(type "KiCad")(uri "${KIPRJMOD}/../buck33630.pretty")(options "")(descr "LMR33630 buck breakout footprints"))
+)

@@ -241,7 +241,7 @@ def bottom(k):
     k.bl([(1.1, y - 0.62), (23.6, y - 0.62)], 0.12)
     y += 0.2
     notes = ["R2* = 1% PART, WITH R1 100k, R3 = 0R LINK",
-             "L1 uH, >=4.5A SAT.  C6-C9 4x 22u 25V",
+             "L1 uH, >=5.1A SAT.  C6-C9 4x 22u 25V",
              "24V OUT: C6-C9 4x 10u 50V, VIN 28-36V",
              "C1 C2 10u 50V  C3 220n  D1 SMBJ24A OPT",
              "C4 100n   C5 1u   R4 100k   C10 47-100u"]

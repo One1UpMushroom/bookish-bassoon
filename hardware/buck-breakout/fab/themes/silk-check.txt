@@ -1,0 +1,38 @@
+buck33630-dawnworks.kicad_pcb
+  F.SilkS: 8 drawn elements; all at least 0.15 mm apart; every line and dot at least 0.15 mm wide
+      real-font titles: narrowest stroke 0.175 mm ('BUCK//33630' near (25.17, 1.43)); letters at least 0.179 mm apart ('BUCK//33630' near (29.63, 1.84))
+  B.SilkS: 9 drawn elements; all at least 0.15 mm apart; every line and dot at least 0.15 mm wide
+      real-font titles: narrowest stroke 0.175 mm ('BUCK//33630' near (39.86, 1.48)); letters at least 0.179 mm apart ('BUCK//33630' near (35.37, 2.05))
+  KiCad's plot of the drawn shapes, both sides (0.01 mm pixels, a brush 13 pixels across): lines, necks, gaps, slots and holes all pass
+  F.SilkS to pads, openings and tab holes: all at least 0.15 mm clear
+  B.SilkS to pads, openings and tab holes: all at least 0.15 mm clear
+  solder-mask openings, top: 0.67 mm2, all over copper (they show the finish)
+  solder-mask openings, bottom: 6.27 mm2, all over copper (they show the finish)
+  no problems
+buck33630-mahogany.kicad_pcb
+  F.SilkS: 8 drawn elements; all at least 0.15 mm apart; every line and dot at least 0.15 mm wide
+      real-font titles: narrowest stroke 0.154 mm ('BUCK 33630' near (34.05, 1.38)); letters at least 0.258 mm apart ('HANDMADE' near (15.62, 1.95))
+  B.SilkS: 12 drawn elements; all at least 0.15 mm apart; every line and dot at least 0.15 mm wide
+      real-font titles: narrowest stroke 0.154 mm ('BUCK 33630' near (33.29, 1.38)); letters at least 0.293 mm apart ('BUCK 33630' near (35.12, 1.69))
+  KiCad's plot of the drawn shapes, both sides (0.01 mm pixels, a brush 13 pixels across): lines, necks, gaps, slots and holes all pass
+  F.SilkS to pads, openings and tab holes: all at least 0.15 mm clear
+  B.SilkS to pads, openings and tab holes: all at least 0.15 mm clear
+  solder-mask openings, bottom: 3.92 mm2, all over copper (they show the finish)
+  no problems
+buck33630-neon.kicad_pcb
+  F.SilkS: 8 drawn elements; all at least 0.15 mm apart; every line and dot at least 0.15 mm wide
+      real-font titles: narrowest stroke 0.161 mm ('BUCK//33630' near (33.9, 1.69)); letters at least 0.190 mm apart ('BUCK//33630' near (29.91, 2.12))
+  B.SilkS: 13 drawn elements; all at least 0.15 mm apart; every line and dot at least 0.15 mm wide
+      real-font titles: narrowest stroke 0.161 mm ('BUCK//33630' near (32.32, 1.49)); letters at least 0.170 mm apart ('BUCK//33630' near (36.22, 2.10))
+  KiCad's plot of the drawn shapes, both sides (0.01 mm pixels, a brush 13 pixels across): lines, necks, gaps, slots and holes all pass
+  F.SilkS to pads, openings and tab holes: all at least 0.15 mm clear
+  B.SilkS to pads, openings and tab holes: all at least 0.15 mm clear
+  no problems
+buck33630-parkside.kicad_pcb
+  F.SilkS: 43 drawn elements; all at least 0.15 mm apart; every line and dot at least 0.15 mm wide
+  B.SilkS: 72 drawn elements; all at least 0.15 mm apart; every line and dot at least 0.15 mm wide
+  KiCad's plot of the drawn shapes, both sides (0.01 mm pixels, a brush 13 pixels across): lines, necks, gaps, slots and holes all pass
+  F.SilkS to pads, openings and tab holes: all at least 0.15 mm clear
+  B.SilkS to pads, openings and tab holes: all at least 0.15 mm clear
+  solder-mask openings, bottom: 5.02 mm2, all over copper (they show the finish)
+  no problems

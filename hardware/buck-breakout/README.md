@@ -165,7 +165,7 @@ Search DigiKey by these manufacturer part numbers. Quantities are per board.
 |---|---|---|---|---|
 | U1 | 1 | Buck regulator | TI **LMR33630ADDAR** | [DigiKey listing](https://www.digikey.com/en/products/detail/texas-instruments/LMR33630ADDAR/8554847). Must be the "A" (400 kHz) version in the DDA package |
 | L1 | 1 | Inductor 10 µH | Bourns **SRP1265A-100M** | 15.5 A saturation, 13 mΩ. Budget: Bourns SRR1260-100M (5.5 A, 20 mΩ) |
-| L1 | 1 | Inductor 15 µH | Bourns **SRP1265A-150M** | 12.5 A, 23 mΩ. Budget: Bourns SRR1260-150M (about 4.6 A, 27 mΩ) |
+| L1 | 1 | Inductor 15 µH | Bourns **SRP1265A-150M** | 12.5 A, 23 mΩ. Budget: Bourns SRR1260-150M (about 4.6 A, 27 mΩ): under the 5.1 A rule below, so it can saturate in a short circuit before the chip's current limit acts. Fine in normal use |
 | L1 | 1 | Inductor 22 µH | Bourns **SRP1265A-220M** | 12 A, 33 mΩ. Or Würth 7447709220 (6.5 A). Not the SRR1260-220M, which saturates at about 3.7 A |
 | C1, C2 | 2 | 10 µF 50 V X7R, 1210 | Murata **GRM32ER71H106KA12L** | Or Samsung CL32B106KBJNNNE, TDK C3225X7R1H106K250AC. Also C6–C9 on 24 V builds |
 | C6–C9 | 4 | 22 µF 25 V X7R, 1210 | Murata **GRM32ER71E226KE15L** | Or Samsung CL32B226KAJNNNE |
@@ -176,7 +176,8 @@ Search DigiKey by these manufacturer part numbers. Quantities are per board.
 | Pins | 10 | 2.54 mm breakaway header | Any 1 × 40 strip | |
 
 The inductor must not saturate below the chip's current limit. Any shielded
-10–13.5 mm SMD inductor fits the pads if it has at least 4.5 A saturation current,
+10–13.5 mm SMD inductor fits the pads if it has at least 5.1 A saturation current
+(the chip's high-side current limit can be as high as 5.05 A),
 3.5 A RMS current and under 40 mΩ resistance. The SRR1260-150M and -220M figures
 above come from a third-party copy of the Bourns datasheet; check them before
 ordering those two.
@@ -242,7 +243,8 @@ SMBJ24A for vehicle builds.
   `gen/art.py` (the thumbs-up is the `THUMBS_UP` bitmap) if you want your own
   wording or icon.
 * **Buck marks:** four 10 × 10 mm drawings of a buck, one for each theme in
-  the design library, are ready in `gen/deer.py` but not yet on the board.
+  the design library, live in `gen/deer.py`. Each one sits on the back of its
+  [themed board](#themed-boards); the standard board doesn't carry one.
   `deer.add_to_board()` places one on either side; the top of `gen/deer.py`
   says how. All four meet the silkscreen limits below (0.20 mm lines and gaps,
   0.25 mm holes), checked on KiCad's own plot.
@@ -399,6 +401,97 @@ pad through a 1N5819 so USB and the converter cannot back-feed each other; the
 kit recipe's 5.13 V leaves about 4.7 V after the diode. Compared with a linear
 regulator this saves about 19 V × the logic current in heat.
 
+## Themed boards
+
+Four more versions of the board, one for each theme in the design library.
+Each has its own layout of the labels and tables, its own lettering, frames
+and ornaments, and one of the buck marks on the back. The copper is the
+standard board's, item for item (the build refuses to finish otherwise), so
+all four are the same circuit and use the same parts and instructions.
+
+![The four themed boards, top and bottom: Dawnworks, Mahogany Lounge, Neon Noir Chartreuse and Parkside 98](img/themed-boards.jpg)
+
+| Theme | Order as (mask / lettering / finish) | What's on it |
+|---|---|---|
+| Dawnworks | Green (ask for dark or olive) / White / ENIG | Modules with two cut corners, joined by silkscreen traces that end in vias; Chakra Petch titles; a gold sun and a gold pin row (bare ENIG through openings in the mask); the circuit buck |
+| Mahogany Lounge | the darkest Green offered / White / ENIG | Rounded corners and frames, fine rules, atomic starbursts, Jost titles; a gold boomerang under the figurine buck |
+| Neon Noir Chartreuse | Black, matte if offered / White / ENIG | 45° cut corners on everything, a departure-board table with scanlines, Oswald titles, tick strips; the neon buck sign and HACK THE PLANET |
+| Parkside 98 | Blue / White / HASL lead-free | Windows with title bars and close boxes, status bars, pixel lettering; a silver bevel (bare HASL) on the table window; the buck in a marquee of bulbs |
+
+The screen colours are stand-ins; compare with the board house's photos. The
+pictures show via holes as open, but the vias are covered by the mask.
+
+**Files:** `kicad/themes/buck33630-<theme>.kicad_pcb` and `-panel.kicad_pcb`,
+and for ordering `fab/themes/buck33630-<theme>-gerbers.zip` (single board) and
+`-panel-gerbers.zip`. Order them like the standard board (see
+[Ordering the panel](#ordering-the-panel)), with the colours above.
+
+**Build and check all eight** (four boards, four panels):
+
+```bash
+/usr/bin/python3 gen/build_themes.py
+```
+
+Add theme names to build only those, `--no-panel` or `--no-export` for a quicker
+run. For every board it runs KiCad's design-rule check with stricter
+silkscreen rules (text at least 0.8 mm tall with 0.15 mm strokes, silkscreen
+0.15 mm from other silkscreen), checks that the copper matches the standard
+board, runs `gen/silk_check.py` and writes the Gerber files. It stops with an
+error if anything fails. Current result: 0 violations on all eight, copper
+identical, and every silkscreen check passed (all six on the single boards,
+the exact ones on the panels, which hold eight copies of the same board;
+report in `fab/themes/silk-check.txt`).
+
+**Why a separate silkscreen check.** Two test boards showed that KiCad 7's
+check misses two things these boards depend on. It never checks one drawn
+shape against another (two overlapping rectangles passed), and most of the
+lettering here is drawn shapes. And it reports silkscreen near a pad or other
+mask opening only when the two actually overlap (0.05 mm apart passed), while
+board houses want 0.15 mm. `gen/silk_check.py` covers both: every drawing at
+least 0.15 mm from every other, every line at least 0.15 mm wide, the strokes
+and letter spacing of the real-font titles, a pixel test of KiCad's own plot,
+every gold or silver accent over copper, and all silkscreen 0.15 mm from pads,
+openings and the holes the panel's break-away tabs drill. The top of the
+script explains each test.
+
+**Small print.**
+
+* KiCad's own font at 0.8–0.85 mm leaves some letter gaps and the holes in A,
+  D or 8 narrower than 0.13 mm, on any board. The letters can blur slightly
+  where they print heavy.
+* On each board 22–26 places in the lettering cross one of the 34 ground
+  vias (mostly in the tables on the back). The vias are covered by the mask,
+  so the ink prints over them, but a small dimple can show. No board-house
+  rule is broken; moving the lettering clear of them is a possible next step.
+* The standard board's smallest labels (0.70–0.75 mm tall, 0.11–0.13 mm
+  strokes) and its 0.12 mm lines are below the current JLCPCB silkscreen
+  minimum (0.8 mm, 0.15 mm). Its own design rules allow them, so its check
+  passes, but they may print faint or broken. The themed boards meet the
+  minimum.
+
+## Circuit check
+
+The circuit was checked against the LMR33630 datasheet and simulated:
+
+* **Netlist:** U1's pins match the datasheet (1 GND, 2 VIN, 3 EN, 4 PG, 5 FB,
+  6 VCC, 7 BOOT, 8 SW, 9 thermal pad to GND), and every part value matches TI's
+  design table and equations (`python3 gen/values.py`).
+* **Power stage:** `python3 gen/sim_power_stage.py` builds an ngspice model of
+  the switches, inductor, capacitors and input wiring for each output, at
+  typical conditions and at worst case (36 V in, the slowest switching
+  frequency, inductor 20 % low). Typical results: 0.62–0.99 A of ripple in the
+  inductor, 3.3–3.5 A peak at 3 A out, about 3–16 mV of output ripple, 1.3–1.5 A RMS in
+  the input capacitors, 0.85–1.3 W of conduction loss.
+* **One case fails:** a 12 V board fed from 36 V can peak at 3.98 A in the
+  worst case, above the chip's lowest current limit (3.85 A), so it may limit
+  early on heavy loads. **Use 22 µH for 12 V builds fed above
+  24 V** (3.66 A peak in the same case).
+* **Inductor rating:** at least 5.1 A saturation, because the chip's current
+  limit can be as high as 5.05 A. The board's back label said 4.5 A; it now
+  says 5.1 A.
+* **Not simulated:** the control loop. The chip compensates itself, but check
+  a built board with a load step before trusting it in something important.
+
 ---
 
 ## Files
@@ -412,7 +505,9 @@ regulator this saves about 19 V × the logic current in heat.
 | `kicad/buck33630.kicad_pcb` | Single board, KiCad 7 or later |
 | `kicad/buck33630-panel.kicad_pcb` | Panel |
 | `kicad/buck33630.pretty/` | Footprints, reusable in other projects |
+| `kicad/themes/`, `fab/themes/` | The four themed boards and panels, their Gerbers and reports ([Themed boards](#themed-boards)) |
 | `gen/` | Python scripts that generate all of the above |
+| `gen/themes/` | One file per theme, the shared drawing kit, and the title letters (OFL fonts, licences in `fonts/`) |
 | `img/` | Renders and the schematic |
 
 The board is generated from code, so there is no KiCad schematic file; the
