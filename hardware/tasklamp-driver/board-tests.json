@@ -1,0 +1,550 @@
+{
+ "limits": {
+  "trace_mm": 0.15,
+  "gap_mm": 0.15,
+  "ring_mm": 0.15,
+  "drill_mm": 0.3,
+  "hole_gap_mm": 0.5,
+  "copper_edge_mm": 0.3,
+  "hole_edge_mm": 0.5,
+  "mask_dam_mm": 0.13,
+  "silk_line_mm": 0.15,
+  "silk_text_mm": 0.8,
+  "hole_tol_mm": 0.08
+ },
+ "results": {
+  "B1 nets in the Gerbers": {
+   "status": "PASS",
+   "detail": "28 nets, 97 pins traced through 47 + 80 copper islands and 99 plated holes: every net joined, none touching another",
+   "data": {
+    "opens": [],
+    "shorts": [],
+    "missing": [],
+    "pins_not_in_design": []
+   }
+  },
+  "B2 no stray copper": {
+   "status": "PASS",
+   "detail": "0 islands carry no pad",
+   "data": {
+    "stray": []
+   }
+  },
+  "B3 trace width": {
+   "status": "PASS",
+   "detail": "narrowest 0.40 mm (limit 0.15)",
+   "data": {
+    "min_mm": 0.4
+   }
+  },
+  "B4 copper gaps": {
+   "status": "PASS",
+   "detail": "closest copper of different islands: 0.400 mm top, 0.400 mm bottom (limit 0.15)",
+   "data": {
+    "F": 0.4000000000000057,
+    "B": 0.4000000000000057
+   }
+  },
+  "B5 drill sizes": {
+   "status": "PASS",
+   "detail": "103 holes in 8 sizes, 0.8, 1, 1.1, 1.2, 1.3, 1.6, 1.78, 3.2 mm",
+   "data": {
+    "sizes_mm": [
+     0.8,
+     1.0,
+     1.1,
+     1.2,
+     1.3,
+     1.6,
+     1.78,
+     3.2
+    ]
+   }
+  },
+  "B6 annular ring": {
+   "status": "PASS",
+   "detail": "smallest 0.302 mm (0.262 mm with the hole at its +0.08 mm tolerance; limit 0.15), 1.3 mm hole",
+   "data": {
+    "min_mm": 0.30249899999998886
+   }
+  },
+  "B7 hole to hole": {
+   "status": "PASS",
+   "detail": "closest edges 1.20 mm (limit 0.50)",
+   "data": {
+    "min_mm": 1.2
+   }
+  },
+  "B8 clearance to the board edge": {
+   "status": "PASS",
+   "detail": "copper 0.50 mm (limit 0.30), holes 1.72 mm (limit 0.50)",
+   "data": {
+    "copper_mm": 0.5005000000000024,
+    "hole_mm": 1.723401871576765
+   }
+  },
+  "B9 everything inside the outline": {
+   "status": "PASS",
+   "detail": "copper, mask and silk all lie within the board",
+   "data": {}
+  },
+  "B10 mask openings": {
+   "status": "PASS",
+   "detail": "0 pads not fully open; every opening at least 0.050 mm larger than its pad (want 0.05)",
+   "data": {
+    "uncovered": 0,
+    "expansion_mm": 0.04993977281024611
+   }
+  },
+  "B11 mask dams": {
+   "status": "PASS",
+   "detail": "narrowest web between openings 0.300 mm top, 0.300 mm bottom (limit 0.13, for black mask)",
+   "data": {
+    "FM": 0.30000000000001137,
+    "BM": 0.30000000000001137
+   }
+  },
+  "B12 no silk on pads": {
+   "status": "PASS",
+   "detail": "silk inside mask openings: 0.0000 mm2",
+   "data": {
+    "area_mm2": 0.0
+   }
+  },
+  "B13 silk line width": {
+   "status": "PASS",
+   "detail": "thinnest stroke 0.15 mm (limit 0.15); in the filled lettering 0.85 % of the ink is thinner than that (rounding at sharp corners)",
+   "data": {
+    "min_stroke_mm": 0.15,
+    "thin_fraction": 0.008502126613821779
+   }
+  },
+  "B14 text height": {
+   "status": "PASS",
+   "detail": "smallest lettering 0.80 mm (\"100n\"; limit 0.80)",
+   "data": {
+    "min_mm": 0.8
+   }
+  },
+  "B15 track heating": {
+   "status": "PASS",
+   "detail": "worst +24V: 0.95 A in 1.0 mm, 1.2 K above the board (IPC-2221; limit 10 K)",
+   "data": {
+    "rows": [
+     {
+      "net": "+24V",
+      "amps": 0.9506501,
+      "min_width_mm": 1.0,
+      "rise_K": 1.2285202634508903,
+      "track_mohm": 39.076106666666675,
+      "drop_mV": 37.14770471027734
+     },
+     {
+      "net": "+3V3",
+      "amps": 0.09,
+      "min_width_mm": 0.6,
+      "rise_K": 0.01343259585919799,
+      "track_mohm": 4.576838095238096,
+      "drop_mV": 0.4119154285714286
+     },
+     {
+      "net": "+5V",
+      "amps": 0.1,
+      "min_width_mm": 0.8,
+      "rise_K": 0.010624029831969287,
+      "track_mohm": 13.014257142857142,
+      "drop_mV": 1.3014257142857142
+     },
+     {
+      "net": "ENC_INT",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 6.865257142857144,
+      "drop_mV": 0.06865257142857144
+     },
+     {
+      "net": "GATE_B",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 12.0142,
+      "drop_mV": 0.12014200000000001
+     },
+     {
+      "net": "GATE_CW",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 12.0142,
+      "drop_mV": 0.12014200000000001
+     },
+     {
+      "net": "GATE_G",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 12.014201351428573,
+      "drop_mV": 0.12014201351428572
+     },
+     {
+      "net": "GATE_R",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 12.0142,
+      "drop_mV": 0.12014200000000001
+     },
+     {
+      "net": "GATE_WW",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 12.01419864857143,
+      "drop_mV": 0.1201419864857143
+     },
+     {
+      "net": "OUT_B",
+      "amps": 0.1255265,
+      "min_width_mm": 1.2,
+      "rise_K": 0.009131404737362316,
+      "track_mohm": 18.935366440958635,
+      "drop_mV": 2.3768902755509944
+     },
+     {
+      "net": "OUT_CW",
+      "amps": 0.2711654,
+      "min_width_mm": 1.2,
+      "rise_K": 0.05257293960851165,
+      "track_mohm": 13.21431927238681,
+      "drop_mV": 3.583266171224478
+     },
+     {
+      "net": "OUT_G",
+      "amps": 0.1255265,
+      "min_width_mm": 1.2,
+      "rise_K": 0.009131404737362316,
+      "track_mohm": 14.358528477661665,
+      "drop_mV": 1.8023758249511972
+     },
+     {
+      "net": "OUT_R",
+      "amps": 0.1266081,
+      "min_width_mm": 1.2,
+      "rise_K": 0.009311206050747279,
+      "track_mohm": 9.992796656707597,
+      "drop_mV": 1.265168998392101
+     },
+     {
+      "net": "OUT_WW",
+      "amps": 0.2711654,
+      "min_width_mm": 1.2,
+      "rise_K": 0.05257293960851165,
+      "track_mohm": 9.059693407181504,
+      "drop_mV": 2.456675386635735
+     },
+     {
+      "net": "PWM_B",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 54.738414004412945,
+      "drop_mV": 0.5473841400441295
+     },
+     {
+      "net": "PWM_CW",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 21.045449024187345,
+      "drop_mV": 0.21045449024187343
+     },
+     {
+      "net": "PWM_G",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 78.76681551979762,
+      "drop_mV": 0.7876681551979762
+     },
+     {
+      "net": "PWM_R",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 102.79521400441295,
+      "drop_mV": 1.0279521400441294
+     },
+     {
+      "net": "PWM_WW",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 30.710013608588394,
+      "drop_mV": 0.30710013608588393
+     },
+     {
+      "net": "QT_5V",
+      "amps": 0.1,
+      "min_width_mm": 0.6,
+      "rise_K": 0.01706688433607092,
+      "track_mohm": 44.94611250703316,
+      "drop_mV": 4.494611250703317
+     },
+     {
+      "net": "TFT_CS",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 36.17561858001414,
+      "drop_mV": 0.3617561858001414
+     },
+     {
+      "net": "TFT_DC",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 36.17561993144271,
+      "drop_mV": 0.36175619931442715
+     },
+     {
+      "net": "TFT_LITE",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 6.865257142857144,
+      "drop_mV": 0.06865257142857144
+     },
+     {
+      "net": "TFT_MOSI",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 6.865257142857144,
+      "drop_mV": 0.06865257142857144
+     },
+     {
+      "net": "TFT_SCK",
+      "amps": 0.01,
+      "min_width_mm": 0.4,
+      "rise_K": 0.00017765496219337932,
+      "track_mohm": 6.865257142857144,
+      "drop_mV": 0.06865257142857144
+     },
+     {
+      "net": "VFUSE",
+      "amps": 0.9506501,
+      "min_width_mm": 2.0,
+      "rise_K": 0.3920730493719732,
+      "track_mohm": 2.432571428571429,
+      "drop_mV": 2.312524271828572
+     },
+     {
+      "net": "VIN",
+      "amps": 0.9506501,
+      "min_width_mm": 2.0,
+      "rise_K": 0.3920730493719732,
+      "track_mohm": 2.697451428571429,
+      "drop_mV": 2.564332470316572
+     }
+    ]
+   }
+  },
+  "B16 voltage drop in the tracks": {
+   "status": "PASS",
+   "detail": "worst +24V: 39 mohm of track at 0.95 A, 37 mV at most (all of its track in series)",
+   "data": {}
+  },
+  "B17 24 V clearance": {
+   "status": "PASS",
+   "detail": "closest copper between a 24 V net and any other net: 0.50 mm (IPC-2221B asks 0.10 mm at 16-30 V)",
+   "data": {
+    "min_mm": 0.5004989999999907
+   }
+  },
+  "B18 leads fit their holes": {
+   "status": "PASS",
+   "detail": "every lead fits with the hole at its smallest",
+   "data": {
+    "rows": [
+     {
+      "footprint": "Capacitor_THT:CP_Radial_D5.0mm_P2.00mm",
+      "part": "10 uF 50 V, 5 mm",
+      "drill_mm": 0.8,
+      "lead_typ_mm": 0.5,
+      "lead_max_mm": 0.5,
+      "status": "fit",
+      "note": "lead dia. 0.5 mm"
+     },
+     {
+      "footprint": "Capacitor_THT:CP_Radial_D8.0mm_P3.50mm",
+      "part": "100 uF 50 V, 8 mm",
+      "drill_mm": 0.8,
+      "lead_typ_mm": 0.6,
+      "lead_max_mm": 0.6,
+      "status": "fit",
+      "note": "lead dia. 0.6 mm"
+     },
+     {
+      "footprint": "Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm",
+      "part": "100 nF ceramic",
+      "drill_mm": 0.8,
+      "lead_typ_mm": 0.5,
+      "lead_max_mm": 0.6,
+      "status": "fit",
+      "note": "lead dia. 0.5-0.6 mm"
+     },
+     {
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical",
+      "part": "0.1 in header",
+      "drill_mm": 1.0,
+      "lead_typ_mm": 0.9050966799187808,
+      "lead_max_mm": 0.9050966799187808,
+      "status": "fit",
+      "note": "0.64 mm square"
+     },
+     {
+      "footprint": "Converter_DCDC:Converter_DCDC_Murata_OKI-78SR_Vertical",
+      "drill_mm": 1.0,
+      "status": "maker",
+      "note": "Murata's footprint for the OKI-78SR"
+     },
+     {
+      "footprint": "Diode_THT:D_DO-15_P12.70mm_Horizontal",
+      "part": "P6KE30A (DO-15)",
+      "drill_mm": 1.2,
+      "lead_typ_mm": 0.8,
+      "lead_max_mm": 0.864,
+      "status": "fit",
+      "note": "lead dia. 0.71-0.864 mm"
+     },
+     {
+      "footprint": "Diode_THT:D_DO-201AD_P15.24mm_Horizontal",
+      "part": "SB560 (DO-201AD)",
+      "drill_mm": 1.6,
+      "lead_typ_mm": 1.27,
+      "lead_max_mm": 1.32,
+      "status": "fit",
+      "note": "lead dia. 1.22-1.32 mm"
+     },
+     {
+      "footprint": "Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal",
+      "part": "1N5819 (DO-41)",
+      "drill_mm": 1.1,
+      "lead_typ_mm": 0.8,
+      "lead_max_mm": 0.864,
+      "status": "fit",
+      "note": "lead dia. 0.71-0.864 mm"
+     },
+     {
+      "footprint": "Fuse:Fuseholder_Blade_Mini_Keystone_3568",
+      "drill_mm": 1.78,
+      "status": "maker",
+      "note": "Keystone's drawing for the 3568"
+     },
+     {
+      "footprint": "MountingHole:MountingHole_3.2mm_M3",
+      "drill_mm": 3.2,
+      "status": "maker",
+      "note": "M3 screw"
+     },
+     {
+      "footprint": "Package_TO_SOT_THT:TO-220-3_Vertical",
+      "part": "IRLB8721 (TO-220AB)",
+      "drill_mm": 1.3,
+      "lead_typ_mm": 0.9315041599477697,
+      "lead_max_mm": 1.1884864324004714,
+      "status": "fit",
+      "note": "lead 0.81 x 0.46 mm typical, 1.02 x 0.61 mm maximum (TO-220AB drawing)"
+     },
+     {
+      "footprint": "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal",
+      "part": "1/4 W resistor",
+      "drill_mm": 0.8,
+      "lead_typ_mm": 0.55,
+      "lead_max_mm": 0.6,
+      "status": "fit",
+      "note": "lead dia. 0.5-0.6 mm"
+     },
+     {
+      "footprint": "TaskLamp:QTPy_RP2040_Socket",
+      "part": "Sullins PPTC071LFBN-RC",
+      "drill_mm": 1.0,
+      "lead_typ_mm": 0.9050966799187808,
+      "lead_max_mm": 0.9050966799187808,
+      "status": "fit",
+      "note": "0.64 mm square tails"
+     },
+     {
+      "footprint": "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal",
+      "drill_mm": 1.3,
+      "status": "maker",
+      "note": "Phoenix MKDS 1,5 recommends a 1.3 mm hole; the On Shore OSTTC blocks are made to the same footprint"
+     },
+     {
+      "footprint": "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-3-5.08_1x03_P5.08mm_Horizontal",
+      "drill_mm": 1.3,
+      "status": "maker",
+      "note": "Phoenix MKDS 1,5 recommends a 1.3 mm hole; the On Shore OSTTC blocks are made to the same footprint"
+     },
+     {
+      "footprint": "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal",
+      "drill_mm": 1.3,
+      "status": "maker",
+      "note": "Phoenix MKDS 1,5 recommends a 1.3 mm hole; the On Shore OSTTC blocks are made to the same footprint"
+     },
+     {
+      "footprint": "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm",
+      "drill_mm": 1.0,
+      "status": "maker",
+      "note": "test pad, no lead"
+     }
+    ]
+   }
+  },
+  "B19 wires enter from the edge": {
+   "status": "PASS",
+   "detail": "J1 5.6 mm from its edge, J2 5.7 mm from its edge, J3 5.7 mm from its edge",
+   "data": {
+    "terminals": [
+     [
+      "J1",
+      5.6,
+      5.6
+     ],
+     [
+      "J2",
+      5.66,
+      5.66
+     ],
+     [
+      "J3",
+      5.66,
+      5.66
+     ]
+    ]
+   }
+  },
+  "B20 pin map": {
+   "status": "PASS",
+   "detail": "all 11 firmware pins land on the right nets",
+   "data": {
+    "wrong": []
+   }
+  },
+  "B21 one PWM output per light": {
+   "status": "PASS",
+   "detail": "outputs GP29=6B, GP28=6A, GP27=5B, GP26=5A, GP20=2A, GP5=2B",
+   "data": {
+    "clash": {}
+   }
+  },
+  "B22 pinouts and polarity": {
+   "status": "PASS",
+   "detail": "transistors, diodes, converter, capacitors and terminals all wired to their datasheet pinouts",
+   "data": {
+    "wrong": []
+   }
+  }
+ }
+}

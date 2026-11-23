@@ -34,7 +34,9 @@ CUT = 3.0                   # 45-degree cut on every corner (the theme's cut cor
 # Signage text is Oswald Bold in capitals; small part labels keep KiCad's stroke font,
 # because Oswald's strokes get thinner than the 0.15 mm a fab prints reliably below 1.2 mm.
 SIGNAGE_FONT = 'Oswald'
-SIGNAGE_MIN = 1.2           # mm: smallest signage text
+SIGNAGE_MIN = 1.2
+SILK_MIN = 0.15          # thinnest silkscreen line the board maker prints reliably, mm
+TO220_DRILL = 1.3        # MOSFET holes, mm (see build())           # mm: smallest signage text
 MASK_COLOR, SILK_COLOR, FINISH = 'Black', 'White', 'ENIG'
 
 # ---------------------------------------------------------------------------
@@ -208,7 +210,8 @@ def silk():
     # back of the board: every line sits in a band that has no pads, so no
     # letter is cut by a solder-mask opening
     sign('TASK LAMP DRIVER', W / 2 + 2, RY1 + 2.4, 2.0, layer='B.SilkS')   # glyphs 2.34 mm tall: centred in the pad-free band
-    sign('REV B  /  RGB + TUNABLE WHITE  /  24 V  1 A', W / 2 + 2, BUS_Y + 2.7, layer='B.SilkS')
+    # separated by wide spaces and a bar: Oswald's slash is a hairline at this size
+    sign('REV B   |   RGB + TUNABLE WHITE   |   24 V  1 A', W / 2 + 2, BUS_Y + 2.7, layer='B.SilkS')
     for x, s in ((TRUNK_X, '+24'), (TRUNK_X + 5.08, 'R'), (TRUNK_X + 10.16, 'G'), (TRUNK_X + 15.24, 'B'),
                  (DROP_X, '+24'), (DROP_X + 5.08, 'WW'), (DROP_X + 10.16, 'CW')):
         sign(s, x, TY - 3.2, 1.3, layer='B.SilkS')
@@ -241,11 +244,11 @@ def qtpy_footprint():
     def S(*a):
         return [Sym(a[0])] + list(a[1:])
 
-    def line(x1, y1, x2, y2, layer, w=0.12):
+    def line(x1, y1, x2, y2, layer, w=0.15):
         return S('fp_line', S('start', x1, y1), S('end', x2, y2),
                  S('stroke', S('width', w), S('type', Sym('solid'))), S('layer', layer))
 
-    def rect(x1, y1, x2, y2, layer, w=0.12):
+    def rect(x1, y1, x2, y2, layer, w=0.15):
         return S('fp_rect', S('start', x1, y1), S('end', x2, y2),
                  S('stroke', S('width', w), S('type', Sym('solid'))), S('fill', Sym('none')), S('layer', layer))
 
@@ -356,7 +359,14 @@ def build(project_dir, project, sym_uuid=None, extra_tracks=(), drop_route=None,
     ds.m_HoleToHoleMin = FromMM(0.5)
     ds.m_SilkClearance = FromMM(0.0)
     ds.m_MinSilkTextHeight = FromMM(0.8)
+    # KiCad's own floor for text strokes. Its check of TrueType lettering shrinks each letter by
+    # half this and flags any that lose a part, which the tapered ends of Oswald's curves do at
+    # 0.15 mm; test_board.py measures the lettering in the Gerbers instead (B13).
     ds.m_MinSilkTextThickness = FromMM(0.12)
+    # mask openings 0.05 mm larger than each pad all round, so the mask's registration
+    # tolerance can't creep onto a pad (test_board.py B10)
+    ds.m_SolderMaskExpansion = FromMM(0.05)
+    ds.m_SolderMaskMinWidth = FromMM(0)
 
     parts = design.parts()
     nets = {}
@@ -378,6 +388,12 @@ def build(project_dir, project, sym_uuid=None, extra_tracks=(), drop_route=None,
         x, y, rot = place[part['ref']]
         fp.SetPosition(P(x, y))
         fp.SetOrientationDegrees(rot)
+        thicken_silk(fp)
+        if part['fp'] == design.FP_TO220:
+            # TO-220AB leads are up to 1.02 x 0.61 mm (1.19 mm corner to corner): a 1.3 mm hole
+            # takes that even at the bottom of its tolerance; the library's 1.1 mm does not
+            for pad in fp.Pads():
+                pad.SetDrillSize(VECTOR2I(FromMM(TO220_DRILL), FromMM(TO220_DRILL)))
         if sym_uuid:
             fp.SetPath(pcbnew.KIID_PATH('/' + sym_uuid(part['ref'])))
         for pad in fp.Pads():
@@ -451,6 +467,19 @@ def build(project_dir, project, sym_uuid=None, extra_tracks=(), drop_route=None,
             board.Add(s)
 
     return board
+
+
+def thicken_silk(fp):
+    """KiCad's library draws footprint silkscreen at 0.12 mm; the board maker prints 0.15 mm and
+    up reliably, so widen anything thinner (test_board.py B13)."""
+    for item in fp.GraphicalItems():
+        if item.GetLayer() not in (pcbnew.F_SilkS, pcbnew.B_SilkS):
+            continue
+        if item.GetClass() == 'FP_TEXT':
+            if item.GetTextThickness() < FromMM(SILK_MIN):
+                item.SetTextThickness(FromMM(SILK_MIN))
+        elif 0 < item.GetWidth() < FromMM(SILK_MIN):
+            item.SetWidth(FromMM(SILK_MIN))
 
 
 def write(board, path):
@@ -617,7 +646,7 @@ def tidy_text(fp, part):
 PRO_TEMPLATE = {
     "board": {
         "design_settings": {
-            "defaults": {"board_outline_line_width": 0.1, "copper_line_width": 0.2, "silk_line_width": 0.12,
+            "defaults": {"board_outline_line_width": 0.1, "copper_line_width": 0.2, "silk_line_width": 0.15,
                          "silk_text_size_h": 1.0, "silk_text_size_v": 1.0, "silk_text_thickness": 0.15},
             "rules": {"min_clearance": 0.2, "min_copper_edge_clearance": 0.5, "min_hole_clearance": 0.25,
                       "min_hole_to_hole": 0.5, "min_through_hole_diameter": 0.3, "min_track_width": 0.2,
