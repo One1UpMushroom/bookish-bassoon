@@ -300,7 +300,7 @@ def test_dfm(layers, pth, npth, edge_poly):
     record('B9 everything inside the outline', inside, 'copper, mask and silk all lie within the board')
 
 
-def test_mask_and_silk(layers):
+def test_mask_and_silk(layers, vias=()):
     print('solder mask and silkscreen')
     L = LIMITS
     worst_exp, bare = float('inf'), 0
@@ -309,6 +309,9 @@ def test_mask_and_silk(layers):
         openings = layers[mk].islands()
         tree = STRtree(openings)
         for pad in layers[cu].flashes:
+            c0 = pad.centroid
+            if any(abs(c0.x - vx) < 0.01 and abs(c0.y - vy) < 0.01 for vx, vy in vias):
+                continue                         # stitching vias are tented on purpose
             c = pad.representative_point()
             i = locate(tree, openings, c.x, c.y)
             if i is None or not openings[i].buffer(1e-4).contains(pad):
@@ -359,7 +362,8 @@ def net_currents():
     sim = os.path.join(OUT, 'sim', 'results.json')
     t1 = json.load(open(sim))['tests']['T1 all channels on, 3.29 V gates']['data']['fit']
     i_all = t1['i_total']
-    cur = {'VIN': i_all, 'VFUSE': i_all, '+24V': i_all, 'GND': i_all, '+5V': 0.10, 'QT_5V': 0.10, '+3V3': 0.09}
+    cur = {'VIN': i_all, 'VFUSE': i_all, '+24V': i_all, 'GND': i_all, '+5V': 0.10, 'QT_5V': 0.10, '+3V3': 0.09,
+           'SW': 0.10}
     for ch, i in t1['i_ch'].items():
         cur['OUT_' + ch] = i
     return cur
@@ -396,7 +400,7 @@ def test_current(board):
 
 
 def test_clearance_by_voltage(isl, island_net):
-    hv = {'VIN', 'VFUSE', '+24V'} | {'OUT_' + c for c in design.CHANNELS}
+    hv = {'VIN', 'VFUSE', '+24V', 'SW', 'BOOT'} | {'OUT_' + c for c in design.CHANNELS}   # SW swings to 24 V
     worst = float('inf')
     for s in ('F', 'B'):
         shapes = isl[s]
@@ -428,6 +432,7 @@ LEADS = {
                                                                     math.hypot(0.64, 0.64), '0.64 mm square'),
     'TaskLamp:QTPy_RP2040_Socket': ('Sullins PPTC071LFBN-RC', 'square', math.hypot(0.64, 0.64),
                                     math.hypot(0.64, 0.64), '0.64 mm square tails'),
+    'TaskLamp:C_Dual_THT-P5.08_or_0805-1206': ('radial ceramic, 5.08 mm', 'round', 0.5, 0.6, 'lead dia. 0.5-0.6 mm'),
 }
 # drawn from the maker's own recommended hole, not checked against a lead size here
 MAKER_HOLE = {
@@ -436,6 +441,7 @@ MAKER_HOLE = {
     'Fuse:Fuseholder_Blade_Mini_Keystone_3568': "Keystone's drawing for the 3568",
     'Converter_DCDC:Converter_DCDC_Murata_OKI-78SR_Vertical': "Murata's footprint for the OKI-78SR",
     'TestPoint': 'test pad, no lead', 'MountingHole': 'M3 screw',
+    'TaskLamp:HSOIC-8-1EP_HandSolder_BackHole': 'plated hole in the thermal pad, for soldering it from the back',
 }
 
 
@@ -443,7 +449,8 @@ def test_footprints(pads):
     print('parts against their footprints')
     seen = {}
     for p in pads:
-        seen.setdefault(p['fp'], set()).add(p['drill'])
+        if p['drill'] > 0:                       # surface-mount pads have no hole to fit
+            seen.setdefault(p['fp'], set()).add(p['drill'])
     tight, bad, rows = [], [], []
     for fp, drill_set in sorted(seen.items()):
         drill = min(drill_set)
@@ -532,8 +539,10 @@ PINOUTS = {
     'SB560 (cathode to the rail)': (['D7'], lambda ch: {'1': '+24V', '2': 'VFUSE'}),
     'P6KE30A (cathode to the rail)': (['D8'], lambda ch: {'1': '+24V', '2': 'GND'}),
     '1N5819 to the QT Py (cathode to its 5V pad)': (['D6'], lambda ch: {'1': 'QT_5V', '2': '+5V'}),
-    'OKI-78SR (1 in, 2 common, 3 out)': (['U2'], lambda ch: {'1': '+24V', '2': 'GND', '3': '+5V'}),
-    'electrolytics (1 = +)': (['C1', 'C2', 'C4'], lambda ch: None),
+    'LMR33630 (1 GND, 2 VIN, 3 EN, 4 PG, 5 FB, 6 VCC, 7 BOOT, 8 SW, pad GND)':
+        (['U2'], lambda ch: {'1': 'GND', '2': '+24V', '3': '+24V', '5': 'FB', '6': 'VCC', '7': 'BOOT', '8': 'SW',
+                             '9': 'GND'}),
+    'electrolytics (1 = +)': (['C1', 'C2'], lambda ch: None),
     'J1 (2 = +, beside the "+" mark)': (['J1'], lambda ch: {'1': 'GND', '2': 'VIN'}),
     'strip terminals (1 = +24 V common)': (['J3', 'J2'], lambda ch: None),
 }
@@ -566,7 +575,9 @@ def main():
     board, pads = board_pads()
     isl, island_net = test_connectivity(layers, pth, pads)
     test_dfm(layers, pth, npth, edge_poly)
-    test_mask_and_silk(layers)
+    vias = [(pcbnew.ToMM(v.GetPosition().x), -pcbnew.ToMM(v.GetPosition().y))
+            for v in board.GetTracks() if v.GetClass() == 'PCB_VIA']
+    test_mask_and_silk(layers, vias)
     test_text(board)
     test_current(board)
     test_clearance_by_voltage(isl, island_net)

@@ -61,7 +61,16 @@ def geometry():
     g['D6'] = ('dio', pad('D6', 0), pad('D6', 10.16), (2.7, 5.2))
     g['D7'] = ('dio', pad('D7', 0), pad('D7', 15.24), (5.3, 9.5))
     g['D8'] = ('dio', pad('D8', 0), pad('D8', 12.7), (3.6, 7.6))
-    g['C5'] = ('cer', pad('C5', 0), pad('C5', 5.0))
+    # the 5 V buck converter: surface-mount parts, drawn at their centres
+    g['U2'] = ('ic', (pl['U2'][0], pl['U2'][1]))
+    g['L1'] = ('ind', (pl['L1'][0], pl['L1'][1]))
+    for ref in ('C3', 'C4', 'C8', 'C9', 'C10', 'C11'):
+        g[ref] = ('chip', (pl[ref][0], pl[ref][1]), 3.2, 2.5, '#C9A26B', pl[ref][2])
+    g['C5'] = ('chip', (pl['C5'][0], pl['C5'][1]), 2.0, 1.25, '#C9A26B', pl['C5'][2])
+    for ref in ('R11', 'R12'):
+        g[ref] = ('chip', (pl[ref][0], pl[ref][1]), 3.2, 1.6, '#1E242B', pl[ref][2])
+    for ref in ('C6', 'C7'):
+        g[ref] = ('cer', pad(ref, -2.54), pad(ref, 2.54))
     g['SK1'] = ('strip', (B.QX, B.QY0), 7, 'socket')
     g['SK2'] = ('strip', (B.QX + 15.24, B.QY0), 7, 'socket')
     g['J4'] = ('strip', (pl['J4'][0], pl['J4'][1]), 8, 'header')
@@ -70,10 +79,9 @@ def geometry():
     g['J1'] = ('term', pad('J1', 5.08), 2, 'up')
     g['J3'] = ('term', pad('J3', 0), 4, 'down')
     g['J2'] = ('term', pad('J2', 0), 3, 'down')
-    for ref, radius in (('C1', 4.0), ('C2', 4.0), ('C4', 2.5)):
+    for ref, radius in (('C1', 4.0), ('C2', 4.0)):
         pitch = 3.5 if radius > 3 else 2.0
         g[ref] = ('ecap', pad(ref, 0), pad(ref, pitch), radius)
-    g['U2'] = ('conv', (pl['U2'][0], pl['U2'][1]))
     g['U1'] = ('qtpy', (B.QX, B.QY0))
     return g
 
@@ -107,9 +115,17 @@ def bbox(item):
         (x1, y1), (x2, y2), r = item[1], item[2], item[3]
         cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
         return cx - r, cy - r, cx + r, cy + r
-    if kind == 'conv':
+    if kind == 'ic':
         x, y = item[1]
-        return x - 2.67, y - 5.33, x + 7.75, y + 3.3
+        return x - 3.9, y - 2.5, x + 3.9, y + 2.5
+    if kind == 'ind':
+        x, y = item[1]
+        return x - 3.65, y - 3.3, x + 3.65, y + 3.3
+    if kind == 'chip':
+        (x, y), w, h = item[1], item[2], item[3]
+        if item[5] % 180 == 90:
+            w, h = h, w
+        return x - w / 2 - 0.3, y - h / 2 - 0.3, x + w / 2 + 0.3, y + h / 2 + 0.3
     if kind == 'qtpy':
         x, y = item[1]
         return x - 1.27, y - 2.73, x + 16.51, y + 17.97
@@ -215,11 +231,31 @@ def draw(item):
         s += line(cx - r * 0.4, cy, cx + r * 0.4, cy, '#8A9299', 0.25)
         s += line(cx, cy - r * 0.4, cx, cy + r * 0.4, '#8A9299', 0.25)
         return s
-    if kind == 'conv':
+    if kind == 'ic':
         x, y = item[1]
-        s = rect(x - 2.67, y - 5.33, 10.42, 8.63, '#25303B', 0.5)
-        s += rect(x - 1.6, y - 4.5, 6.0, 3.6, '#4A5560', 0.5)
-        s += '<text x="%s" y="%s" class="pw" text-anchor="middle">5V</text>' % (f(x + 2.54), f(y + 2.4))
+        s = ''
+        for k in range(4):
+            for sx in (-1, 1):
+                s += rect(x + sx * 2.85 - 0.75, y - 1.905 + 1.27 * k - 0.22, 1.5, 0.44, SILVER, 0.1)
+        s += rect(x - 1.95, y - 2.45, 3.9, 4.9, BLACK, 0.3)
+        s += '<circle cx="%s" cy="%s" r="0.35" fill="#6B747C"/>' % (f(x - 1.4), f(y - 1.9))
+        return s
+    if kind == 'ind':
+        x, y = item[1]
+        s = rect(x - 3.65, y - 3.3, 7.3, 6.6, '#2A3138', 0.6)
+        s += '<circle cx="%s" cy="%s" r="2.4" fill="#3D4750"/>' % (f(x), f(y))
+        s += '<text x="%s" y="%s" class="pv" text-anchor="middle">100</text>' % (f(x), f(y + 0.7))
+        return s
+    if kind == 'chip':
+        (x, y), w, h, fill = item[1], item[2], item[3], item[4]
+        if item[5] % 180 == 90:
+            w, h = h, w
+        s = rect(x - w / 2, y - h / 2, w, h, fill, 0.2)
+        cap = 0.5
+        if w >= h:
+            s += rect(x - w / 2, y - h / 2, cap, h, SILVER) + rect(x + w / 2 - cap, y - h / 2, cap, h, SILVER)
+        else:
+            s += rect(x - w / 2, y - h / 2, w, cap, SILVER) + rect(x - w / 2, y + h / 2 - cap, w, cap, SILVER)
         return s
     if kind == 'qtpy':
         x, y = item[1]
@@ -316,10 +352,19 @@ def icon(kind, arg=None):
                 f(x0 + 6 + 12 * i), SILVER, f(x0 + 4 + 12 * i), f(x0 + 8 + 12 * i))
             s += '<rect x="%s" y="11.5" width="5" height="4" rx="0.6" fill="#1B5E38"/>' % f(x0 + 3.5 + 12 * i)
         return s + '</svg>'
-    if kind == 'conv':
-        return ('<svg class="ic-t" viewBox="0 0 40 52">' + ''.join('<line x1="%d" y1="34" x2="%d" y2="51" stroke="#8A9299" stroke-width="2"/>' % (x, x) for x in (12, 20, 28))
-                + '<rect x="5" y="2" width="30" height="34" rx="2" fill="#25303B"/><rect x="10" y="7" width="20" height="13" rx="2" fill="#4A5560"/>'
-                '<text x="20" y="31" text-anchor="middle" class="it">5 V</text></svg>')
+    if kind == 'ic':
+        legs = ''.join('<rect x="%s" y="%d" width="7" height="2.4" fill="%s"/>' % (f(x), 8 + 7 * k, SILVER)
+                       for k in range(4) for x in (3, 30))
+        return ('<svg class="ic-m" viewBox="0 0 40 40">%s<rect x="9" y="5" width="22" height="30" rx="1.5" fill="%s"/>'
+                '<circle cx="13" cy="9" r="1.6" fill="#6B747C"/></svg>' % (legs, BLACK))
+    if kind == 'ind':
+        return ('<svg class="ic-m" viewBox="0 0 40 40"><rect x="3" y="5" width="34" height="30" rx="3" fill="#2A3138"/>'
+                '<circle cx="20" cy="20" r="10" fill="#3D4750"/><text x="20" y="24" text-anchor="middle" class="it2">100</text></svg>')
+    if kind == 'chip':
+        fill, w = arg
+        return ('<svg class="ic-s" viewBox="0 0 56 18"><rect x="%s" y="4" width="%s" height="10" rx="1" fill="%s"/>'
+                '<rect x="%s" y="4" width="4" height="10" fill="%s"/><rect x="%s" y="4" width="4" height="10" fill="%s"/></svg>'
+                % (f(28 - w / 2), w, fill, f(28 - w / 2), SILVER, f(28 + w / 2 - 4), SILVER))
     if kind == 'qtpy':
         return ('<svg class="ic-m" viewBox="0 0 40 40"><rect x="5" y="2" width="30" height="36" rx="3" fill="#11161B"/>'
                 '<rect x="13" y="0" width="14" height="11" rx="2" fill="#AEB6BD"/><rect x="14" y="17" width="12" height="12" rx="1" fill="#2A3138"/>'
@@ -363,8 +408,14 @@ TRAY = {
     't3': lambda n: piece(n, icon('term', 3), '3-way terminal', 'ordered'),
     't4': lambda n: piece(n, icon('term', 4), '4-way terminal', 'ordered'),
     'c100u': lambda n: piece(n, icon('ecap', 'big'), '100 µF 50 V', 'inventory C-044'),
-    'c10u': lambda n: piece(n, icon('ecap', 'small'), '10 µF 50 V', 'inventory C-038'),
-    'conv': lambda n: piece(n, icon('conv'), '5 V converter', 'ordered'),
+    'buckic': lambda n: piece(n, icon('ic'), 'LMR33630 chip', 'ordered'),
+    'ind10u': lambda n: piece(n, icon('ind'), '10 µH inductor', 'ordered'),
+    'c10u1210': lambda n: piece(n, icon('chip', ('#C9A26B', 24)), '10 µF 50 V chip', 'ordered'),
+    'c22u1210': lambda n: piece(n, icon('chip', ('#C9A26B', 24)), '22 µF 25 V chip', 'ordered'),
+    'c220n': lambda n: piece(n, icon('chip', ('#C9A26B', 16)), '220 nF chip', 'ordered'),
+    'r100kc': lambda n: piece(n, icon('chip', ('#1E242B', 22)), '100 kΩ 1 % chip', 'ordered'),
+    'r249k': lambda n: piece(n, icon('chip', ('#1E242B', 22)), '24.9 kΩ 1 % chip', 'ordered'),
+    'c1u': lambda n: piece(n, icon('cer'), '1 µF (105)', 'inventory C-027'),
     'fet': lambda n: piece(n, icon('fet'), 'IRLB8721', 'inventory Q-004'),
     'qtpy': lambda n: piece(n, icon('qtpy'), 'QT Py RP2040', 'you have it'),
     'pcb': lambda n: piece(n, icon('pcb'), 'Driver board', 'from PCBWay'),
@@ -675,8 +726,9 @@ def build():
     r_pull = ['R%d' % (n + 5) for n in channels]
     d_small = ['D%d' % n for n in channels] + ['D6']
     fets = ['Q%d' % n for n in channels]
-    order = [r_gate, r_pull, d_small, ['D7', 'D8'], ['SK1', 'SK2', 'J4', 'C5'], ['F1', 'J1', 'J3', 'J2'],
-             ['C1', 'C2', 'C4'], ['U2'], fets, ['FUSE']]
+    buck = ['U2', 'L1', 'C3', 'C4', 'C5', 'C8', 'C9', 'C10', 'C11', 'R11', 'R12']
+    order = [buck, r_gate, r_pull, d_small, ['D7', 'D8'], ['SK1', 'SK2', 'J4', 'C6', 'C7'], ['F1', 'J1', 'J3', 'J2'],
+             ['C1', 'C2'], fets, ['FUSE']]
     everything = [r for group in order for r in group]
 
     def pic(i, tags=()):
@@ -685,46 +737,47 @@ def build():
 
     gx = B.gx
     steps = []
-    steps.append(step(1, 'Gate resistors',
+    steps.append(step(1, 'The 5 V converter',
+                      'Eleven small parts that sit flat on their pads, done first while the board is bare and lies flat. Start with the chip: tin one corner pad, place the chip with its dot at the top left, solder that one pin and check the chip is straight, then the other seven. Turn the board over and fill the hole in the middle of its footprint with solder from the back: that joins the chip’s heat pad. Then the inductor, the four 22 µF right of it, the two 10 µF and the 220 nF left of the chip, and the two resistors below it: 24.9 k above, 100 k below. None of them has a right way round except the chip.',
+                      tray([('buckic', 1), ('ind10u', 1), ('c22u1210', 4), ('c10u1210', 2), ('c220n', 1), ('r249k', 1), ('r100kc', 1)]),
+                      pic(0, [(22.6, 8.4, 'chip'), (38.0, 8.2, '10 µH'), (49.1, 11.4, '22 µF ×4'), (14.6, 21.6, '10 µF ×2'), (24.0, 24.6, '24.9 k, 100 k')]),
+                      '<div class="tip text"><p>The values are not printed beside these parts: there is no room. Go by this picture, and keep each kind in its own dish until it is on the board. A flux pen helps; the pads are long so a normal iron tip reaches them.</p></div>'))
+    steps.append(step(2, 'Gate resistors',
                       'Five 220 Ω resistors, one for each colour. They sit in the positions printed <b>220</b>. Either way round. Bend the legs close to the body: the holes are 10 mm apart.',
-                      tray([('r220', 5)]), pic(0),
+                      tray([('r220', 5)]), pic(1),
                       tip(TIP_BANDS['220'], 'Red, red, black, black, brown. Check one with a meter before soldering: it reads 220 Ω.')))
-    steps.append(step(2, 'Pull-down resistors',
+    steps.append(step(3, 'Pull-down resistors',
                       'Five 100 kΩ resistors, each beside a 220 Ω, in the positions printed <b>100k</b>. They hold the strips dark whenever the QT Py is not driving them.',
-                      tray([('r100k', 5)]), pic(1),
+                      tray([('r100k', 5)]), pic(2),
                       tip(TIP_BANDS['100k'], 'Brown, black, black, orange, brown. On a blue body the orange band is easy to take for red, so measure: 100 kΩ.')))
-    steps.append(step(3, 'Six small diodes',
+    steps.append(step(4, 'Six small diodes',
                       'Six 1N5819, in the positions printed <b>5819</b>. The five beside the MOSFETs have their stripe at the top. The sixth lies flat, stripe to the right.',
-                      tray([('d5819', 6)]), pic(2, [(49.5, 21.4, 'stripe right')]),
+                      tray([('d5819', 6)]), pic(3, [(54.9, 24.2, 'stripe right')]),
                       tip(TIP_DIODE, 'The stripe goes to the end marked <b>K</b>, where the outline has its band and the pad is square.')))
-    steps.append(step(4, 'Two input diodes',
+    steps.append(step(5, 'Two input diodes',
                       'The big SB560 lies along the top edge, stripe to the left. The P6KE30A stands down the left edge, stripe toward the top.',
-                      tray([('sb560', 1), ('tvs', 1)]), pic(3, [(17.8, 10.2, 'SB560'), (9.6, 24.0, 'P6KE30A')]),
+                      tray([('sb560', 1), ('tvs', 1)]), pic(4, [(17.8, 9.4, 'SB560'), (9.6, 24.0, 'P6KE30A')]),
                       tip(TIP_DIODE, 'Same rule: stripe to <b>K</b>. The SB560 stops a supply wired backwards. Fitted backwards itself, it stops everything.')))
-    steps.append(step(5, 'Sockets, header, small capacitor',
-                      'Push both sockets onto the QT Py’s pins, lower the pair into the board and solder them with the QT Py still in place. They end up straight and the right distance apart. Then the 8-pin header and the 100 nF capacitor.',
-                      tray([('socket', 2), ('header', 1), ('c104', 1)]), pic(4, [(35.6, 10.3, '100 nF')]),
+    steps.append(step(6, 'Sockets, header, two small capacitors',
+                      'Push both sockets onto the QT Py’s pins, lower the pair into the board and solder them with the QT Py still in place. They end up straight and the right distance apart. Then the 8-pin header, and the two small capacitors right of the converter chip: 100 nF at the top, 1 µF below. Either way round.',
+                      tray([('socket', 2), ('header', 1), ('c104', 1), ('c1u', 1)]), pic(5, [(33.9, 8.6, '100 nF'), (33.9, 24.0, '1 µF')]),
                       '<div class="tip text"><p>Pull the QT Py back out when the sockets are soldered. It stays out until the power checks are done.</p></div>'))
-    steps.append(step(6, 'Fuse holder and screw terminals',
+    steps.append(step(7, 'Fuse holder and screw terminals',
                       'The 2-way terminal is the 24 V input at the top. The 4-way takes the RGB strip, the 3-way the white strip. Turn each so its wire openings face the nearest edge of the board.',
                       tray([('holder', 1), ('t2', 1), ('t4', 1), ('t3', 1)]),
-                      pic(5, [(50.0, 13.0, '2-way'), (17.8, 46.2, '4-way'), (63.5, 46.2, '3-way')]),
+                      pic(6, [(50.0, 13.0, '2-way'), (17.8, 46.2, '4-way'), (63.5, 46.2, '3-way')]),
                       '<div class="tip text"><p>Hold each part flat against the board while you solder its first pin. A terminal that sits crooked puts strain on its joints every time a screw is tightened.</p></div>'))
-    steps.append(step(7, 'Three capacitors',
+    steps.append(step(8, 'Two big capacitors',
                       'Electrolytic capacitors have a right way round. The long leg goes in the hole marked <b>+</b>. The pale stripe down the can ends up over the filled half of the printed circle.',
-                      tray([('c100u', 2), ('c10u', 1)]), pic(6, [(11.9, 20.0, '100 µF'), (50.2, 47.2, '100 µF'), (30.6, 24.0, '10 µF')]),
+                      tray([('c100u', 2)]), pic(7, [(11.9, 20.0, '100 µF'), (50.2, 47.2, '100 µF')]),
                       tip(TIP_ECAP, 'Long leg to <b>+</b>, stripe over the filled half. A reversed electrolytic on 24 V fails, sometimes loudly.')))
-    steps.append(step(8, 'The 5 V converter',
-                      'Pin 1 is its input and goes in the square pad marked <b>IN</b>. The three pins are in a row, so it also fits the wrong way round. Find pin 1 from the drawing in its datasheet before you solder.',
-                      tray([('conv', 1)]), pic(7, [(22.0, 9.8, '5 V converter')]),
-                      '<div class="tip text"><p><b>Not sure which pin is pin 1?</b> Test the loose module with a 9 V battery: + on the pin you believe is pin 1, − on the middle pin. The third pin then reads 5 V. Wrong way round, it reads nothing.</p></div>'))
     steps.append(step(9, 'Five MOSFETs',
                       'IRLB8721 only. Other parts in your drawers have the same shape, so read the printing on each one. Metal tab toward the resistors, printed face toward the screw terminals. Leave them standing straight: the tabs are connected to the strips and must not touch each other.',
                       tray([('fet', 5)]), pic(8),
                       tip(TIP_FET, '<b>Pick the best five first.</b> Clip G and D together. 9 V battery: + through a 1 kΩ resistor to G and D, − to S. The meter from G to S reads about 2.0–2.2 V. Measure every one you have, fit the five lowest, and set aside any above 2.6 V.')))
     steps.append(step(10, 'The fuse',
                       'Push the 2 A fuse into its holder. The soldering is finished: look over the back of the board once for joints that touch their neighbours, above all the three pins of each MOSFET.',
-                      tray([('fuse', 1)]), pic(9, [(36.0, 11.2, '2 A')])))
+                      tray([('fuse', 1)]), pic(9, [(36.0, 10.2, '2 A')])))
 
     check1 = ('<article class="check" id="check-1"><header><span class="stopno">!</span><div><span class="where">Stop and check · nothing plugged in</span><h3>First power-up</h3></div></header>'
               '<p>No QT Py, no strips, no display. Connect the 24 V supply to the input terminal: <b>+</b> and <b>−</b> are printed beside it. Black probe on the <b>GND</b> test pad.</p><ol>'
@@ -769,11 +822,18 @@ def build():
 
     n_stock = sum(1 for p in design.parts() if p['src'] == design.STOCK) + 1      # + the QT Py itself
     all_tray = tray([('pcb', 1), ('r220', 5), ('r100k', 5), ('d5819', 6), ('sb560', 1), ('tvs', 1), ('c104', 1), ('socket', 2),
-                     ('header', 1), ('holder', 1), ('fuse', 1), ('t2', 1), ('t4', 1), ('t3', 1), ('c100u', 2), ('c10u', 1),
-                     ('conv', 1), ('fet', 5), ('qtpy', 1)], 'need all')
+                     ('header', 1), ('holder', 1), ('fuse', 1), ('t2', 1), ('t4', 1), ('t3', 1), ('c100u', 2), ('c1u', 1),
+                     ('buckic', 1), ('ind10u', 1), ('c22u1210', 4), ('c10u1210', 2), ('c220n', 1), ('r249k', 1), ('r100kc', 1),
+                     ('fet', 5), ('qtpy', 1)], 'need all')
 
     order_rows = [
-        ('1', 'Murata OKI-78SR-5/1.5-W36-C', '5 V converter', 'https://www.digikey.com/en/products/detail/murata-power-solutions-inc/OKI-78SR-5-1-5-W36-C/2259781'),
+        ('2', 'Texas Instruments LMR33630ADDAR', '5 V buck converter chip (one spare)', 'https://www.digikey.com/en/products/result?keywords=LMR33630ADDAR'),
+        ('1', 'Bourns SRP7028A-100M', '10 µH inductor', 'https://www.digikey.com/en/products/result?keywords=SRP7028A-100M'),
+        ('3', 'Murata GRM32ER71H106KA12L', '10 µF 50 V 1210 capacitor (one spare)', 'https://www.digikey.com/en/products/result?keywords=GRM32ER71H106KA12L'),
+        ('5', 'Murata GRM32ER71E226KE15L', '22 µF 25 V 1210 capacitor (one spare)', 'https://www.digikey.com/en/products/result?keywords=GRM32ER71E226KE15L'),
+        ('2', 'KEMET C0805C224K5RACTU', '220 nF 50 V 0805 capacitor', 'https://www.digikey.com/en/products/result?keywords=C0805C224K5RACTU'),
+        ('2', 'Yageo RC1206FR-07100KL', '100 kΩ 1 % 1206 resistor', 'https://www.digikey.com/en/products/result?keywords=RC1206FR-07100KL'),
+        ('2', 'Yageo RC1206FR-0724K9L', '24.9 kΩ 1 % 1206 resistor', 'https://www.digikey.com/en/products/result?keywords=RC1206FR-0724K9L'),
         ('2', 'Sullins PPTC071LFBN-RC', '1×7 sockets for the QT Py', 'https://www.digikey.com/en/products/detail/sullins-connector-solutions/PPTC071LFBN-RC/810146'),
         ('1', 'On Shore OSTTC022162', '2-way screw terminal', 'https://www.digikey.com/en/products/detail/on-shore-technology-inc/OSTTC022162/614558'),
         ('1', 'On Shore OSTTC032162', '3-way screw terminal', 'https://www.digikey.com/en/products/detail/on-shore-technology-inc/OSTTC032162/614559'),
@@ -793,14 +853,14 @@ def build():
                 '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
                 '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Nunito+Sans:wght@400;600;700&family=Rubik:wght@600;800&display=swap">\n'
                 '<style>' + CSS + '</style>\n<svg class="defs" aria-hidden="true" focusable="false"><defs>' + defs + '</defs></svg>\n\n<div class="page">\n')
-    page.append('<header class="cover"><div class="band"><span class="where">Build booklet · driver board · revision B</span><h1>Task Lamp Driver Build</h1>'
-                '<div class="chips"><span><b>5</b> channels</span><span><b>35</b> parts to solder</span><span><b>%d</b> steps</span><span><b>1</b> board</span><span><b>24 V</b></span></div></div>'
+    page.append('<header class="cover"><div class="band"><span class="where">Build booklet · driver board · revision C</span><h1>Task Lamp Driver Build</h1>'
+                '<div class="chips"><span><b>5</b> channels</span><span><b>45</b> parts to solder</span><span><b>%d</b> steps</span><span><b>1</b> board</span><span><b>24 V</b></span></div></div>'
                 '<figure class="plate hero">%s</figure>'
-                '<p class="lede">One board, every part through-hole. The low parts go in first and the tall ones last. Then it is powered up in three stages, so a mistake shows on the meter before it can reach the QT Py or the strips.</p></header>\n'
+                '<p class="lede">One board, one 24 V input. The 5 V converter’s eleven small surface-mount parts go on first, while the board lies flat; everything else is through-hole, low parts before tall ones. Then it is powered up in three stages, so a mistake shows on the meter before it can reach the QT Py or the strips.</p></header>\n'
                 % (N_STEPS, hero))
     page.append('<div class="facts">'
                 '<div><span class="where">The board</span><span class="v">5 from PCBWay</span><p>Upload <b>tasklamp-driver-gerbers.zip</b>, then choose matte black mask, white silkscreen and ENIG. <a href="#pcbway">Options below.</a></p></div>'
-                '<div><span class="where">To buy</span><span class="v">9 lines, about $17</span><p>The converter, sockets, screw terminals, fuse holder and fuses, and two diodes. <a href="#order">Links are below.</a></p></div>'
+                '<div><span class="where">To buy</span><span class="v">15 lines, about $22</span><p>The converter’s chip, inductor and small parts, sockets, screw terminals, fuse holder and fuses, and two diodes. <a href="#order">Links are below.</a></p></div>'
                 '<div><span class="where">From your inventory</span><span class="v">%d parts</span><p>Five IRLB8721, six 1N5819, ten resistors, four capacitors, a pin header and the QT Py.</p></div></div>\n' % n_stock)
     page.append('<nav class="bags" aria-label="Sections"><a href="#step-1"><b>1</b>Soldering</a><a href="#check-1"><b>!</b>Power-up</a>'
                 '<a href="#step-11"><b>11</b>Wiring</a><a href="#readings"><b>V</b>Meter readings</a><a href="#order"><b>$</b>Parts to order</a><a href="#schematic"><b>i</b>Schematic</a></nav>\n')
@@ -809,7 +869,7 @@ def build():
                 '<div><span class="sw new"></span><span><b>Orange outline:</b> fit these now.</span></div>'
                 '<div><span class="sw old">old</span><span><b>No outline:</b> already soldered in an earlier step.</span></div>'
                 '<div><span class="sw stop">!</span><span><b>Yellow cards:</b> stop and measure before going on.</span></div></div>'
-                '<p class="hint">Parts go in from the top and are soldered on the back. Every position has its value printed inside the outline, so the bare board tells you what goes where. Tick <b>Done</b> on a step and the page remembers it on this device.</p></section>\n')
+                '<p class="hint">Parts go in from the top and are soldered on the back. Every through-hole position has its value printed inside the outline, so the bare board tells you what goes where; step 1’s picture shows where the converter’s small parts go. Tick <b>Done</b> on a step and the page remembers it on this device.</p></section>\n')
     page.append('<section class="sheet"><span class="where">Everything on the bench</span><h2>What goes in</h2>%s'
                 '<p class="hint">The codes are the IDs in your inventory sheet. You also need a soldering iron, solder, side cutters and a multimeter.</p></section>\n' % all_tray)
     page.append('<header class="bag"><span class="bagno">1</span><div><span class="where">Steps 1 to 10</span><h2>Soldering</h2></div></header>\n')
@@ -821,7 +881,7 @@ def build():
                 '<div class="tablewrap"><table><thead><tr><th>Where</th><th>Reading</th><th>If not</th></tr></thead><tbody>'
                 '<tr><td>Input terminal, + to −</td><td class="n">24 V</td><td>Supply or its wiring</td></tr>'
                 '<tr><td>Either +24 screw</td><td class="n">23–24 V</td><td>0 V: fuse blown or missing, or the SB560 is backwards</td></tr>'
-                '<tr><td>+5V test pad</td><td class="n">4.9–5.1 V</td><td>0 V with 24 V present: the converter is backwards or unsoldered</td></tr>'
+                '<tr><td>+5V test pad</td><td class="n">4.9–5.1 V</td><td>0 V with 24 V present: a converter pin is unsoldered or bridged, or the chip’s heat pad hole was not filled</td></tr>'
                 '<tr><td>QT Py socket, 5V</td><td class="n">4.6–5.0 V</td><td>Lower: D6 is backwards</td></tr>'
                 '<tr><td>QT Py socket, 3V, QT Py in</td><td class="n">3.3 V</td><td>The QT Py is not seated</td></tr>'
                 '<tr><td>A colour’s screw, that colour at 100 %</td><td class="n">under 0.10 V</td><td>Swap that MOSFET</td></tr>'
@@ -830,15 +890,15 @@ def build():
                 '<p class="hint">Loads at 100 %: about 0.13 A for each of red, green and blue, 0.30 A for each white, 1.0 A with everything on.</p></section>\n')
     page.append('<section class="sheet" id="order"><span class="where">One Digi-Key order</span><h3>Parts to order</h3>'
                 '<div class="tablewrap"><table><thead><tr><th>Qty</th><th>Part</th><th>What it is</th></tr></thead><tbody>%s</tbody></table></div>'
-                '<p class="hint">Stock and prices were not checked live. If a line is out of stock: any 5.08 mm screw terminal with the same number of ways fits, any “78xx replacement” 5 V switching module rated for 28 V or more fits the converter’s holes, and any Mini (ATM) 2 A blade fuse from a car-parts shop fits the holder.</p></section>\n' % order_table)
+                '<p class="hint">Stock and prices were not checked live; the converter lines open a Digi-Key search for the exact part. If a line is out of stock: the LMR33620ADDAR or LMR33640ADDAR fits the chip’s pads, any shielded 10 µH inductor about 7 × 7 mm rated 4.5 A saturation or more fits the inductor’s, any X7R 1210 capacitor of the same value and voltage works, any 5.08 mm screw terminal with the same number of ways fits, and any Mini (ATM) 2 A blade fuse from a car-parts shop fits the holder.</p></section>\n' % order_table)
     page.append('<section class="sheet" id="pcbway"><span class="where">The circuit board</span><h3>Ordering from PCBWay</h3><ol class="plain">'
                 '<li>Choose <b>PCB Instant Quote</b> and upload <b>tasklamp-driver-gerbers.zip</b> from the repository’s <b>hardware/tasklamp-driver</b> folder. The size, 96.5 × 59 mm, and the two layers are read from the file.</li>'
                 '<li>Keep FR-4, 1.6 mm thick and 1 oz copper. For the look the board was drawn for, choose <b>solder mask: matte black</b> (plain black if matte isn’t offered), <b>silkscreen: white</b> and <b>surface finish: ENIG</b>. Black and ENIG cost more than green and HASL, and the board works the same with either; the quote shows the difference. Nothing needs a special process.</li>'
                 '<li>Quantity 5 is the minimum.</li><li>Compare PCBWay’s preview with the picture at the top of this page before paying.</li></ol>'
                 '<p class="hint">The mounting holes are 3.2 mm, for M3 screws, on a 88.9 × 50.8 mm rectangle. No board has been built from these files yet. They pass 22 checks against the board maker’s limits and the circuit (see <b>hardware/tasklamp-driver/test-report.md</b>), but before ordering, print the top layer at full size and hold the fuse holder, converter and terminals against it.</p></section>\n')
     page.append('<section class="sheet" id="schematic"><span class="where">The whole circuit</span><h3>Schematic</h3>'
-                '<figure class="schem"><div class="scroll"><img alt="Schematic of the driver board: 24 V input with fuse, Schottky diode and TVS, a 5 V converter feeding the QT Py through a diode, and five identical MOSFET switches" src="data:image/png;base64,%s"></div>'
-                '<figcaption>24 V comes in through the fuse and the SB560. The converter makes 5 V for the QT Py. Each colour is one MOSFET with a 220 Ω gate resistor, a 100 kΩ pull-down and a 1N5819 back to +24 V.</figcaption></figure></section>\n'
+                '<figure class="schem"><div class="scroll"><img alt="Schematic of the driver board: 24 V input with fuse, Schottky diode and TVS, an LMR33630 buck converter making 5 V for the QT Py through a diode, and five identical MOSFET switches" src="data:image/png;base64,%s"></div>'
+                '<figcaption>24 V comes in through the fuse and the SB560. An LMR33630 buck converter makes 5 V for the QT Py. Each colour is one MOSFET with a 220 Ω gate resistor, a 100 kΩ pull-down and a 1N5819 back to +24 V.</figcaption></figure></section>\n'
                 % base64.b64encode(schematic).decode())
     page.append('</div>\n' + SCRIPT + '\n')
     return ''.join(page)

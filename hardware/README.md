@@ -13,14 +13,15 @@ MOSFET.
 | Supply | 24 V DC, 1.5 A or more. About 1.0 A is drawn with every channel at 100 % |
 | Outputs | Red, green, blue: about 0.13 A each. Warm white, cool white: about 0.30 A each |
 | Controller power | 5 V made on the board from the 24 V input; USB can be plugged in at the same time |
-| Parts | All through-hole. Most are in the inventory; nine lines to buy ([`docs/parts-to-order.md`](../docs/parts-to-order.md)) |
+| Parts | Through-hole, except the 5 V converter's eleven surface-mount parts (hand-solderable). Most are in the inventory; fifteen lines to buy ([`docs/parts-to-order.md`](../docs/parts-to-order.md)) |
+| Power input | One: 24 V into J1. Everything on the board, the QT Py included, runs from it |
 
 ## What is on it
 
 ```
  24 V in ─ fuse ─ Schottky ─┬───────────────┬──────────────── +24 V to both strips
           (2 A)  (reverse   │               │
-                 protection)│               └─ 5 V converter ─ diode ─ QT Py 5V pad
+                 protection)│               └─ 5 V buck (LMR33630) ─ diode ─ QT Py 5V pad
                            TVS, 2 × 100 µF
 
  QT Py pin ── 220 Ω ──┬── gate ┐
@@ -31,7 +32,8 @@ MOSFET.
 
 * **Input.** Fuse first, then a Schottky diode so a supply wired backwards reaches nothing,
   then a TVS diode and two bulk capacitors on the 24 V rail.
-* **5 V supply.** A switching converter module (78xx pinout) feeds the QT Py's 5V pad
+* **5 V supply.** An LMR33630 buck converter, the circuit of the BUCK//33630 breakout set
+  for 5.02 V, feeds the QT Py's 5V pad
   through a diode. The QT Py has its own diode from USB, so either source, or both, can
   be connected.
 * **Five identical switches.** The QT Py pin drives the MOSFET gate through 220 Ω. The
@@ -64,7 +66,7 @@ The full schematic is [`tasklamp-driver-schematic.pdf`](tasklamp-driver/tasklamp
    `tasklamp-driver-gerbers.zip`. The size (96.5 × 59 mm) and layer count (2) are read
    from the file.
 2. Keep FR-4, 1.6 mm and 1 oz copper, and set these for the board's look (Neon Noir
-   Chartreuse, revision B):
+   Chartreuse, revision C):
 
    | Option | Choose |
    |---|---|
@@ -75,7 +77,8 @@ The full schematic is [`tasklamp-driver-schematic.pdf`](tasklamp-driver/tasklamp
    Black mask and ENIG cost more than green and HASL; the quote shows the difference.
    The circuit works the same with any colour and finish, so green with HASL is fine if
    you'd rather save it. Nothing needs a special process: the narrowest track is 0.4 mm,
-   the closest copper 0.4 mm apart, the smallest hole 0.8 mm, and there are no vias.
+   the closest copper 0.23 mm apart (in the converter), the smallest hole 0.4 mm (18 ground
+   vias round the converter).
 3. Quantity 5 is the minimum and usually the cheapest tier.
 4. Look at PCBWay's own preview before paying. It should look like the two pictures in
    `tasklamp-driver/img/`.
@@ -90,27 +93,22 @@ standard).
 The same steps, with a picture of the board for each one, are in the build booklet:
 [`docs/driver-build.html`](../docs/driver-build.html).
 
-Solder the low parts first so the board lies flat. Every position has its value printed
-inside the outline.
+Solder the converter's surface-mount parts first, while the board is bare, then the low
+through-hole parts so the board lies flat. Every through-hole position has its value
+printed inside the outline.
 
 | Step | Parts | Which way round |
 |---|---|---|
-| 1 | R1–R5, **220 Ω** (red, red, black, black, brown) | Either way |
-| 2 | R6–R10, **100 kΩ** (brown, black, black, orange, brown) | Either way |
-| 3 | D1–D6, **1N5819** | Stripe toward the **K** mark and the band on the outline |
-| 4 | D7 **SB560** and D8 **P6KE30A** | Stripe toward **K** |
-| 5 | C5, **100 nF** ceramic (marked 104) | Either way |
+| 1 | The 5 V converter, surface-mount: U2 **LMR33630**, L1 **10 µH**, C8–C11 **22 µF**, C3–C4 **10 µF**, C5 **220 nF**, R12 **24.9 kΩ**, R11 **100 kΩ** | Only the chip has a right way round: its dot to the top left. Solder one corner pin, check it's straight, then the rest; fill the hole in its centre pad with solder from the back. Values aren't printed on the board: use the booklet's step 1 picture |
+| 2 | R1–R5, **220 Ω** (red, red, black, black, brown) | Either way |
+| 3 | R6–R10, **100 kΩ** (brown, black, black, orange, brown) | Either way |
+| 4 | D1–D6, **1N5819** | Stripe toward the **K** mark and the band on the outline |
+| 5 | D7 **SB560** and D8 **P6KE30A** | Stripe toward **K** |
+| 6 | C6 **100 nF** (marked 104) and C7 **1 µF** (105), right of the converter chip | Either way |
 | 6 | Two **1×7 sockets** and the 8-pin header J4 | Plug the sockets onto the QT Py's pins first and solder them with the QT Py in place, so they end up straight and parallel |
 | 7 | Fuse holder F1, screw terminals J1, J2, J3 | Wire openings toward the board edge |
-| 8 | C1, C2 **100 µF** and C4 **10 µF** | Long lead in the hole marked **+**. The stripe on the can goes over the filled half of the circle |
-| 9 | U2, the **5 V converter** | Pin 1 (+Vin) in the square pad marked **IN**. See the note below |
-| 10 | Q1–Q5, **IRLB8721**, the five picked below | Metal tab toward the resistors, printing toward the screw terminals. The outline has a second line on the tab side |
-
-**The converter can be fitted backwards**, because its three pins are in a row. Pin 1 is
-the input. Find it from the drawing in the module's datasheet before soldering; if that
-leaves any doubt, test the loose module with a 9 V battery: battery + on the pin you
-think is pin 1, battery − on the middle pin, and the third pin must read 5 V. The first
-power-up check below also catches a reversed converter before it can reach the QT Py.
+| 8 | C1, C2 **100 µF** | Long lead in the hole marked **+**. The stripe on the can goes over the filled half of the circle |
+| 9 | Q1–Q5, **IRLB8721**, the five picked below | Metal tab toward the resistors, printing toward the screw terminals. The outline has a second line on the tab side |
 
 The IRLB8721 shares its package with other parts in the inventory (IRFZ44N, the 78xx
 regulators). Read the printing on each one: only IRLB8721 goes in Q1–Q5.
@@ -180,14 +178,15 @@ connects to; `tools/pcb/build.py` generates the schematic and the board from it 
 refuses to write factory files unless all of this holds:
 
 * the netlist KiCad extracts from the **schematic** is exactly the list in `design.py`
-  (28 nets, 40 parts);
+  (32 nets, 50 parts);
 * every pad on the **board** is on the net `design.py` gives it;
 * KiCad's **design-rule check** finds no violation and nothing left unrouted;
 * the outline, the QT Py socket spacing (taken from Adafruit's own board file) and the
-  terminal pitch are right, there are no vias, and nothing is routed on the ground layer;
+  terminal pitch are right, the only vias are the converter's ground stitching, and nothing is
+  routed on the ground layer;
 * four faults planted on purpose are each reported: a short, a 0.05 mm gap, a missing
   track, and two swapped wires;
-* the exported **drill files** hold the same 103 holes, at the same places and sizes, as
+* the exported **drill files** hold the same 119 holes, at the same places and sizes, as
   the board.
 
 The pictures in `img/` are rendered from the Gerber files by a different program
@@ -202,7 +201,8 @@ Two more test suites go further. Their results, with what each one assumed, are 
   drills and annular rings, mask openings and dams, silkscreen line widths, heating and
   voltage drop in the tracks, clearance at 24 V, whether each part's leads fit its holes,
   which way the screw terminals face, the firmware's pin map and each part's pinout.
-* **`tools/sim/run.py`** (17 checks) simulates the circuit in ngspice: all channels on,
+* **`tools/sim/run.py`** (20 checks) simulates the circuit in ngspice: the 5 V buck's power
+  stage (ripple, peak current, losses, the 5 V setting), all channels on,
   the 3.3 V gate drive across the MOSFET's whole threshold range, switching and the bottom
   of the dimming range, turn-off spikes, plugging in a live supply, a reversed supply, the
   5 V and USB power paths, floating pins and supply ripple.
@@ -216,7 +216,7 @@ solder-mask openings were exactly pad-sized (now 0.05 mm larger all round).
 What has **not** been done: nobody has built one. Footprints come from KiCad's standard
 library except the QT Py socket, whose pad positions are from Adafruit's design files.
 Before ordering, it is worth printing the top layer at 100 % and holding the real parts
-against it, above all the fuse holder, the converter and the screw terminals.
+against it, above all the fuse holder, the inductor and the screw terminals.
 
 To regenerate after a change (needs KiCad 7 or newer; the test suites also need ngspice,
 and Python with `gerbonara`, `shapely` and `matplotlib`):
@@ -244,8 +244,8 @@ python3 tools/pcb/test_board.py         # checks of the factory files
   hurt it even if a surge lifts the rail. The kick from the strip wiring at turn-off is
   clamped half a volt above the rail by the 1N5819.
 * **One ground plane.** The whole bottom layer is ground and everything else is routed on
-  top, so the return current of every track runs directly underneath it. There are no
-  vias to fail.
+  top, so the return current of every track runs directly underneath it. The only vias are
+  18 ground stitches round the 5 V converter, joining its top-layer ground to the plane.
 * **Copper sized for more.** The 24 V paths are 3 mm wide and the outputs 1.2 mm, good for
   about 3 A in total (the input diode is what sets that). Longer strips need only a larger
   fuse, up to 3 A, and a repeat of the 0.1 V check above.

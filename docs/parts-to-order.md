@@ -1,7 +1,7 @@
 # Parts to order for the driver board
 
 Everything else on the board is already in the component inventory. This is one Digi-Key
-order of about $17 before shipping, plus the circuit boards themselves from PCBWay
+order of about $22 before shipping, plus the circuit boards themselves from PCBWay
 (see [`hardware/README.md`](../hardware/README.md)).
 
 Stock and prices could not be checked live when this list was made (November 2026); the
@@ -12,7 +12,13 @@ holes, in case something is out of stock.
 
 | Qty | Part | What it does | Link | About |
 |---|---|---|---|---|
-| 1 | Murata **OKI-78SR-5/1.5-W36-C** | Makes 5 V for the QT Py from the 24 V supply. A switching module with the pinout of a 7805, 7–36 V in, no heatsink | [Digi-Key](https://www.digikey.com/en/products/detail/murata-power-solutions-inc/OKI-78SR-5-1-5-W36-C/2259781) | $6.00 |
+| 2 | Texas Instruments **LMR33630ADDAR** | The 5 V converter's chip: a 3 A buck converter, 3.8–36 V in, 400 kHz (the BUCK//33630 breakout's circuit). One to fit, one spare | [Digi-Key search](https://www.digikey.com/en/products/result?keywords=LMR33630ADDAR) | $2.50 each |
+| 1 | Bourns **SRP7028A-100M** | 10 µH shielded inductor, 7.3 × 6.6 mm, saturates at 6 A | [Digi-Key search](https://www.digikey.com/en/products/result?keywords=SRP7028A-100M) | $0.90 |
+| 3 | Murata **GRM32ER71H106KA12L** | 10 µF 50 V X7R 1210: the converter's input capacitors. Two to fit, one spare | [Digi-Key search](https://www.digikey.com/en/products/result?keywords=GRM32ER71H106KA12L) | $0.55 each |
+| 5 | Murata **GRM32ER71E226KE15L** | 22 µF 25 V X7R 1210: the converter's output capacitors. Four to fit, one spare | [Digi-Key search](https://www.digikey.com/en/products/result?keywords=GRM32ER71E226KE15L) | $0.60 each |
+| 2 | KEMET **C0805C224K5RACTU** | 220 nF 50 V X7R 0805: high-frequency input bypass | [Digi-Key search](https://www.digikey.com/en/products/result?keywords=C0805C224K5RACTU) | $0.10 each |
+| 2 | Yageo **RC1206FR-07100KL** | 100 kΩ 1 % 1206: top of the feedback divider | [Digi-Key search](https://www.digikey.com/en/products/result?keywords=RC1206FR-07100KL) | $0.10 each |
+| 2 | Yageo **RC1206FR-0724K9L** | 24.9 kΩ 1 % 1206: bottom of the feedback divider, sets 5.02 V | [Digi-Key search](https://www.digikey.com/en/products/result?keywords=RC1206FR-0724K9L) | $0.10 each |
 | 2 | Sullins **PPTC071LFBN-RC** | 1×7 sockets, so the QT Py plugs in and can be taken out | [Digi-Key](https://www.digikey.com/en/products/detail/sullins-connector-solutions/PPTC071LFBN-RC/810146) | $0.60 each |
 | 1 | On Shore **OSTTC022162** | 2-way screw terminal, 5.08 mm: 24 V in | [Digi-Key](https://www.digikey.com/en/products/detail/on-shore-technology-inc/OSTTC022162/614558) | $0.70 |
 | 1 | On Shore **OSTTC032162** | 3-way screw terminal: white strip | [Digi-Key](https://www.digikey.com/en/products/detail/on-shore-technology-inc/OSTTC032162/614559) | $1.00 |
@@ -26,7 +32,10 @@ holes, in case something is out of stock.
 
 | Part | Any of these fits the same footprint |
 |---|---|
-| 5 V converter | Traco **TSR 1-2450**, Recom **R-78K5.0-1.0**, CUI **VXO7805-1000**. Any "78xx replacement" switching module with pins IN-GND-OUT at 2.54 mm, rated for at least 28 V in and 0.5 A out |
+| Converter chip | **LMR33620ADDAR** (2 A) or **LMR33640ADDAR** (4 A): same pads, same pins, same parts around them |
+| Inductor | Any shielded 10 µH SMD inductor about 7 × 7 mm, saturation current 4.5 A or more, resistance under 0.1 Ω (for example Bourns **SRP7028AA-100M**) |
+| 1210 / 0805 capacitors | Any X7R (or X5R) part of the same value and at least the same voltage; the 0805 pads also take a 1206 |
+| Feedback resistors | Any 1 % 0805 or 1206 resistors of those values |
 | Screw terminals | Any 5.08 mm (0.2 in) pitch block with 2, 3 and 4 ways: Phoenix Contact **1715721**, **1715734**, **1715747** (MKDS 1,5 series); TE **282837-2**, **-3**, **-4** |
 | Sockets | Any single-row 2.54 mm female header with 7 positions, or a longer one cut down |
 | Fuse | Any **Mini (ATM)** blade fuse, 2 A, from a car-parts shop. Not the larger "ATO/ATC" size |
@@ -42,8 +51,8 @@ holes, in case something is out of stock.
 | 5 | 220 Ω resistor (R-006) | R1–R5 gate resistors |
 | 5 | 100 kΩ resistor (R-014) | R6–R10 gate pull-downs |
 | 2 | 100 µF 50 V electrolytic (C-044) | C1, C2 |
-| 1 | 10 µF 50 V electrolytic (C-038) | C4 |
-| 1 | 0.1 µF ceramic (C-021) | C5 |
+| 1 | 0.1 µF ceramic (C-021) | C6, the converter's bootstrap capacitor |
+| 1 | 1 µF ceramic (C-027) | C7, the converter's VCC capacitor |
 | 8 pins | Male header strip (E-007) | J4, to the display and the encoder |
 | 1 | QT Py RP2040, with its header pins | U1 |
 
@@ -58,9 +67,11 @@ holes, in case something is out of stock.
 
 ## Why these parts
 
-* **A switching converter, not a 7805.** The inventory has no inductors, so nothing in it
-  can make 5 V from 24 V efficiently. A 7805 would turn about 2 W into heat to deliver
-  0.5 W, and need a heatsink. This module wastes about a tenth of a watt.
+* **A buck converter on the board, not a 7805.** A 7805 would turn about 2 W into heat to
+  deliver 0.5 W, and need a heatsink. The LMR33630 circuit, the same one as on the
+  BUCK//33630 breakout, wastes a few tens of milliwatts at the lamp's load. Its chip and
+  small capacitors are surface-mount: they are soldered first, with an ordinary iron (the
+  pads are long, and the chip's heat pad is soldered through a hole from the back).
 * **A fuse.** The board's copper is sized for the fuse, not for whatever the supply can
   deliver into a short.
 * **The Schottky.** Screw terminals can be wired backwards once. The diode costs half a

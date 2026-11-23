@@ -64,6 +64,10 @@ def board_holes(pcb_path):
             pos = pad.GetPosition()
             hole = (mm(pos.x) - gen_pcb.OX, mm(pos.y) - gen_pcb.OY, d)
             (unplated if pad.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH else plated).append(hole)
+    for v in board.GetTracks():                 # the buck's ground stitching vias
+        if v.GetClass() == 'PCB_VIA':
+            pos = v.GetPosition()
+            plated.append((mm(pos.x) - gen_pcb.OX, mm(pos.y) - gen_pcb.OY, mm(v.GetDrillValue())))
     return plated, unplated
 
 

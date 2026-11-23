@@ -1,7 +1,29 @@
 # Driver board test report
 
-Revision B (Neon Noir Chartreuse: matte black mask, white silkscreen, ENIG), firmware
+Revision C (Neon Noir Chartreuse: matte black mask, white silkscreen, ENIG), firmware
 1.2.1. Tested 2026-11-23, before any board has been built.
+
+## What changed in revision C
+
+The Murata OKI-78SR module is gone. The 5 V supply is now the LMR33630 buck converter
+from the BUCK//33630 breakout (branch `Branchy`), built into the board and set for 5.02 V,
+fed only from the 24 V input:
+
+* **Same circuit and chip-side layout as the breakout:** chip, input capacitors, bootstrap
+  and VCC capacitors and their routing are the breakout's, moved here as a block; the
+  hand-solder footprints (long pads, a plated hole to solder the chip's heat pad from the
+  back) come with it.
+* **Changed to fit this board:** a 7 mm inductor (Bourns SRP7028A-100M, 10 µH, saturating at
+  6 A) instead of the breakout's 12.5 mm one; SMD feedback resistors (100 k / 24.9 k 1 %,
+  5.016 V) instead of axial ones; EN tied to VIN; no input or output headers. The board's
+  existing fuse, reverse-polarity diode, TVS and 100 µF capacitors protect it.
+* **Kept:** D6, so the QT Py's own USB socket can never feed the converter.
+* **Board:** 18 ground stitching vias (the board's first), a top-layer ground pour round the
+  chip and a 5 V pour round the output capacitors; the four PWM lanes moved down 1.6 mm to
+  make room. Size, outline, holes, look and every strip-switch position are unchanged.
+* **Tests:** a new power-stage simulation (T11); the 5 V and hot-plug simulations use the
+  buck's figures; the board checks now cover the surface-mount parts, the switch node as a
+  24 V net and the LMR33630's pinout.
 
 ## Summary
 
@@ -10,7 +32,7 @@ Revision B (Neon Noir Chartreuse: matte black mask, white silkscreen, ENIG), fir
 | Suite | What it does | Result |
 |---|---|---|
 | `tools/pcb/build.py` | Schematic and board against the circuit description, KiCad's design-rule check, four planted faults, drill files read back | all pass |
-| `tools/sim/run.py` | The circuit simulated in ngspice | 17 pass, 0 fail |
+| `tools/sim/run.py` | The circuit simulated in ngspice | 20 pass, 0 fail |
 | `tools/pcb/test_board.py` | The factory files read back as shapes, without KiCad, and measured | 22 pass, 0 fail |
 
 **Found and fixed** (the first runs failed on items 1–3 and measured item 4):
@@ -57,9 +79,12 @@ checks the result. Results are in [`sim/results.json`](sim/results.json).
 | T4 Turn-off spike | Peak drain 14.0 V with a 1 µH strip lead, 23.7 V with 3 µH. Without the 1N5819 clamps: 15.0 V and 30.0 V (the MOSFET's rating) | pass |
 | T5 Plugging in a live supply | Inrush 68 A peak (1.5 m lead), 139 A (short heavy lead, low-ESR capacitors), 39 A (5 m lead). The rail never overshoots 23.7 V. At most 0.49 A²s through the fuse, against 5.8 A²s to melt it | pass |
 | T6 Supply wired backwards | 0.6 µA flows; the rail sits at −0.02 V | pass |
-| T7 QT Py power | 5V pin 4.71 V on 24 V alone, 4.67 V on USB alone, 4.73 V on both (4.92 V with USB at 5.25 V). At most 32 µA, the diode's leakage, flows back into a source | pass |
+| T7 QT Py power | 5V pin 4.73 V from the board (the buck's 5.02 V less D6); 4.67 V on the QT Py's USB alone with the board off; 4.74 V with both. At most 32 µA, a diode's leakage, flows back into either | pass |
 | T8 Pins left floating | Gate at 0.10 V even with 1 µA of pin leakage; strip dark | pass |
 | T10 All channels switching together | Rail ripple 0.24 V peak to peak; each bulk capacitor carries 121 mA rms | pass |
+| T11a 5 V buck: current and ripple | Inductor ripple 1.04 A peak to peak at 24 V in. At the chip's full 3 A the inductor peaks at 3.51 A, 3.78 A in the worst case (26.4 V in, slow clock, inductor 20 % low), under the chip's 3.85 A minimum current limit. Output ripple 5–9 mV | pass |
+| T11b 5 V buck: losses | 21 mW in the switches and inductor at the lamp's real 0.1 A (conduction only; the chip skips pulses at light load). 1.5 W, 91 %, at 3 A. Input capacitors 1.24 A rms at 3 A | pass |
+| T11c 5 V setting | 5.016 V nominal; 4.86–5.17 V with the reference and both resistors at their limits | pass |
 
 ### The 3.3 V gate drive
 
@@ -153,23 +178,23 @@ those shapes alone. Limits are set above PCBWay's published minimums (4 mil trac
 
 | Test | Result | Status |
 |---|---|---|
-| B1 Nets in the Gerbers | Copper traced into 28 nets across 97 pins, through 47 top and 80 bottom copper islands and 99 plated holes: exactly the circuit, no opens, no shorts | pass |
+| B1 Nets in the Gerbers | Copper traced into 32 nets across 122 pins, through 52 top and 79 bottom copper islands and 115 plated holes: exactly the circuit, no opens, no shorts | pass |
 | B2 Stray copper | None | pass |
-| B3 Track width | Narrowest 0.40 mm (limit 0.15) | pass |
-| B4 Copper gaps | Closest 0.40 mm (limit 0.15) | pass |
-| B5 Drills | 103 holes in 8 sizes, 0.8 to 3.2 mm | pass |
-| B6 Annular ring | Smallest 0.30 mm, 0.26 mm with the hole at its tolerance (limit 0.15) | pass |
-| B7 Hole spacing | Closest edges 1.20 mm (limit 0.50) | pass |
+| B3 Track width | Narrowest 0.25 mm, in the converter (limit 0.15) | pass |
+| B4 Copper gaps | Closest 0.23 mm, round the converter's pours (limit 0.15) | pass |
+| B5 Drills | 119 holes in 9 sizes, 0.4 (vias) to 3.2 mm | pass |
+| B6 Annular ring | Smallest 0.25 mm (vias), 0.21 mm with the hole at its tolerance (limit 0.15) | pass |
+| B7 Hole spacing | Closest edges 0.60 mm (limit 0.50) | pass |
 | B8 Edge clearance | Copper 0.50 mm, holes 1.72 mm from the board edge | pass |
 | B9 Inside the outline | Copper, mask and silkscreen all within it | pass |
 | B10 Mask openings | Every pad open, each opening 0.05 mm larger than its pad (was exactly pad-sized) | pass |
-| B11 Mask dams | Narrowest 0.30 mm (black-mask limit 0.13) | pass |
+| B11 Mask dams | Narrowest 0.15 mm, between the chip and its 220 nF capacitor, both ground (black-mask limit 0.13) | pass |
 | B12 Silkscreen on pads | None | pass |
 | B13 Silkscreen line width | Thinnest stroke 0.15 mm (was 0.12: **failed**). In the filled lettering 0.85 % of the ink is thinner, at the rounded ends of curves | pass |
 | B14 Text height | Smallest 0.80 mm | pass |
-| B15 Track heating | Worst: 0.95 A in a 1.0 mm stretch of +24 V, 1.2 K rise (IPC-2221) | pass |
-| B16 Voltage drop | At most 37 mV along the +24 V tracks | pass |
-| B17 24 V clearance | 0.50 mm between 24 V copper and anything else (IPC-2221B asks 0.10 mm) | pass |
+| B15 Track heating | Worst, counting the whole 0.95 A through the narrowest +24 V track (0.5 mm): 3.8 K rise (IPC-2221) | pass |
+| B16 Voltage drop | At most 44 mV along the +24 V tracks | pass |
+| B17 24 V clearance | 0.23 mm between 24 V copper (the switch node included) and anything else (IPC-2221B asks 0.10 mm) | pass |
 | B18 Leads in holes | Every lead fits with its hole at the small end of the tolerance (TO-220 at 1.1 mm did not: **failed**) | pass |
 | B19 Screw terminals | All three take their wires from the nearest board edge | pass |
 | B20 Firmware pin map | All 11 pins in `config.h` land on the right nets | pass |
@@ -191,7 +216,16 @@ those shapes alone. Limits are set above PCBWay's published minimums (4 mil trac
   the top layer before ordering, and test-fit them in a bare board before soldering.
 * **The MOSFET's true threshold curve** isn't published, which is why three models are
   compared above. The 0.1 V check after assembly is the real test.
-* **A second design-rule check** in PCBEditor was not run: it takes the 880 KB board file
+* **The buck's control loop** isn't simulated: TI publishes no model of it. The parts are
+  the datasheet's and the breakout's, which the chip's internal compensation is designed
+  for; the first board's 5 V test pad (4.9–5.1 V, steady) is the check.
+* **The inductor's land** is drawn from the part's body size (7.3 × 6.6 mm, terminals at
+  the ends) with long pads for an iron, not from Bourns' land drawing, which wasn't to hand.
+  Hold a real SRP7028A against the full-size print before ordering.
+* **Surface-mount soldering.** The converter's eleven parts are the board's only SMD parts.
+  The breakout's footprints were chosen for an iron, but the chip (1.27 mm pitch) is the
+  fiddliest joint on the board; a flux pen and a magnifier help.
+* **A second design-rule check** in PCBEditor was not run: it takes the 940 KB board file
   inline, which is impractical from here. KiCad's check and the Gerber measurements above
   cover the same rules. To get a third opinion, import `tasklamp-driver.kicad_pcb` there.
 

@@ -34,7 +34,7 @@ FUSE_I2T = 5.8           # A^2 s: the lower of the two published melting figures
 V_SUPPLY = 24.0
 R_CABLE, L_CABLE = 0.10, 1.5e-6      # 1.5 m supply lead: both conductors, loop inductance
 ESR_BULK = 0.3           # general-purpose electrolytic (a low-ESR type is nearer 0.05)
-C_OKI_IN = 10e-6         # the converter's own input capacitance (not given in its datasheet)
+C_BUCK_IN = 10e-6        # buck input ceramics C3, C4 (2 x 10 uF 50 V X7R, about 5 uF each at 24 V) + C5
 R_GPIO = 100.0           # RP2040 pad at its default 4 mA drive strength
 V_GPIO = 3.3             # IOVDD, from the QT Py's 3.3 V regulator
 L_STRIP = 1.0e-6         # strip lead plus strip copper, each channel
@@ -64,7 +64,14 @@ I_STRIP_W = 0.271        # white channel current on the 23.4 V rail (test T1)
 # swing. n = 2.0 (118 mV/decade) is taken as the central value and n = 1.3-2.5 as the range.
 K_B_Q = 8.617333e-5      # Boltzmann's constant over the electron charge, V/K
 N_CENTRAL, N_RANGE = 2.0, (1.3, 1.6, 2.0, 2.5)
-SCREEN_V, SCREEN_R = 9.0, 1000.0   # the MOSFET screening test: 9 V battery, 1 kohm, gate tied to drain
+SCREEN_V, SCREEN_R = 9.0, 1000.0
+# ---- the 5 V buck (LMR33630ADDA, datasheet SNVSAN3F, typical) ----------------------------------
+BUCK_VOUT = 1.0 * (1 + 100e3 / 24.9e3)       # VREF 1.0 V, R11 100k, R12 24.9k: 5.016 V
+BUCK_RHS, BUCK_RLS = 0.095, 0.066            # switch on-resistance, ohms
+BUCK_ILIM_MIN = 3.85                         # high-side current limit, minimum, A
+BUCK_L, BUCK_DCR = 10e-6, 0.085              # Bourns SRP7028A-100M: 10 uH, 85 mohm max
+BUCK_COUT_EACH = 16e-6                       # one 22 uF 25 V 1210 X7R at 5 V (estimate)
+BUCK_CIN_EACH = 5e-6                         # one 10 uF 50 V 1210 X7R at 24 V (estimate)   # the MOSFET screening test: 9 V battery, 1 kohm, gate tied to drain
 
 
 def ekv(vg, vd, vt0, k, n, t_c=25.0):
@@ -361,8 +368,8 @@ C1 rail c1e {cb}
 Rc1 c1e 0 {esr}
 C2 rail c2e {cb}
 Rc2 c2e 0 {esr}
-* the converter: 5 V x the QT Py's load at about 80 %, plus 0.12 W of its own, above 7 V
-Boki rail 0 I = V(rail) > 7 ? (5*{il}/0.8 + 0.12)/V(rail) : 0
+* the LMR33630 buck: 5 V x the QT Py's load at about 85 %, plus 0.05 W of its own, above 6 V
+Bbuck rail 0 I = V(rail) > 6 ? (5*{il}/0.85 + 0.05)/V(rail) : 0
 """.format(vs=vsup, rc=R_CABLE, rf=R_FUSE, cb=C_BULK, esr=ESR_BULK, il=QTPY_LOAD + 0.01)
     for name, strip in CHANNELS:
         # Vm_ is a 0 V source in the strip lead: it measures the channel current
@@ -636,7 +643,7 @@ C2 rail c2e {cb}
 Rc2 c2e 0 {esr}
 Coki rail ce {co}
 Rcoki ce 0 0.01
-Boki rail 0 I = V(rail) > 7 ? 0.8/V(rail) : 0
+Bbuck rail 0 I = V(rail) > 6 ? 0.65/V(rail) : 0
 .control
 tran 20n 3m uic
 meas tran ipk max i(lcab)
@@ -646,7 +653,7 @@ meas tran i2t integ i2 from=0 to=3m
 wrdata hotplug_{k}.txt i(lcab) v(rail)
 .endc
 .end
-""".format(vs=V_SUPPLY, lc=lc, rc=rc, rf=R_FUSE, cb=C_BULK, esr=esr, co=C_OKI_IN, k=k), keep=['hotplug_%d.txt' % k])
+""".format(vs=V_SUPPLY, lc=lc, rc=rc, rf=R_FUSE, cb=C_BULK, esr=esr, co=C_BUCK_IN, k=k), keep=['hotplug_%d.txt' % k])
         data[label] = {'ipk': v['ipk'], 'vpk': v['vpk'], 'i2t': v['i2t']}
     worst_v = max(d['vpk'] for d in data.values())
     worst_i2t = max(d['i2t'] for d in data.values())
@@ -654,7 +661,7 @@ wrdata hotplug_{k}.txt i(lcab) v(rail)
     ok = worst_v < 28.5 and worst_i2t < 0.22 * FUSE_I2T
     record('T5 hot-plug', ok, '; '.join('%s: %.0f A peak, rail peaks at %.1f V, %.2f A2s' % (
         k, d['ipk'], d['vpk'], d['i2t']) for k, d in data.items()) +
-        '. Fuse melts at ~%.1f A2s; the TVS starts at 28.5 V, the converter is rated 36 V' % FUSE_I2T, data)
+        '. Fuse melts at ~%.1f A2s; the TVS starts at 28.5 V, the buck chip is rated 36 V' % FUSE_I2T, data)
 
 
 # =============================================================================================
@@ -670,14 +677,15 @@ def t6_reverse():
 
 # =============================================================================================
 def t7_five_volt():
-    print('T7  the QT Py supply, with and without USB')
+    print('T7  the QT Py supply: 24 V is the only input; USB on the QT Py stays separate')
     out = {}
-    for label, oki, usb in (('24 V only', 5.0, 0.0), ('USB only', 0.0, 5.0), ('both', 5.0, 5.0),
-                            ('both, USB at 5.25 V', 5.0, 5.25)):
+    for label, oki, usb in (('24 V only', BUCK_VOUT, 0.0), ('USB only, board off', 0.0, 5.0),
+                            ('both', BUCK_VOUT, 5.0), ('both, USB at 5.25 V', BUCK_VOUT, 5.25)):
         v, _ = spice(header() + """
+* the buck's output, regulated, behind its 4 x 22 uF
 Voki o5x 0 DC {oki}
-Roki o5x o5 0.02
-C4 o5 0 10u
+Roki o5x o5 0.01
+C4 o5 0 64u
 D6 o5 qt5 D1N5819
 Vusb vb 0 DC {usb}
 Rusb vb vbi 0.2
@@ -690,7 +698,7 @@ op
         out[label] = {'v5': v['v5'], 'i_oki': v['ioki'], 'i_usb': v['iusb']}
     back = min(min(d['i_oki'], d['i_usb']) for d in out.values())
     ok = all(d['v5'] > 4.5 for d in out.values()) and back > -100e-6
-    record('T7 5 V path', ok, '; '.join('%s: 5V pin %.2f V (converter %.0f mA, USB %.0f mA)' % (
+    record('T7 5 V path', ok, '; '.join('%s: 5V pin %.2f V (buck %.0f mA, USB %.0f mA)' % (
         k, d['v5'], d['i_oki'] * 1e3, d['i_usb'] * 1e3) for k, d in out.items()) +
         '; at most %.1f uA flows back into either source' % max(0.0, -back * 1e6), out)
 
@@ -733,9 +741,9 @@ Vc2 c2a c2e 0
 Rc2 c2e 0 {esr}
 Coki rail ce {co}
 Rcoki ce 0 0.01
-Boki rail 0 I = V(rail) > 7 ? (5*{il}/0.8 + 0.12)/V(rail) : 0
+Bbuck rail 0 I = V(rail) > 6 ? (5*{il}/0.85 + 0.05)/V(rail) : 0
 Vp pad 0 PULSE(0 {vgp} 0 2n 2n 250u 500u)
-""".format(vs=V_SUPPLY, lc=L_CABLE, rc=R_CABLE, rf=R_FUSE, cb=C_BULK, esr=ESR_BULK, co=C_OKI_IN,
+""".format(vs=V_SUPPLY, lc=L_CABLE, rc=R_CABLE, rf=R_FUSE, cb=C_BULK, esr=ESR_BULK, co=C_BUCK_IN,
            il=QTPY_LOAD + 0.01, vgp=V_GPIO)
     for n, strip in CHANNELS:
         net += ('Rp_{n} pad pin_{n} {rp}\nRg_{n} pin_{n} g_{n} {rg}\nRpd_{n} g_{n} 0 {rpd}\nX{n} d_{n} g_{n} 0 irlb_fit\n'
@@ -757,6 +765,92 @@ meas tran ipk max i(lcab) from=2m to=4m
            'rail ripple %.2f V p-p (low point %.2f V); each bulk capacitor carries %.0f mA rms; supply lead %.2f A rms, '
            '%.2f A peak' % (v['vpp'], v['vmin'], v['ic1'] * 1e3, v['isup'], v['ipk']),
            {'vpp': v['vpp'], 'vmin': v['vmin'], 'ic_rms_mA': v['ic1'] * 1e3, 'isup_rms': v['isup'], 'ipk': v['ipk']})
+
+
+# =============================================================================================
+def t11_buck():
+    """The buck's power stage: the chip's switches as switches with the datasheet's on-resistance,
+    taking turns at 400 kHz; inductor, ceramic capacitors and load as on the board. The chip's
+    control loop isn't modelled (TI publishes no model of it), so the duty cycle is set to land
+    on 5.0 V; what this checks is everything the parts around the chip decide."""
+    print('T11 the 5 V buck converter, power stage')
+    rows = []
+    cases = [('QT Py, display and encoder', RAIL, 0.10, 400e3, 1.0),
+             ('half an amp', RAIL, 0.5, 400e3, 1.0),
+             ('the chip\'s full 3 A', RAIL, 3.0, 400e3, 1.0),
+             ('3 A, worst case: 26.4 V in, slow clock, L -20 %', 26.4, 3.0, 340e3, 0.8)]
+    for label, vin, iout, fsw, lscale in cases:
+        per = 1 / fsw
+        d = (BUCK_VOUT + iout * (BUCK_DCR + BUCK_RLS)) / (vin - iout * (BUCK_RHS - BUCK_RLS))
+        ton, dead = d * per, 10e-9
+        deck = header() + """
+VIN vsrc 0 DC {vin}
+LSRC vsrc vlead 1u
+RSRC vlead vin 0.05
+C1 vin c1 100u
+R1 c1 0 {esr}
+VS1 vin s1 0
+CIN1 s1 cin1 {cin}
+RIN1 cin1 0 0.004
+VS2 vin s2 0
+CIN2 s2 cin2 {cin}
+RIN2 cin2 0 0.004
+CHF vin 0 0.2u
+VGH gh 0 PULSE(0 1 {dead} 1n 1n {ton1} {per})
+VGL gl 0 PULSE(0 1 {tl0} 1n 1n {tl1} {per})
+SHS vin sw gh 0 HSW
+SLS sw 0 gl 0 LSW
+DBODY 0 sw DB
+DBODYH sw vin DB
+.model HSW SW(Ron={rhs} Roff=1e6 Vt=0.5 Vh=0.1)
+.model LSW SW(Ron={rls} Roff=1e6 Vt=0.5 Vh=0.1)
+.model DB D(Is=1e-12 N=1.2 Rs=0.02)
+L1 sw lx {l} IC={iout}
+RL lx vout {dcr}
+""".format(vin=vin, esr=ESR_BULK, cin=BUCK_CIN_EACH, dead=dead, ton1=ton - 2e-9, per=per, tl0=ton + 2 * dead,
+                tl1=per - ton - 3 * dead - 2e-9, rhs=BUCK_RHS, rls=BUCK_RLS, l=BUCK_L * lscale, iout=iout,
+                dcr=BUCK_DCR) + ''.join('C{i} vout c{i} {c} IC={v}\nRC{i} c{i} 0 0.003\n'.format(
+                    i=i + 10, c=BUCK_COUT_EACH, v=BUCK_VOUT) for i in range(4)) + """RLOAD vout 0 {rl}
+.options method=gear reltol=1e-4
+.control
+tran 2n {t1} {t0} 2n uic
+meas tran vavg AVG v(vout)
+meas tran vpp PP v(vout)
+meas tran ilmax MAX i(L1)
+meas tran ilmin MIN i(L1)
+let pinst = v(vsrc)*(-i(VIN))
+meas tran pin AVG pinst
+let icin = i(VS1)+i(VS2)
+meas tran icinrms RMS icin
+.endc
+.end
+""".format(rl=BUCK_VOUT / iout, t1=500 * per, t0=460 * per)
+        v, _ = spice(deck)
+        pout = v['vavg'] ** 2 / (BUCK_VOUT / iout)
+        rows.append({'case': label, 'vin': vin, 'iout': iout, 'vout': v['vavg'], 'ripple_A': v['ilmax'] - v['ilmin'],
+                     'peak_A': v['ilmax'], 'vout_pp_mV': v['vpp'] * 1e3, 'cin_rms_A': v['icinrms'],
+                     'loss_W': v['pin'] - pout, 'eff': pout / v['pin']})
+    results['curves']['buck'] = rows
+    full = rows[2]
+    worst = rows[3]
+    ok = worst['peak_A'] < BUCK_ILIM_MIN and all(r['vout_pp_mV'] < 50 for r in rows)
+    record('T11a buck current and ripple', ok,
+           'inductor ripple %.2f A peak to peak; peak %.2f A at 3 A (%.2f A worst case) against the chip\'s 3.85 A '
+           'minimum limit; output ripple %s mV' % (full['ripple_A'], full['peak_A'], worst['peak_A'],
+                                                   ', '.join('%.0f' % r['vout_pp_mV'] for r in rows)), {'rows': rows})
+    light = rows[0]
+    ok = all(r['cin_rms_A'] < 2 * 3.0 for r in rows) and light['loss_W'] < 0.25
+    record('T11b buck losses', ok,
+           'at the lamp\'s real load (0.1 A) the switches and inductor lose %.0f mW (conduction only; the chip '
+           'skips pulses at light load, which this forced-PWM model does not); at 3 A %.2f W, %.0f %% efficient; '
+           'input capacitors carry %.2f A rms at 3 A (each 10 uF 1210 is good for about 3 A)' % (
+               light['loss_W'] * 1e3, full['loss_W'], full['eff'] * 100, full['cin_rms_A']), {})
+    # the feedback divider's tolerance: VREF 0.985-1.015 V, both resistors 1 %
+    lo = 0.985 * (1 + 100e3 * 0.99 / (24.9e3 * 1.01))
+    hi = 1.015 * (1 + 100e3 * 1.01 / (24.9e3 * 0.99))
+    record('T11c 5 V setting', 4.75 <= lo and hi <= 5.25,
+           'nominal %.3f V; %.2f-%.2f V with VREF and both resistors at their limits (USB-style 4.75-5.25 V)' % (
+               BUCK_VOUT, lo, hi), {'lo': lo, 'hi': hi})
 
 
 # =============================================================================================
@@ -899,6 +993,7 @@ def main():
     t7_five_volt()
     t8_reset()
     t10_ripple()
+    t11_buck()
     plots()
     for name in os.listdir(OUT):              # waveforms were only needed for the plots
         if name.endswith('.txt'):

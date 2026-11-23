@@ -69,75 +69,75 @@
   },
   "T1 all channels on, 3.29 V gates": {
    "status": "PASS",
-   "detail": "supply 0.951 A; rail 23.40 V; strip currents R 0.127, G 0.126, B 0.126, WW 0.271, CW 0.271 A; MOSFET VDS 1.7, 1.7, 1.7, 3.6, 3.6 mV (vendor model: up to 7.6 mV; maximum-resistance model: up to 6.5 mV)",
+   "detail": "supply 0.946 A; rail 23.40 V; strip currents R 0.127, G 0.126, B 0.126, WW 0.271, CW 0.271 A; MOSFET VDS 1.7, 1.7, 1.7, 3.6, 3.6 mV (vendor model: up to 7.6 mV; maximum-resistance model: up to 6.5 mV)",
    "data": {
     "fit": {
-     "i_total": 0.9506501,
-     "rail": 23.40395,
-     "sb560_v": 0.4481263,
+     "i_total": 0.9463669,
+     "rail": 23.40493,
+     "sb560_v": 0.4478158,
      "vds_mV": {
-      "R": 1.6730390000000002,
-      "G": 1.658744,
-      "B": 1.658744,
-      "WW": 3.584485,
-      "CW": 3.584485
+      "R": 1.673179,
+      "G": 1.659025,
+      "B": 1.659025,
+      "WW": 3.585466,
+      "CW": 3.585466
      },
      "i_ch": {
-      "R": 0.1266081,
-      "G": 0.1255265,
-      "B": 0.1255265,
-      "WW": 0.2711654,
-      "CW": 0.2711654
+      "R": 0.1266187,
+      "G": 0.1255477,
+      "B": 0.1255477,
+      "WW": 0.2712396,
+      "CW": 0.2712396
      }
     },
     "vendor": {
-     "i_total": 0.9499716,
-     "rail": 23.40411,
-     "sb560_v": 0.4480772,
+     "i_total": 0.9456883,
+     "rail": 23.40508,
+     "sb560_v": 0.4477665,
      "vds_mV": {
-      "R": 3.540806,
-      "G": 3.509967,
-      "B": 3.509967,
-      "WW": 7.598887,
-      "CW": 7.598887
+      "R": 3.541102,
+      "G": 3.510561,
+      "B": 3.510561,
+      "WW": 7.600975,
+      "CW": 7.600975
      },
      "i_ch": {
-      "R": 0.1265896,
-      "G": 0.1254897,
-      "B": 0.1254897,
-      "WW": 0.2708724,
-      "CW": 0.2708724
+      "R": 0.1266002,
+      "G": 0.1255109,
+      "B": 0.1255109,
+      "WW": 0.2709464,
+      "CW": 0.2709464
      }
     },
     "dsmax": {
-     "i_total": 0.9501556,
-     "rail": 23.40407,
-     "sb560_v": 0.4480905,
+     "i_total": 0.9458723,
+     "rail": 23.40504,
+     "sb560_v": 0.4477799,
      "vds_mV": {
-      "R": 3.038096,
-      "G": 3.0117999999999996,
-      "B": 3.0117999999999996,
-      "WW": 6.508877,
-      "CW": 6.508877
+      "R": 3.03835,
+      "G": 3.012309,
+      "B": 3.012309,
+      "WW": 6.510659,
+      "CW": 6.510659
      },
      "i_ch": {
-      "R": 0.1265946,
-      "G": 0.1254996,
-      "B": 0.1254996,
-      "WW": 0.270952,
-      "CW": 0.270952
+      "R": 0.1266052,
+      "G": 0.1255208,
+      "B": 0.1255208,
+      "WW": 0.271026,
+      "CW": 0.271026
      }
     }
    }
   },
   "T9 temperatures": {
    "status": "PASS",
-   "detail": "SB560 0.45 V x 0.95 A = 0.43 W, about 17 K above ambient at ~40 K/W; F1 50 mW; worst MOSFET 1.0 mW (<0.2 K, no heatsink needed)",
+   "detail": "SB560 0.45 V x 0.95 A = 0.42 W, about 17 K above ambient at ~40 K/W; F1 50 mW; worst MOSFET 1.0 mW (<0.2 K, no heatsink needed)",
    "data": {
-    "sb560_w": 0.42601131190763,
-    "sb560_rise_K": 17.040452476305198,
-    "fuse_mW": 50.24770006222856,
-    "mos_mW": 0.971988308819
+    "sb560_w": 0.42379805041702,
+    "sb560_rise_K": 16.9519220166808,
+    "fuse_mW": 49.795933203507914,
+    "mos_mW": 0.9725203636536001
    }
   },
   "T2a typical part": {
@@ -756,22 +756,22 @@
   },
   "T5 hot-plug": {
    "status": "PASS",
-   "detail": "general-purpose capacitors, 1.5 m lead: 68 A peak, rail peaks at 23.7 V, 0.19 A2s; low-ESR capacitors, short heavy lead: 139 A peak, rail peaks at 23.7 V, 0.49 A2s; general-purpose capacitors, 5 m lead: 39 A peak, rail peaks at 23.7 V, 0.11 A2s. Fuse melts at ~5.8 A2s; the TVS starts at 28.5 V, the converter is rated 36 V",
+   "detail": "general-purpose capacitors, 1.5 m lead: 68 A peak, rail peaks at 23.7 V, 0.19 A2s; low-ESR capacitors, short heavy lead: 139 A peak, rail peaks at 23.7 V, 0.49 A2s; general-purpose capacitors, 5 m lead: 39 A peak, rail peaks at 23.7 V, 0.11 A2s. Fuse melts at ~5.8 A2s; the TVS starts at 28.5 V, the buck chip is rated 36 V",
    "data": {
     "general-purpose capacitors, 1.5 m lead": {
-     "ipk": 67.88333,
-     "vpk": 23.68038,
-     "i2t": 0.19077
+     "ipk": 67.88068,
+     "vpk": 23.68753,
+     "i2t": 0.190716
     },
     "low-ESR capacitors, short heavy lead": {
-     "ipk": 138.7735,
-     "vpk": 23.68275,
-     "i2t": 0.489646
+     "ipk": 138.7756,
+     "vpk": 23.68946,
+     "i2t": 0.489629
     },
     "general-purpose capacitors, 5 m lead": {
-     "ipk": 39.29739,
-     "vpk": 23.6736,
-     "i2t": 0.114411
+     "ipk": 39.29997,
+     "vpk": 23.682,
+     "i2t": 0.114372
     }
    }
   },
@@ -785,27 +785,27 @@
   },
   "T7 5 V path": {
    "status": "PASS",
-   "detail": "24 V only: 5V pin 4.71 V (converter 85 mA, USB -0 mA); USB only: 5V pin 4.67 V (converter -0 mA, USB 85 mA); both: 5V pin 4.73 V (converter 58 mA, USB 27 mA); both, USB at 5.25 V: 5V pin 4.92 V (converter 0 mA, USB 85 mA); at most 31.7 uA flows back into either source",
+   "detail": "24 V only: 5V pin 4.73 V (buck 85 mA, USB -0 mA); USB only, board off: 5V pin 4.67 V (buck -0 mA, USB 85 mA); both: 5V pin 4.74 V (buck 66 mA, USB 19 mA); both, USB at 5.25 V: 5V pin 4.92 V (buck 0 mA, USB 85 mA); at most 31.7 uA flows back into either source",
    "data": {
     "24 V only": {
-     "v5": 4.713585,
+     "v5": 4.7305,
      "i_oki": 0.085057,
      "i_usb": -2e-06
     },
-    "USB only": {
+    "USB only, board off": {
      "v5": 4.667997,
      "i_oki": -3.17e-05,
      "i_usb": 0.0850867
     },
     "both": {
-     "v5": 4.728796,
-     "i_oki": 0.05844132,
-     "i_usb": 0.02661368
+     "v5": 4.740901,
+     "i_oki": 0.06560909,
+     "i_usb": 0.01944591
     },
     "both, USB at 5.25 V": {
-     "v5": 4.918256,
-     "i_oki": 0.0002848797,
-     "i_usb": 0.08477012
+     "v5": 4.918403,
+     "i_oki": 0.0004638002,
+     "i_usb": 0.0845912
     }
    }
   },
@@ -819,13 +819,82 @@
   },
   "T10 rail ripple": {
    "status": "PASS",
-   "detail": "rail ripple 0.24 V p-p (low point 23.41 V); each bulk capacitor carries 121 mA rms; supply lead 0.59 A rms, 0.93 A peak",
+   "detail": "rail ripple 0.24 V p-p (low point 23.41 V); each bulk capacitor carries 121 mA rms; supply lead 0.58 A rms, 0.93 A peak",
    "data": {
-    "vpp": 0.2399691,
-    "vmin": 23.40817,
-    "ic_rms_mA": 120.785,
-    "isup_rms": 0.587329,
-    "ipk": 0.9303299
+    "vpp": 0.240915,
+    "vmin": 23.40917,
+    "ic_rms_mA": 121.048,
+    "isup_rms": 0.583435,
+    "ipk": 0.9259382
+   }
+  },
+  "T11a buck current and ripple": {
+   "status": "PASS",
+   "detail": "inductor ripple 1.04 A peak to peak; peak 3.51 A at 3 A (3.78 A worst case) against the chip's 3.85 A minimum limit; output ripple 5, 5, 5, 9 mV",
+   "data": {
+    "rows": [
+     {
+      "case": "QT Py, display and encoder",
+      "vin": 23.4,
+      "iout": 0.1,
+      "vout": 5.206174,
+      "ripple_A": 1.0152044,
+      "peak_A": 0.6132328,
+      "vout_pp_mV": 5.021262,
+      "cin_rms_A": 0.14155,
+      "loss_W": 0.020622406337011623,
+      "eff": 0.9632380367105917
+     },
+     {
+      "case": "half an amp",
+      "vin": 23.4,
+      "iout": 0.5,
+      "vout": 4.997253,
+      "ripple_A": 0.995658457,
+      "peak_A": 0.9972571,
+      "vout_pp_mV": 5.115107,
+      "cin_rms_A": 0.240096,
+      "loss_W": 0.05656785550190557,
+      "eff": 0.9777801389640818
+     },
+     {
+      "case": "the chip's full 3 A",
+      "vin": 23.4,
+      "iout": 3.0,
+      "vout": 4.989462,
+      "ripple_A": 1.0440500000000004,
+      "peak_A": 3.507334,
+      "vout_pp_mV": 5.169447,
+      "cin_rms_A": 1.24375,
+      "loss_W": 1.479827522870563,
+      "eff": 0.909594789433908
+     },
+     {
+      "case": "3 A, worst case: 26.4 V in, slow clock, L -20 %",
+      "vin": 26.4,
+      "iout": 3.0,
+      "vout": 4.992861,
+      "ripple_A": 1.589292,
+      "peak_A": 3.784372,
+      "vout_pp_mV": 9.199029,
+      "cin_rms_A": 1.2037,
+      "loss_W": 1.484604770940921,
+      "eff": 0.9094416355509719
+     }
+    ]
+   }
+  },
+  "T11b buck losses": {
+   "status": "PASS",
+   "detail": "at the lamp's real load (0.1 A) the switches and inductor lose 21 mW (conduction only; the chip skips pulses at light load, which this forced-PWM model does not); at 3 A 1.48 W, 91 % efficient; input capacitors carry 1.24 A rms at 3 A (each 10 uF 1210 is good for about 3 A)",
+   "data": {}
+  },
+  "T11c 5 V setting": {
+   "status": "PASS",
+   "detail": "nominal 5.016 V; 4.86-5.17 V with VREF and both resistors at their limits (USB-style 4.75-5.25 V)",
+   "data": {
+    "lo": 4.86249015865442,
+    "hi": 5.173654821305423
    }
   }
  },
@@ -1409,6 +1478,56 @@
     ]
    ]
   },
-  "fw_min_duty_white_us": 0.8
+  "fw_min_duty_white_us": 0.8,
+  "buck": [
+   {
+    "case": "QT Py, display and encoder",
+    "vin": 23.4,
+    "iout": 0.1,
+    "vout": 5.206174,
+    "ripple_A": 1.0152044,
+    "peak_A": 0.6132328,
+    "vout_pp_mV": 5.021262,
+    "cin_rms_A": 0.14155,
+    "loss_W": 0.020622406337011623,
+    "eff": 0.9632380367105917
+   },
+   {
+    "case": "half an amp",
+    "vin": 23.4,
+    "iout": 0.5,
+    "vout": 4.997253,
+    "ripple_A": 0.995658457,
+    "peak_A": 0.9972571,
+    "vout_pp_mV": 5.115107,
+    "cin_rms_A": 0.240096,
+    "loss_W": 0.05656785550190557,
+    "eff": 0.9777801389640818
+   },
+   {
+    "case": "the chip's full 3 A",
+    "vin": 23.4,
+    "iout": 3.0,
+    "vout": 4.989462,
+    "ripple_A": 1.0440500000000004,
+    "peak_A": 3.507334,
+    "vout_pp_mV": 5.169447,
+    "cin_rms_A": 1.24375,
+    "loss_W": 1.479827522870563,
+    "eff": 0.909594789433908
+   },
+   {
+    "case": "3 A, worst case: 26.4 V in, slow clock, L -20 %",
+    "vin": 26.4,
+    "iout": 3.0,
+    "vout": 4.992861,
+    "ripple_A": 1.589292,
+    "peak_A": 3.784372,
+    "vout_pp_mV": 9.199029,
+    "cin_rms_A": 1.2037,
+    "loss_W": 1.484604770940921,
+    "eff": 0.9094416355509719
+   }
+  ]
  }
 }

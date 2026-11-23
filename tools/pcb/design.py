@@ -17,7 +17,12 @@ FP_D41 = 'Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal'
 FP_D201 = 'Diode_THT:D_DO-201AD_P15.24mm_Horizontal'
 FP_D15 = 'Diode_THT:D_DO-15_P12.70mm_Horizontal'
 FP_TO220 = 'Package_TO_SOT_THT:TO-220-3_Vertical'
-FP_OKI = 'Converter_DCDC:Converter_DCDC_Murata_OKI-78SR_Vertical'
+FP_HSOIC = 'TaskLamp:HSOIC-8-1EP_HandSolder_BackHole'
+FP_L7 = 'TaskLamp:L_Bourns_SRP7028A_HandSolder'
+FP_C1210 = 'TaskLamp:C_1210_HandSolder'
+FP_CCHIP = 'TaskLamp:C_0805-1206_HandSolder'
+FP_RCHIP = 'TaskLamp:R_0805-1206_HandSolder'
+FP_CDUAL = 'TaskLamp:C_Dual_THT-P5.08_or_0805-1206'
 FP_FUSE = 'Fuse:Fuseholder_Blade_Mini_Keystone_3568'
 FP_TB = 'TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-%d-5.08_1x%02d_P5.08mm_Horizontal'
 FP_HDR8 = 'Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical'
@@ -78,14 +83,30 @@ def parts():
     add('C2', '100uF 50V', 'Device:C_Polarized', FP_CP8,
         {'1': '+24V', '2': 'GND'}, STOCK, 'Bulk capacitor beside the strip terminals')
 
-    # --- 5 V supply for the controller
-    add('U2', 'OKI-78SR-5/1.5-W36-C', 'Converter_DCDC:OKI-78SR-5_1.5-W36-C', FP_OKI,
-        {'1': '+24V', '2': 'GND', '3': '+5V'}, ORDER, '24 V to 5 V switching converter, 78xx pinout',
-        'OKI-78SR-5/1.5-W36-C')
-    add('C4', '10uF 50V', 'Device:C_Polarized', FP_CP5,
-        {'1': '+5V', '2': 'GND'}, STOCK, '5 V output capacitor')
-    add('C5', '100nF', 'Device:C', FP_C,
-        {'1': '+5V', '2': 'GND'}, STOCK, '5 V high-frequency bypass (ceramic)')
+    # --- 5 V supply for the controller: an LMR33630 buck converter, set for 5.0 V
+    # (the circuit of the BUCK//33630 breakout, branch Branchy). EN is tied to VIN, PG unused.
+    add('U2', 'LMR33630ADDAR', 'Regulator_Switching:LMR33630ADDA', FP_HSOIC,
+        {'1': 'GND', '2': '+24V', '3': '+24V', '5': 'FB', '6': 'VCC', '7': 'BOOT', '8': 'SW', '9': 'GND'},
+        ORDER, '24 V to 5 V buck converter, 3 A, 400 kHz', 'LMR33630ADDAR')
+    add('L1', '10uH', 'Device:L', FP_L7, {'1': 'SW', '2': '+5V'}, ORDER,
+        'Buck inductor, shielded, Isat 6 A', 'SRP7028A-100M')
+    add('C3', '10uF 50V', 'Device:C', FP_C1210, {'1': 'GND', '2': '+24V'}, ORDER,
+        'Buck input capacitor, X7R', 'GRM32ER71H106KA12L')
+    add('C4', '10uF 50V', 'Device:C', FP_C1210, {'1': '+24V', '2': 'GND'}, ORDER,
+        'Buck input capacitor, X7R', 'GRM32ER71H106KA12L')
+    add('C5', '220nF 50V', 'Device:C', FP_CCHIP, {'1': 'GND', '2': '+24V'}, ORDER,
+        'Buck input bypass, X7R 0805 or 1206', 'C0805C224K5RACTU')
+    add('C6', '100nF', 'Device:C', FP_CDUAL, {'1': 'SW', '2': 'BOOT'}, STOCK,
+        'Bootstrap capacitor (radial, or a chip on the inner pads)')
+    add('C7', '1uF', 'Device:C', FP_CDUAL, {'1': 'VCC', '2': 'GND'}, STOCK,
+        'Buck VCC capacitor (radial, or a chip on the inner pads)')
+    for ref, pins in (('C8', {'1': '+5V', '2': 'GND'}), ('C9', {'1': '+5V', '2': 'GND'}),
+                      ('C10', {'1': 'GND', '2': '+5V'}), ('C11', {'1': 'GND', '2': '+5V'})):
+        add(ref, '22uF 25V', 'Device:C', FP_C1210, pins, ORDER, 'Buck output capacitor, X7R', 'GRM32ER71E226KE15L')
+    add('R11', '100k 1%', 'Device:R', FP_RCHIP, {'1': 'FB', '2': '+5V'}, ORDER,
+        'Feedback divider, top (0805 or 1206)', 'RC1206FR-07100KL')
+    add('R12', '24.9k 1%', 'Device:R', FP_RCHIP, {'1': 'GND', '2': 'FB'}, ORDER,
+        'Feedback divider, bottom: 5.02 V out (0805 or 1206)', 'RC1206FR-0724K9L')
     add('D6', '1N5819', 'Diode:1N5819', FP_D41,
         {'1': 'QT_5V', '2': '+5V'}, STOCK, 'Feeds the QT Py 5V pad; lets USB be plugged in at the same time')
 

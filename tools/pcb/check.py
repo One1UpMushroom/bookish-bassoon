@@ -34,6 +34,8 @@ def schematic_netlist(sch_path):
     nets = {}
     for n in children(child(net, 'nets'), 'net'):
         name = child(n, 'name')[1].lstrip('/')
+        if name.startswith('unconnected-'):     # a pin left open on purpose (the buck's PG)
+            continue
         nets[name] = sorted('%s.%s' % (child(x, 'ref')[1], child(x, 'pin')[1]) for x in children(n, 'node'))
     comps = {}
     for c in children(child(net, 'components'), 'comp'):
@@ -132,7 +134,7 @@ def drc_of_variant(project_dir, project, **faults):
 def self_test(project_dir, project):
     """Plant four faults, one at a time; every one must be reported."""
     results = []
-    lane = 22.6
+    lane = gen_pcb.LANE_PWM0
     # 1. a stray track joining the red PWM line to the 24 V trunk
     errors, unconnected, _ = drc_of_variant(project_dir, project,
                                             extra_tracks=[('PWM_R', 0.4, [(gen_pcb.X0, lane), (gen_pcb.TRUNK_X, lane)], 0)])
@@ -184,8 +186,9 @@ def geometry_facts(board):
             if min(x - r, y - r, gen_pcb.W - x - r, gen_pcb.H - y - r) < 1.0:
                 problems.append('pad %s.%s is within 1 mm of the board edge' % (fp.GetReference(), p.GetNumber()))
     vias = [t for t in board.GetTracks() if t.GetClass() == 'PCB_VIA']
-    if vias:
-        problems.append('%d vias found; the design is meant to have none' % len(vias))
+    other = [v for v in vias if v.GetNetname() != 'GND']
+    if other:
+        problems.append('%d vias on nets other than GND; only ground stitching is meant to have vias' % len(other))
     bottom = [t for t in board.GetTracks() if t.GetClass() != 'PCB_VIA' and t.GetLayer() == pcbnew.B_Cu]
     if bottom:
         problems.append('%d tracks on the bottom layer; it is meant to be an unbroken ground plane' % len(bottom))

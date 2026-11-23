@@ -19,7 +19,7 @@ controlled by a single push-button rotary encoder and a 240×240 color display.
 ```
                           QT Py RP2040
                    ┌─────────────────────────┐
-     Red gate  ◄── │ A0  (GP29)    5V        │◄── 5 V from the board's converter
+     Red gate  ◄── │ A0  (GP29)    5V        │◄── 5 V from the board's buck converter
    Green gate  ◄── │ A1  (GP28)    GND       │── common ground
     Blue gate  ◄── │ A2  (GP27)    3V        │── TFT Vin, (encoder via STEMMA)
     Warm gate  ◄── │ A3  (GP26)    MO (GP3)  │──► TFT MOSI (SI)
@@ -45,7 +45,7 @@ controlled by a single push-button rotary encoder and a 240×240 color display.
 | SCL | GP25 | TFT **D/C** | Used as a plain GPIO |
 | STEMMA QT | GP22/23 | Encoder breakout | I2C1 (`Wire1`), 400 kHz |
 | 3V / GND | | TFT Vin / GND | |
-| 5V | | The board's 5 V converter, through a diode | USB may be connected at the same time |
+| 5V | | The board's 5 V buck converter (LMR33630), through a diode | USB may be connected at the same time |
 | – | – | TFT **RST**, **CCS**, **SO**, **TE** | Leave unconnected. The display resets itself at power-up, and the microSD slot isn't used (leave it empty) |
 
 On the driver board the LED pins and the 5 V feed are copper. The only wires are the
@@ -84,7 +84,8 @@ The strips are never driven from the GPIO pins. The board in
 
 * **24 V input**: a 2 A fuse, a Schottky diode against a supply wired backwards, a TVS
   diode against spikes, and bulk capacitors.
-* **5 V for the QT Py** from a small switching converter, through a diode to the 5V pad.
+* **5 V for the QT Py** from an LMR33630 buck converter on the board (the BUCK//33630
+  circuit), through a diode to the 5V pad. The 24 V input is the board's only power input.
   USB can be plugged in while the lamp is powered.
 * **Five identical switches**: a logic-level MOSFET per colour (IRLB8721), its gate driven
   straight from the QT Py pin through 220 Ω, a 100 kΩ pull-down, and a 1N5819 from the
@@ -315,7 +316,7 @@ Outside the firmware: `hardware/` (the driver board's KiCad project and factory 
 * Firmware 1.1 ran on a breadboard build: the display, the encoder and the two white
   channels worked there. **Firmware 1.2.1 has not yet been run on hardware.** It differs
   in its defaults and in dropping one menu option, not in how it drives the pins.
-* The driver board passes KiCad's design-rule check, 17 circuit simulations and 22 checks
+* The driver board passes KiCad's design-rule check, 20 circuit simulations and 22 checks
   of its factory files (`hardware/tasklamp-driver/test-report.md`), but **no board has been
   built yet**. Its power-up section lists
   what to measure on the first one.

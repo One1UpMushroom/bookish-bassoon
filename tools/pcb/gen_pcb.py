@@ -10,9 +10,13 @@ whether the result is complete (nothing unrouted) and legal (no clearance
 violations) and whether every pad is on the net design.py says.
 
 Layer plan: the bottom layer is one unbroken ground plane. Everything else is
-routed on the top layer without a single via, so return currents always have a
-straight path underneath. The top layer carries no ground fill: it would only
-add slivers between the tracks, and leaving it out keeps every track visible.
+routed on the top layer, so return currents always have a straight path
+underneath. The only top-layer pours are in the 5 V buck converter, whose
+switching loop wants solid copper: ground round the chip and its capacitors,
+5 V round the output capacitors. Its ground reaches the bottom plane through
+the chip's plated thermal hole and a few stitching vias, the only vias on the
+board. The buck's layout round the chip is the one from the BUCK//33630
+breakout (branch Branchy), moved here as a block.
 """
 import os
 
@@ -51,6 +55,9 @@ GY = RY1 + 15.24            # MOSFET pins
 LANE1, LANE2, LANE3 = GY + 2.8, GY + 4.8, GY + 6.8   # output tracks below the MOSFETs
 TY = GY + 10.16             # strip terminal pins
 
+LANE_PWM0, LANE_PWM_STEP = 24.2, 0.8   # PWM lines for R, G, B, WW run left along these
+BUCK_X, BUCK_Y = 25.4, 14.45           # the buck chip's centre
+
 TRUNK_X = 10.16             # +24 V from the input diode down to the bus and J3
 DROP_X = X0 + 2 * PITCH + 12.7   # +24 V down to J2, between switches 3 and 4
 
@@ -76,13 +83,23 @@ def placements():
         'D7': (TRUNK_X, 5.5, 0),        # cathode sits on the trunk
         'D8': (4.5, 9.3, 270),          # TVS, down the left edge
         'C1': (TRUNK_X, 13.5, 0),
-        # 5 V supply
-        'U2': (19.5, 18.0, 0),
-        'C4': (30.6, 18.0, 270),
-        'C5': (35.6, 18.0, 90),
-        'D6': (49.5, 18.0, 180),        # anode toward the converter
-        'TP1': (39.34, 13.5, 0),
-        'TP2': (43.5, 13.5, 0),
+        # 5 V buck converter: chip, input and bootstrap capacitors as on the breakout
+        'U2': (BUCK_X, BUCK_Y, 0),
+        'C3': (BUCK_X - 7.55, BUCK_Y - 2.2, 270),
+        'C4': (BUCK_X - 7.55, BUCK_Y + 2.6, 270),
+        'C5': (BUCK_X - 5.0, BUCK_Y - 1.85, 270),
+        'C6': (BUCK_X + 5.4, BUCK_Y - 1.79, 270),
+        'C7': (BUCK_X + 5.4, BUCK_Y + 5.74, 270),
+        'R12': (24.0, 19.8, 0),
+        'R11': (24.0, 22.4, 0),
+        'L1': (37.8, 12.75, 0),
+        'C8': (46.6, 14.5, 0),
+        'C9': (46.6, 17.8, 0),
+        'C10': (51.6, 14.5, 0),
+        'C11': (51.6, 17.8, 0),
+        'D6': (60.0, 21.5, 180),        # anode toward the converter
+        'TP1': (56.6, 14.5, 0),
+        'TP2': (56.6, 17.8, 0),
         # controller and display header
         'U1': (QX, QY0, 0),
         'J4': (J4_X, QY0 + 2 * 2.54, 0),
@@ -124,12 +141,35 @@ def routes():
     add('+24V', W_BUS, (TRUNK_X, BUS_Y), (gx(4) + 10.16, BUS_Y))
     add('+24V', 1.5, (DROP_X, BUS_Y), (DROP_X, TY))
     add('+24V', 1.5, (4.5, 9.3), (TRUNK_X, 9.3))                  # TVS
-    add('+24V', 1.0, (19.5, 18.0), (TRUNK_X, 18.0))              # converter input
     add('+24V', 1.5, (52.0, TY), (DROP_X, TY))                   # C2
-    # --- 5 V
-    add('+5V', W_5V, (24.58, 18.0), (39.34, 18.0))
-    add('+5V', W_5V, (39.34, 18.0), (39.34, 13.5))
-    add('QT_5V', 0.6, (49.5, 18.0), (59.0, 18.0), (59.0, 1.9), (QX + 15.24 - 1.91, 1.9),
+    # --- 5 V buck converter. Around the chip: the breakout's routing, moved to (BUCK_X, BUCK_Y)
+    def b(x, y):
+        return (BUCK_X - 17.3 + x, BUCK_Y - 7.4 + y)       # breakout coordinates -> this board
+    add('+24V', 0.8, (TRUNK_X, 15.3), (BUCK_X - 7.55, 15.3))                 # feed from the trunk
+    add('+24V', 1.0, (BUCK_X - 7.55, 13.81), (BUCK_X - 7.55, 15.49))         # C3 to C4
+    add('+24V', 0.8, (BUCK_X - 7.55, 13.95), (BUCK_X - 5.0, 13.95))          # to C5
+    add('+24V', 0.6, b(14.45, 6.765), b(12.3, 6.765))                         # VIN pin
+    add('+24V', 0.5, b(14.45, 8.035), (BUCK_X - 3.65, BUCK_Y + 0.635), (BUCK_X - 3.65, BUCK_Y - 0.635))  # EN = VIN
+    add('GND', 0.6, b(14.45, 5.495), b(13.3, 5.495), b(12.6, 4.8), b(12.3, 4.2))
+    add('GND', 0.5, b(14.45, 5.495), b(16.4, 5.495))
+    add('GND', 2.4, (BUCK_X, BUCK_Y - 1.2), (BUCK_X, 9.7))                    # heat spreaders
+    add('GND', 2.4, (BUCK_X, BUCK_Y + 1.2), (BUCK_X, BUCK_Y + 2.3))
+    add('SW', 0.65, b(20.15, 5.495), b(21.9, 5.495), (BUCK_X + 5.4, BUCK_Y - 3.09))
+    add('SW', 1.0, (BUCK_X + 5.4, BUCK_Y - 3.09), (36.0, BUCK_Y - 3.09))      # to L1
+    add('BOOT', 0.4, b(20.15, 6.765), b(22.3, 6.765))
+    add('VCC', 0.25, b(20.15, 8.035), b(21.3, 8.035), b(21.55, 8.285), b(21.55, 9.9), b(22.25, 10.6),
+        b(22.7, 10.6))
+    add('FB', 0.25, b(20.15, 9.305), (BUCK_X + 2.3, BUCK_Y + 1.905), (BUCK_X + 2.3, 19.0), (26.9, 19.8), (25.35, 19.8))
+    add('FB', 0.25, (25.35, 19.8), (23.9, 21.1), (22.65, 22.4))
+    # 5 V: inductor to the output capacitors, the sense line back to R11, out to D6 and TP1
+    add('+5V', 1.2, (41.2, 14.0), (45.04, 14.0))
+    add('+5V', 1.0, (45.04, 14.5), (45.04, 17.8))
+    add('+5V', 1.0, (53.16, 14.5), (53.16, 17.8))
+    add('+5V', 0.6, (45.04, 17.8), (45.04, 20.0), (53.16, 20.0), (53.16, 17.8))
+    add('+5V', 0.3, (25.35, 22.4), (26.6, 22.4), (28.8, 20.19), (45.04, 20.19), (45.04, 20.0))
+    add('+5V', 0.8, (56.6, 14.5), (53.16, 14.5))
+    add('+5V', 0.8, (49.84, 21.5), (49.84, 20.0))
+    add('QT_5V', 0.6, (60.0, 21.5), (61.4, 20.1), (61.4, 1.9), (QX + 15.24 - 1.91, 1.9),
         (QX + 15.24, QY0), chamfer=1.0)
     # --- display header: five lines straight across, two from under the QT Py
     for k, net in enumerate(['+3V3', 'TFT_MOSI', 'ENC_INT', 'TFT_SCK', 'TFT_LITE']):
@@ -143,7 +183,7 @@ def routes():
     for i in range(4):
         y_pad = QY0 + i * 2.54
         xv = QX - 5.68 + i * 1.0
-        lane = 22.6 + i * 1.0
+        lane = LANE_PWM0 + i * LANE_PWM_STEP
         add('PWM_' + design.CHANNELS[i], W_SIG, (QX, y_pad), (xv, y_pad), (xv, lane), (gx(i), lane),
             (gx(i), RY1), chamfer=0.8)
     add('PWM_CW', W_SIG, (QX, QY0 + 6 * 2.54), (QX, 25.8), (gx(4), 25.8), (gx(4), RY1), chamfer=0.8)
@@ -169,6 +209,23 @@ def routes():
     return r
 
 
+# The buck's top-layer pours (net, priority, outline) and its ground stitching vias.
+BUCK_ZONES = [
+    ('GND', 0, [(16.4, 9.35), (39.0, 9.35), (39.0, 23.8), (16.4, 23.8)]),
+    ('+5V', 1, [(39.3, 10.9), (43.9, 10.9), (43.9, 12.6), (55.0, 12.6), (55.0, 19.95), (39.3, 19.95)]),
+    ('GND', 2, [(47.4, 12.8), (50.8, 12.8), (50.8, 19.1), (47.4, 19.1)]),    # between the output capacitors
+]
+VIA_DIA, VIA_DRILL = 0.8, 0.4
+BUCK_VIAS = [
+    (BUCK_X - 0.5, 10.2), (BUCK_X + 0.5, 10.2), (BUCK_X - 0.5, 11.4), (BUCK_X + 0.5, 11.4),   # heat spreader, up
+    (BUCK_X - 0.5, 17.4), (BUCK_X + 0.5, 17.4),                                           # and down
+    (16.9, 9.8), (18.8, 9.8), (22.2, 10.9),                                               # input capacitors
+    (17.2, 20.0), (18.5, 20.0), (21.0, 19.8),                                             # C4, R12
+    (37.4, 12.75), (37.4, 15.6), (34.4, 16.3),                                            # under L1
+    (49.1, 13.6), (49.1, 16.15), (49.1, 18.4),                                            # output capacitors
+]
+
+
 # ---------------------------------------------------------------------------
 # Silkscreen text: (text, x, y, height, rotation, layer)
 # ---------------------------------------------------------------------------
@@ -187,10 +244,11 @@ def silk():
     # input
     sign('+', 47.5, 12.1, 1.6)
     sign('-', 52.58, 12.0, 1.6)
-    sign('24V IN', 50.04, 14.6, 1.3)
-    sign('FUSE 2A', 33.4, 10.4)
-    sign('+5V', 39.34, 11.7)
-    sign('GND', 43.5, 11.7)
+    sign('24V IN', 57.0, 6.0, 1.3, rot=90)
+    sign('FUSE 2A', 35.96, 4.75)
+    sign('+5V', 59.7, 14.5, 1.3)
+    sign('GND', 59.7, 17.8, 1.3)
+    sign('5V BUCK', 38.0, 17.8, 1.3)
     # strip terminals
     for x, s in ((TRUNK_X, '+24'), (TRUNK_X + 5.08, 'R'), (TRUNK_X + 10.16, 'G'), (TRUNK_X + 15.24, 'B')):
         sign(s, x, TY - 6.2)
@@ -211,7 +269,7 @@ def silk():
     # letter is cut by a solder-mask opening
     sign('TASK LAMP DRIVER', W / 2 + 2, RY1 + 2.4, 2.0, layer='B.SilkS')   # glyphs 2.34 mm tall: centred in the pad-free band
     # separated by wide spaces and a bar: Oswald's slash is a hairline at this size
-    sign('REV B   |   RGB + TUNABLE WHITE   |   24 V  1 A', W / 2 + 2, BUS_Y + 2.7, layer='B.SilkS')
+    sign('REV C   |   RGB + TUNABLE WHITE   |   24 V  1 A', W / 2 + 2, BUS_Y + 2.7, layer='B.SilkS')
     for x, s in ((TRUNK_X, '+24'), (TRUNK_X + 5.08, 'R'), (TRUNK_X + 10.16, 'G'), (TRUNK_X + 15.24, 'B'),
                  (DROP_X, '+24'), (DROP_X + 5.08, 'WW'), (DROP_X + 10.16, 'CW')):
         sign(s, x, TY - 3.2, 1.3, layer='B.SilkS')
@@ -225,7 +283,7 @@ def frames():
     """Signage panels round the connector labels: thin rectangles cut at 45 degrees
     top-left and bottom-right, like the theme's tiles. (x0, y0, x1, y1, cut, layer)."""
     return [
-        (45.6, 13.45, 54.5, 15.75, 0.8, 'F.SilkS'),     # 24V IN
+        (55.85, 2.6, 58.15, 9.4, 0.8, 'F.SilkS'),       # 24V IN
         (31.6, 54.4, 43.0, 56.8, 0.8, 'F.SilkS'),       # RGB STRIP
         (74.2, 54.4, 87.8, 56.8, 0.8, 'F.SilkS'),       # WHITE STRIP
     ]
@@ -441,6 +499,33 @@ def build(project_dir, project, sym_uuid=None, extra_tracks=(), drop_route=None,
     zone.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
     board.Add(zone)
 
+    # --- the buck converter's top-layer pours and ground stitching
+    for net, prio, poly in BUCK_ZONES:
+        z = pcbnew.ZONE(board)
+        z.SetNet(nets[net])
+        z.SetLayer(pcbnew.F_Cu)
+        z.SetAssignedPriority(prio)
+        z.SetLocalClearance(FromMM(0.25))
+        z.SetMinThickness(FromMM(0.2))
+        z.SetPadConnection(pcbnew.ZONE_CONNECTION_THT_THERMAL)
+        z.SetThermalReliefGap(FromMM(0.3))
+        z.SetThermalReliefSpokeWidth(FromMM(0.5))
+        z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
+        ol = z.Outline()
+        ol.NewOutline()
+        for x, y in poly:
+            ol.Append(FromMM(OX + x), FromMM(OY + y))
+        board.Add(z)
+    for x, y in BUCK_VIAS:
+        v = pcbnew.PCB_VIA(board)
+        v.SetPosition(P(x, y))
+        v.SetViaType(pcbnew.VIATYPE_THROUGH)
+        v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
+        v.SetDrill(FromMM(VIA_DRILL))
+        v.SetWidth(FromMM(VIA_DIA))
+        v.SetNet(nets['GND'])
+        board.Add(v)
+
     # --- outline: a rectangle with every corner cut at 45 degrees
     pts = outline()
     for a, b in zip(pts, pts[1:] + pts[:1]):
@@ -559,6 +644,9 @@ def add_text(board, text, x, y, h, rot=0, layer='F.SilkS', just='center'):
 
 # Where each reference designator is printed, relative to pad 1 after rotation
 # has been applied (board millimetres). Parts not listed keep the library position.
+BUCK_PARTS = {'U2', 'L1', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'R11', 'R12'}
+
+
 def tidy_text(fp, part):
     """Put the reference where it can be read and print the value inside the outline."""
     ref = part['ref']
@@ -576,6 +664,10 @@ def tidy_text(fp, part):
         t.SetPosition(P(x, y))
         t.SetTextAngleDegrees(rot)
 
+    if ref in BUCK_PARTS:
+        r.SetLayer(pcbnew.F_Fab)
+        v.SetVisible(False)
+        return
     if kind == 'R':
         # vertical resistor: value inside the body, reference hidden on fab
         r.SetLayer(pcbnew.F_Fab)
@@ -610,29 +702,13 @@ def tidy_text(fp, part):
     elif ref == 'F1':
         r.SetVisible(False)
         v.SetVisible(False)
-    elif ref == 'U2':
-        at(r, px + 2.54, py - 6.5)
-        r.SetVisible(False)
-        v.SetVisible(False)
-        add_text(board, '5V CONV', px + 2.54, py - 3.9, 0.9)
-        add_text(board, 'IN', px - 1.0, py + 2.3, 0.8)
-        add_text(board, 'OUT', px + 6.3, py + 2.3, 0.8)
     elif ref in ('C1', 'C2'):
         r.SetVisible(False)
         v.SetVisible(False)
         if ref == 'C1':
-            add_text(board, '100u', px + 6.6, py - 3.3, 0.9, just='left')
+            add_text(board, '100u', px + 3.3, py + 5.3, 0.9)
         else:
             add_text(board, '100u 50V', px - 1.75, py - 5.0, 0.9)
-    elif ref == 'C4':
-        r.SetVisible(False)
-        v.SetVisible(False)
-        add_text(board, '10u', px + 4.4, py + 2.6, 0.9)
-    elif ref == 'C5':
-        r.SetLayer(pcbnew.F_Fab)
-        at(r, px, py - 2.5, 90)
-        v.SetVisible(False)
-        add_text(board, '100n', px, py - 2.5, 0.8, rot=90)
     elif kind == 'J':
         r.SetVisible(False)
         v.SetVisible(False)
@@ -662,7 +738,7 @@ PRO_TEMPLATE = {
     },
     "meta": {"filename": None, "version": 1},
     "net_settings": {
-        "classes": [{"name": "Default", "clearance": 0.3, "track_width": 0.4, "via_diameter": 0.8,
+        "classes": [{"name": "Default", "clearance": 0.2, "track_width": 0.4, "via_diameter": 0.8,
                      "via_drill": 0.4, "microvia_diameter": 0.3, "microvia_drill": 0.1,
                      "diff_pair_width": 0.2, "diff_pair_gap": 0.25, "diff_pair_via_gap": 0.25,
                      "bus_width": 12, "wire_width": 6, "line_style": 0,

@@ -88,52 +88,107 @@ def build(sym_lib_path, date, rev):
     s.wire(pin('J1', 1), (pin('J1', 1)[0] + G, pin('J1', 1)[1]), (pin('J1', 1)[0] + G, 19 * G))
     s.power('power:GND', pin('J1', 1)[0] + G, 19 * G)
 
-    # rail from the diode's cathode to the converter input, with the shunt parts hanging off it
+    # rail from the diode's cathode to the buck converter's input, with the shunt parts hanging off it
     put('D8', 31 * G, 17 * G, rot=270, ref_at=(2.54, -1.27, 'left'), val_at=(2.54, 1.27, 'left'))
     put('C1', 37 * G, 17 * G, ref_at=(2.54, -1.27, 'left'), val_at=(2.54, 1.27, 'left'))
     put('C2', 44 * G, 17 * G, ref_at=(2.54, -1.27, 'left'), val_at=(2.54, 1.27, 'left'))
-    put('U2', 56 * G, RAIL, ref_at=(0, -6.35, 'center'), val_at=(0, -3.81, 'center'))
-    taps = [31 * G, 37 * G, 44 * G, 49 * G]
-    xs = [pin('D7', 1)[0]] + taps + [pin('U2', 1)[0]]
+    UBX, UBY = 67 * G, RAIL + 2 * G           # buck chip: its VIN pin lands on the rail
+    put('U2', UBX, UBY, ref_at=(0, -11.43, 'center'), val_at=(2.54, 13.97, 'left'))
+    assert abs(pin('U2', 2)[1] - RAIL) < 1e-6, pin('U2', 2)
+    caps_in = (('C3', 51 * G), ('C4', 55 * G), ('C5', 59 * G))
+    for ref, x in caps_in:
+        put(ref, x, 17 * G, rot=180 if parts[ref]['pins']['1'] == 'GND' else 0,
+            ref_at=(1.27, -1.27, 'left'), val_at=(1.27, 1.27, 'left'))
+    taps = [31 * G, 37 * G, 44 * G, 49 * G] + [x for _, x in caps_in] + [62.5 * G]
+    xs = [pin('D7', 1)[0]] + taps + [pin('U2', 2)[0]]
     for a, b in zip(xs, xs[1:]):
         s.wire((a, RAIL), (b, RAIL))
-    for ref, x in (('D8', 31 * G), ('C1', 37 * G), ('C2', 44 * G)):
+    for ref, x in (('D8', 31 * G), ('C1', 37 * G), ('C2', 44 * G)) + caps_in:
+        top, bot = (1, 2) if parts[ref]['pins']['1'] == '+24V' else (2, 1)
         s.junction(x, RAIL)
-        s.wire((x, RAIL), pin(ref, 1))
-        s.wire(pin(ref, 2), (x, 19 * G))
+        s.wire((x, RAIL), pin(ref, top))
+        s.wire(pin(ref, bot), (x, 19 * G))
         s.power('power:GND', x, 19 * G)
     s.junction(49 * G, RAIL)
     s.wire((49 * G, RAIL), (49 * G, 12 * G))
     s.power('power:+24V', 49 * G, 12 * G)
     s.power('power:PWR_FLAG', 46.5 * G, RAIL)
-    s.wire(pin('U2', 2), (pin('U2', 2)[0], 19 * G))
-    s.power('power:GND', pin('U2', 2)[0], 19 * G)
+    # EN tied to VIN
+    en = pin('U2', 3)
+    s.junction(62.5 * G, RAIL)
+    s.wire(en, (62.5 * G, en[1]), (62.5 * G, RAIL))
+    # chip ground, VCC capacitor, PG left open
+    g = pin('U2', 1)
+    s.wire(g, (g[0], g[1] + G))
+    s.power('power:GND', g[0], g[1] + G)
+    vcc = pin('U2', 6)
+    put('C7', vcc[0], vcc[1] + 3 * G, ref_at=(1.27, -1.27, 'left'), val_at=(1.27, 1.27, 'left'))
+    s.wire(vcc, pin('C7', 1))
+    s.label('VCC', vcc[0], vcc[1] + 0.5 * G, angle=90)
+    s.wire(pin('C7', 2), (vcc[0], vcc[1] + 5 * G))
+    s.power('power:GND', vcc[0], vcc[1] + 5 * G)
+    s.noconnect(*pin('U2', 4))
 
     # ------------------------------------------------------------------ 5 V supply
-    s.text('5 V FOR THE CONTROLLER', 53 * G, 8 * G, 2.0, bold=True)
-    put('C4', 63 * G, 17 * G, ref_at=(2.54, -1.27, 'left'), val_at=(2.54, 1.27, 'left'))
-    put('C5', 69 * G, 17 * G, ref_at=(2.54, -1.27, 'left'), val_at=(2.54, 1.27, 'left'))
-    put('TP1', 73 * G, RAIL, ref_at=(1.27, -3.81, 'left'), val_at=(1.27, -1.27, 'left'), hide_val=True)
-    put('D6', 78 * G, RAIL, rot=180, ref_at=(0, -3.81, 'center'), val_at=(0, 3.81, 'center'))
-    xs = [pin('U2', 3)[0], 63 * G, 66 * G, 69 * G, 73 * G, pin('D6', 2)[0]]
+    s.text('5 V FOR THE CONTROLLER: LMR33630 BUCK (BUCK//33630 CIRCUIT)', 53 * G, 8 * G, 2.0, bold=True)
+    boot, sw, fb = pin('U2', 7), pin('U2', 8), pin('U2', 5)
+    put('C6', boot[0] + 3 * G, boot[1] + 1.5 * G, rot=180, ref_at=(1.27, -1.27, 'left'), val_at=(1.27, 1.27, 'left'))
+    s.wire(boot, pin('C6', 2))
+    s.label('BOOT', boot[0] + 0.635, boot[1])
+    swx = sw[0] + 2 * G
+    s.wire(sw, (swx, sw[1]))
+    s.wire((swx, sw[1]), (swx, pin('C6', 1)[1]), pin('C6', 1))
+    s.junction(swx, sw[1])
+    VR = sw[1]                                  # the 5 V rail runs level with SW
+    put('L1', 80 * G, VR, rot=90, ref_at=(0, -2.54, 'center'), val_at=(0, 2.54, 'center'))
+    l_in, l_out = pin('L1', 1), pin('L1', 2)
+    if l_in[0] > l_out[0]:
+        l_in, l_out = l_out, l_in
+    s.wire((swx, sw[1]), l_in)
+    s.label('SW', swx + 1.27, sw[1])
+    # feedback divider: R11 from the rail down to the FB node, R12 from there to ground
+    put('R11', 84 * G, VR + 3.5 * G, rot=180, ref_at=(1.27, -1.27, 'left'), val_at=(1.27, 1.27, 'left'))
+    fbn = (84 * G, VR + 5.75 * G)
+    s.wire(pin('R11', 1), fbn)
+    s.wire((84 * G, VR), pin('R11', 2))
+    s.junction(84 * G, VR)
+    s.junction(*fbn)
+    put('R12', 87 * G, fbn[1], rot=270, ref_at=(0, -2.54, 'center'), val_at=(0, 2.54, 'center'))
+    r12 = [pin('R12', 1), pin('R12', 2)]
+    near, far = sorted(r12, key=lambda q: q[0])
+    assert far == pin('R12', 1), 'R12: FB end must face the node'
+    s.wire(fbn, near)
+    s.wire(far, (far[0] + G, far[1]))
+    s.power('power:GND', far[0] + G, far[1], rot=90)
+    s.wire(fb, (fb[0] + G, fb[1]), (fb[0] + G, fbn[1]), fbn)
+    s.label('FB', fb[0] + 0.3, fb[1])
+    # output capacitors, test pad, +5V, and the diode to the QT Py
+    outs = [('C8', 93 * G), ('C9', 97.5 * G), ('C10', 102 * G), ('C11', 106.5 * G)]
+    for ref, x in outs:
+        put(ref, x, VR + 3 * G, rot=0 if parts[ref]['pins']['1'] == '+5V' else 180,
+            ref_at=(1.27, -1.27, 'left'), val_at=(1.27, 1.27, 'left'))
+    put('TP1', 110 * G, VR, ref_at=(1.27, -3.81, 'left'), val_at=(1.27, -1.27, 'left'), hide_val=True)
+    put('D6', 114 * G, VR, rot=180, ref_at=(0, -3.81, 'center'), val_at=(0, 3.81, 'center'))
+    xs = [l_out[0], 84 * G, 90 * G] + [x for _, x in outs] + [110 * G, pin('D6', 2)[0]]
     for a, b in zip(xs, xs[1:]):
-        s.wire((a, RAIL), (b, RAIL))
-    for ref, x in (('C4', 63 * G), ('C5', 69 * G)):
-        s.junction(x, RAIL)
-        s.wire((x, RAIL), pin(ref, 1))
-        s.wire(pin(ref, 2), (x, 19 * G))
-        s.power('power:GND', x, 19 * G)
-    s.junction(66 * G, RAIL)
-    s.wire((66 * G, RAIL), (66 * G, 12 * G))
-    s.power('power:+5V', 66 * G, 12 * G)
-    s.junction(73 * G, RAIL)
+        s.wire((a, VR), (b, VR))
+    for ref, x in outs:
+        top, bot = (1, 2) if parts[ref]['pins']['1'] == '+5V' else (2, 1)
+        s.junction(x, VR)
+        s.wire((x, VR), pin(ref, top))
+        s.wire(pin(ref, bot), (x, VR + 5 * G))
+        s.power('power:GND', x, VR + 5 * G)
+    s.junction(90 * G, VR)
+    s.wire((90 * G, VR), (90 * G, VR - 3 * G))
+    s.power('power:+5V', 90 * G, VR - 3 * G)
+    s.junction(110 * G, VR)
     k = pin('D6', 1)
     s.wire(k, (k[0] + 2 * G, k[1]))
     s.label('QT_5V', k[0] + 0.635, k[1])
 
     # ------------------------------------------------------------------ controller
     UX, UY = 91 * G, 29 * G
-    s.text('CONTROLLER', UX - 17 * G, UY - 6.5 * G, 2.0, bold=True)
+    s.text('CONTROLLER', 40 * G, UY - 3.5 * G, 2.0, bold=True)
     put('U1', UX, UY, ref_at=(-15.24, -11.43, 'left'), val_at=(0, 12.7, 'center'))
     for n in range(1, 8):
         p = pin('U1', n)

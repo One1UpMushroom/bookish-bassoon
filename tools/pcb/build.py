@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import pcbnew  # noqa: E402
 
+import buck_fp  # noqa: E402
 import check  # noqa: E402
 import design  # noqa: E402
 import gen_pcb  # noqa: E402
@@ -30,7 +31,7 @@ import verify_fab  # noqa: E402
 from kisch import uid  # noqa: E402
 
 PROJECT = gen_sch.PROJECT
-REV = 'B'
+REV = 'C'
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, 'hardware', 'tasklamp-driver')
 
@@ -53,6 +54,7 @@ def generate(date):
         f.write(gen_sch.FP_LIB_TABLE)
     with open(os.path.join(OUT, 'TaskLamp.pretty', 'QTPy_RP2040_Socket.kicad_mod'), 'w') as f:
         f.write(gen_pcb.qtpy_footprint())
+    buck_fp.write_all(os.path.join(OUT, 'TaskLamp.pretty'))
     sch = os.path.join(OUT, PROJECT + '.kicad_sch')
     with open(sch, 'w') as f:
         f.write(gen_sch.build(sym_lib, date, REV))
@@ -90,7 +92,7 @@ def run_checks(sch, pcb):
     for p in problems:
         print('       ' + p)
     problems = check.geometry_facts(board)
-    ok &= say(not problems, 'outline, socket spacing, terminal pitch, edge margins, no vias, clean ground plane')
+    ok &= say(not problems, 'outline, socket spacing, terminal pitch, edge margins, vias only on ground, clean ground plane')
     for p in problems:
         print('       ' + p)
 
@@ -142,7 +144,7 @@ def export(sch, pcb):
 def write_bom():
     def stem(p):
         # "Gate resistor, red" and "Gate resistor, green" are one line of the BOM
-        channel_part = p['ref'][0] in 'RQ' or p['ref'] in ('D1', 'D2', 'D3', 'D4', 'D5')
+        channel_part = (p['ref'][0] in 'RQ' and p['ref'] not in ('R11', 'R12')) or p['ref'] in ('D1', 'D2', 'D3', 'D4', 'D5')
         return p['note'].rsplit(',', 1)[0] if channel_part else p['note']
 
     def number(ref):
@@ -152,7 +154,7 @@ def write_bom():
     for p in design.parts():
         if not p['ref'].startswith(('H', 'TP')):
             groups.setdefault((p['value'], p['fp'], p['src'], p['mpn'], stem(p)), []).append(p)
-    order = 'JFUQDRC'
+    order = 'JFUQLDRC'
     rows = sorted(groups.items(), key=lambda kv: (order.index(kv[1][0]['ref'][0]), number(kv[1][0]['ref'])))
     source = {design.STOCK: 'in stock', design.ORDER: 'to order'}
     with open(os.path.join(OUT, PROJECT + '-bom.csv'), 'w', newline='') as f:
