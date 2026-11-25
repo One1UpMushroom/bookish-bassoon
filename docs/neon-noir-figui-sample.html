@@ -1,0 +1,365 @@
+<title>Neon Noir FigUI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Share+Tech+Mono&family=Barlow:wght@400;600&display=swap">
+<style>
+/* Layout: one 1280×720 touchscreen frame (FigUI tablet layout), scaled to fit; sample controls above it. */
+:root {
+  color-scheme: dark;
+  --void: #0b0d0c;
+  --asphalt: #16191a;
+  --elevated: #1d2123;
+  --steel-900: #2a2f31;
+  --steel-500: #646b6e;
+  --steel-300: #a3aaad;
+  --fog: #c8cdd0;
+  --accent: #7fff00;
+  --alarm: #ff2e88;
+  --glow: 0 0 8px rgba(127,255,0,0.5);
+  --cut: 12px;
+  --f-sign: Oswald, "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-mono: "Share Tech Mono", "JetBrains Mono", ui-monospace, monospace;
+  --f-body: Barlow, system-ui, sans-serif;
+}
+html, body { background: var(--void); color: var(--fog); }
+body { font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px; }
+.page { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.intro h1 { font: 700 28px/1.1 var(--f-sign); letter-spacing: .04em; text-transform: uppercase; color: var(--accent); margin: 0; }
+.intro p { margin: 4px 0 0; color: var(--steel-300); max-width: 62ch; font-size: 15px; }
+.switch { display: flex; gap: 0; border: 1px solid var(--steel-500); }
+.switch button { font: 500 14px/1 var(--f-sign); letter-spacing: .06em; text-transform: uppercase;
+  background: transparent; color: var(--fog); border: 0; border-right: 1px solid var(--steel-500);
+  padding: 10px 16px; cursor: pointer; min-height: 40px; }
+.switch button:last-child { border-right: 0; }
+.switch button[aria-pressed="true"] { background: var(--accent); color: var(--void); }
+.switch button[data-s="alarm"][aria-pressed="true"] { background: var(--alarm); }
+.switch-label { font: 12px/1 var(--f-mono); color: var(--steel-300); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* the device frame */
+.fit { width: 100%; position: relative; }
+.bezel { position: absolute; top: 0; left: 0; width: 1280px; height: 720px; transform-origin: 0 0;
+  background: var(--void); outline: 1px solid var(--steel-900); overflow: hidden; }
+.screen { position: absolute; inset: 0; display: grid; grid-template-rows: 52px 1fr; }
+
+/* header */
+.hdr { display: flex; align-items: center; gap: 16px; padding: 0 16px; border-bottom: 1px solid var(--steel-900); background: var(--void); }
+.brand { font: 700 20px/1 var(--f-sign); letter-spacing: .06em; text-transform: uppercase; color: var(--fog); }
+.brand b { color: var(--accent); font-weight: 700; }
+.badge { font: 500 15px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; padding: 7px 12px 6px;
+  border: 1px solid var(--accent); color: var(--accent); display: inline-flex; gap: 8px; align-items: center; }
+.badge i { width: 8px; height: 8px; background: currentColor; display: block; }
+[data-state="run"] .badge { background: var(--accent); color: var(--void); box-shadow: var(--glow); }
+[data-state="hold"] .badge { background: var(--fog); border-color: var(--fog); color: var(--void); animation: pulse 1s ease-in-out infinite; }
+[data-state="alarm"] .badge { background: var(--alarm); border-color: var(--alarm); color: var(--void); }
+@keyframes pulse { 50% { opacity: .55; } }
+.hdr .sp { flex: 1; }
+.conn { font: 15px/1 var(--f-mono); color: var(--accent); display: flex; gap: 8px; align-items: center; letter-spacing: .04em; }
+.host { font: 14px/1 var(--f-mono); color: var(--steel-300); }
+.ico { width: 40px; height: 40px; display: grid; place-items: center; color: var(--steel-300); border: 1px solid transparent; background: none; }
+.ico svg, .conn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; }
+.rst { font: 500 14px/1 var(--f-sign); letter-spacing: .08em; color: var(--fog); border: 1px solid var(--steel-500); padding: 9px 12px; background: none; }
+
+/* body grid */
+.main { display: grid; grid-template-columns: 600px 1fr; gap: 12px; padding: 12px; min-height: 0; }
+.col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+
+/* cut-corner panel: outer layer is the 1px frame, inner layer the surface */
+.panel { --edge: var(--steel-900); background: var(--edge); padding: 1px; flex-shrink: 0;
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut)); }
+.panel > .in { background: var(--asphalt); height: 100%;
+  clip-path: polygon(calc(var(--cut) - .4px) 0, 100% 0, 100% calc(100% - var(--cut) + .4px), calc(100% - var(--cut) + .4px) 100%, 0 100%, 0 calc(var(--cut) - .4px)); }
+.ph { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 10px 20px; border-bottom: 1px solid var(--steel-900); }
+.ph h2 { margin: 0; font: 700 18px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.seg { display: flex; border: 1px solid var(--steel-500); }
+.seg span { font: 13px/1 var(--f-mono); letter-spacing: .06em; padding: 7px 10px; color: var(--steel-300); text-transform: uppercase; }
+.seg span.on { background: var(--elevated); color: var(--fog); box-shadow: inset 0 -2px 0 var(--accent); }
+
+/* DRO */
+.dro { display: grid; grid-template-columns: 36px 1fr 56px 56px 56px; gap: 8px; align-items: center; padding: 10px 16px 6px 20px; }
+.ax { font: 700 26px/1 var(--f-sign); color: var(--accent); }
+.num { font: 52px/1 var(--f-mono); color: var(--fog); text-align: right; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.num small { font-size: 22px; color: var(--steel-500); margin-left: 6px; }
+.k { height: 52px; border: 1px solid var(--steel-500); background: var(--asphalt); color: var(--steel-300);
+  font: 500 14px/1 var(--f-sign); letter-spacing: .06em; display: grid; place-items: center; }
+.k svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; }
+.big { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px 16px 12px 20px; }
+.btn { height: 52px; border: 1px solid var(--steel-500); background: var(--asphalt); color: var(--fog);
+  font: 500 18px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; display: flex; gap: 10px; align-items: center; justify-content: center; }
+.btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: var(--void); }
+.fs { display: flex; justify-content: space-between; padding: 8px 16px 10px 20px; border-top: 1px solid var(--steel-900); font: 16px/1 var(--f-mono); color: var(--steel-300); }
+.fs b { color: var(--fog); font-weight: 400; font-size: 20px; margin: 0 4px; }
+
+/* jog */
+.jog { flex: 1; display: grid; grid-template-rows: 48px 1fr; min-height: 0; }
+.steps { display: grid; grid-template-columns: 72px repeat(5, 1fr); border-bottom: 1px solid var(--steel-900); }
+.steps > * { display: grid; place-items: center; border-right: 1px solid var(--steel-900); font: 18px/1 var(--f-mono); color: var(--fog); }
+.steps > :first-child { font: 700 16px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); padding-left: 6px; }
+.steps button { background: none; border: 0; border-right: 1px solid var(--steel-900); cursor: pointer; height: 100%; width: 100%; }
+.steps button[aria-pressed="true"] { background: var(--accent); color: var(--void); }
+.steps button:last-child { border-right: 0; font-family: var(--f-sign); letter-spacing: .06em; text-transform: uppercase; font-size: 16px; }
+.jogbody { display: grid; grid-template-columns: 72px 1fr; min-height: 0; }
+.feeds { border-right: 1px solid var(--steel-900); display: grid; grid-template-rows: 1fr 1fr; }
+.feeds div { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-bottom: 1px solid var(--steel-900); }
+.feeds div:last-child { border-bottom: 0; }
+.feeds b { font: 700 16px/1 var(--f-sign); letter-spacing: .08em; color: var(--steel-300); }
+.feeds span { font: 20px/1 var(--f-mono); color: var(--fog); }
+.feeds small { font: 11px/1 var(--f-mono); color: var(--steel-500); letter-spacing: .06em; }
+.pad { display: grid; grid-template-columns: repeat(3, 76px) 40px 76px; grid-template-rows: repeat(3, 66px); gap: 10px; align-content: center; justify-content: center; }
+.jk { border: 1px solid var(--steel-500); background: var(--elevated); color: var(--fog); font: 700 22px/1 var(--f-sign); letter-spacing: .04em; display: grid; place-items: center; cursor: pointer; }
+.jk:active { background: var(--accent); color: var(--void); }
+.jk.stop { border-color: var(--alarm); background: var(--asphalt); }
+.jk.stop i { width: 22px; height: 22px; background: var(--alarm); display: block; }
+
+/* right column */
+.tabs { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--steel-900); height: 50px; align-items: stretch; }
+.tabs span { font: 500 17px/50px var(--f-sign); letter-spacing: .08em; text-transform: uppercase; color: var(--steel-300); padding: 0 14px; }
+.tabs span.on { color: var(--accent); text-shadow: var(--glow); box-shadow: inset 0 -2px 0 var(--accent); }
+.viewer { position: relative; margin: 12px; border: 1px solid var(--steel-900); background: var(--void); height: 262px; }
+[data-state="alarm"] .viewer { height: 192px; }
+.viewer canvas { width: 100%; height: 100%; display: block; }
+.vtools { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; }
+.vtools span { font: 12px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--steel-300); border: 1px solid var(--steel-500); padding: 6px 8px; background: var(--asphalt); }
+.vtools span.on { color: var(--fog); box-shadow: inset 0 -2px 0 var(--accent); }
+.legend { position: absolute; bottom: 8px; right: 12px; display: flex; gap: 14px; font: 12px/1 var(--f-mono); color: var(--steel-300); }
+.legend i { display: inline-block; width: 16px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+.vbar { position: absolute; top: 12px; left: 12px; font: 12px/1 var(--f-mono); color: var(--steel-500); }
+.jobrow { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 8px; padding: 0 12px; }
+.btn.abort { border-color: var(--alarm); color: var(--alarm); }
+.btn.dim { color: var(--steel-500); border-color: var(--steel-900); }
+.file { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px 0; font: 15px/1 var(--f-mono); color: var(--fog); }
+.file span { color: var(--steel-300); }
+.prog { height: 4px; background: var(--steel-900); margin: 10px 12px 12px; }
+.prog i { display: block; height: 100%; background: var(--accent); width: 0; }
+[data-state="alarm"] .prog i { background: var(--steel-500); }
+
+.alert { display: none; margin: 0 12px 12px; border: 1px solid var(--alarm); padding: 10px 14px; gap: 12px; align-items: center; background: var(--void); }
+[data-state="alarm"] .alert { display: flex; }
+.alert b { font: 700 16px/1 var(--f-sign); letter-spacing: .08em; color: var(--alarm); text-transform: uppercase; white-space: nowrap; }
+.alert span { font-size: 15px; line-height: 1.4; color: var(--fog); }
+.panel > .in.collapsed { display: flex; justify-content: space-between; align-items: center; padding: 0 16px 0 20px; height: 52px; }
+.collapsed h2 { margin: 0; font: 700 17px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; color: var(--steel-300); }
+.collapsed span { font: 15px/1 var(--f-mono); color: var(--steel-300); }
+.right-fill { flex: 1; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 24px; color: var(--steel-300); font-size: 15px; }
+.notes h3 { font: 700 15px/1.2 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; color: var(--fog); margin: 0 0 4px; }
+.notes p { margin: 0; }
+@media (prefers-reduced-motion: reduce) { [data-state="hold"] .badge { animation: none; } }
+</style>
+
+<div class="page">
+  <div class="intro">
+    <div>
+      <h1>Neon Noir · FigUI sample</h1>
+      <p>A mock of the Pi touchscreen (1280×720) running the forked FigUI. It isn't connected to a machine: the numbers are example values from a LowRider V4 sign-carving job. Switch the machine state to see how each one reads.</p>
+    </div>
+    <div>
+      <div class="switch-label" id="stl">Machine state</div>
+      <div class="switch" role="group" aria-labelledby="stl">
+        <button type="button" id="s-idle" data-s="idle" aria-pressed="false">Idle</button>
+        <button type="button" id="s-run" data-s="run" aria-pressed="true">Run</button>
+        <button type="button" id="s-hold" data-s="hold" aria-pressed="false">Hold</button>
+        <button type="button" id="s-alarm" data-s="alarm" aria-pressed="false">Alarm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="fit" id="fit">
+    <div class="bezel" id="bezel" data-state="run">
+      <div class="screen">
+        <header class="hdr">
+          <div class="brand">LowRider <b>V4</b></div>
+          <div class="badge" id="badge"><i></i><span id="badgeText">Run</span></div>
+          <div class="sp"></div>
+          <div class="conn"><svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></svg>Connected</div>
+          <div class="host">192.168.0.1</div>
+          <button class="rst" type="button" tabindex="-1">RST</button>
+          <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></span>
+          <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></span>
+        </header>
+
+        <div class="main">
+          <div class="col">
+            <section class="panel"><div class="in">
+              <div class="ph"><h2>Position</h2><div class="seg"><span class="on">WPos</span><span>MPos</span><span>Both</span></div></div>
+              <div class="dro">
+                <div class="ax">X</div><div class="num" id="nx">412.350</div><div class="k">Z0</div><div class="k">→0</div><div class="k"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9H4z"/></svg></div>
+                <div class="ax">Y</div><div class="num" id="ny">1186.204</div><div class="k">Z0</div><div class="k">→0</div><div class="k"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9H4z"/></svg></div>
+                <div class="ax">Z</div><div class="num" id="nz">-3.175</div><div class="k">Z0</div><div class="k">→0</div><div class="k"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9H4z"/></svg></div>
+              </div>
+              <div class="big">
+                <div class="btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/></svg>Zero all</div>
+                <div class="btn"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9H4z"/></svg>Home all</div>
+              </div>
+              <div class="fs"><span>F<b id="feed">1500</b>mm/min</span><span>Router<b id="spin">ON</b></span></div>
+            </div></section>
+
+            <section class="panel jogwrap" style="flex:1 1 auto"><div class="in jog">
+              <div class="steps" role="group" aria-label="Jog step">
+                <div>Jog</div>
+                <button type="button" id="j01" aria-pressed="false">0.1</button>
+                <button type="button" id="j1" aria-pressed="false">1</button>
+                <button type="button" id="j10" aria-pressed="true">10</button>
+                <button type="button" id="j100" aria-pressed="false">100</button>
+                <button type="button" id="jc" aria-pressed="false">Cont</button>
+              </div>
+              <div class="jogbody">
+                <div class="feeds">
+                  <div><b>XY</b><span>2400</span><small>MM/MIN</small></div>
+                  <div><b>Z</b><span>600</span><small>MM/MIN</small></div>
+                </div>
+                <div class="pad">
+                  <span></span><div class="jk" style="grid-column:2">Y+</div><span></span><span></span><div class="jk" style="grid-column:5">Z+</div>
+                  <div class="jk" style="grid-column:1;grid-row:2">X−</div><div class="jk stop" style="grid-column:2;grid-row:2" aria-label="Stop jog"><i></i></div><div class="jk" style="grid-column:3;grid-row:2">X+</div>
+                  <div class="jk" style="grid-column:2;grid-row:3">Y−</div><div class="jk" style="grid-column:5;grid-row:3">Z−</div>
+                </div>
+              </div>
+            </div></section>
+          </div>
+
+          <div class="col">
+            <section class="panel" style="--edge: var(--steel-900)"><div class="in">
+              <div class="tabs"><span class="on">Viewer</span><span>Files</span><span>Macros</span><span>Terminal</span></div>
+              <div class="viewer">
+                <canvas id="cv" width="1240" height="520" aria-label="Toolpath preview of a carved sign with a cut-out profile"></canvas>
+                <div class="vtools"><span class="on">3D</span><span>Top</span><span class="on">Rapids</span><span>Fit</span></div>
+                <div class="vbar">XY 1220 × 610 · Z −6.35</div>
+                <div class="legend"><span><i style="border-color:var(--steel-500);border-top-style:dashed"></i>Rapid</span><span><i style="border-color:var(--accent)"></i>Cut</span><span><i style="border-color:var(--fog)"></i>Done</span></div>
+              </div>
+              <div class="alert" id="alert"><b>Alarm 1 · Hard limit</b><span>The Y1 endstop opened during a move. Check the machine, then Unlock ($X) and Home before running again.</span></div>
+              <div class="jobrow">
+                <div class="btn" id="bHold"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg><span>Hold</span></div>
+                <div class="btn abort" id="bAbort"><svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>Abort</div>
+                <div class="btn pri" id="bStart"><svg viewBox="0 0 24 24"><path d="M7 4l12 8-12 8z"/></svg><span id="startText">Running</span></div>
+              </div>
+              <div class="file"><span>lr4-workshop-sign.nc</span><b style="font-weight:400" id="pct">62% · 18:40 left</b></div>
+              <div class="prog"><i id="progbar"></i></div>
+            </div></section>
+
+            <section class="panel"><div class="in collapsed"><h2>Tool probe</h2><span>Touch plate · 15.10 mm</span></div></section>
+            <section class="panel"><div class="in collapsed"><h2>Spindle &amp; overrides</h2><span>Feed 100% · Rapid 100%</span></div></section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div><h3>One light</h3><p>Chartreuse marks what is live: titles, the axis letters, the selected step, Start, and the running state. Everything else is fog and steel.</p></div>
+    <div><h3>Magenta means alarm</h3><p>Only Abort, the jog stop and an alarm use magenta, and an alarm always says what happened and what to do.</p></div>
+    <div><h3>Fonts on the Pi</h3><p>Oswald, Share Tech Mono and Barlow are installed on the Raspberry Pi, so they cost nothing on the Jackpot3's storage.</p></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var bezel = document.getElementById('bezel'), fit = document.getElementById('fit');
+  function scale() {
+    var s = Math.min(1, fit.clientWidth / 1280);
+    bezel.style.transform = 'scale(' + s + ')';
+    fit.style.height = (720 * s) + 'px';
+  }
+  window.addEventListener('resize', scale); scale();
+
+  /* toolpath: an isometric view of a 1220×610 sheet with a carved border, three letters
+     and a cut-out profile with tabs. Built once as segments; drawn per state. */
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var segs = [];
+  function add(path, z, rapid) { for (var i = 1; i < path.length; i++) segs.push({ a: path[i-1], b: path[i], z: z, r: !!rapid }); }
+  var last = [0, 0, 5];
+  function moveTo(x, y) { segs.push({ a: [last[0], last[1]], b: [x, y], z: 5, r: true }); last = [x, y]; }
+  function cut(path, z) { add(path, z); last = path[path.length - 1]; }
+  // border groove, two passes
+  [40, 52].forEach(function (o) { moveTo(o, o); cut([[o,o],[1220-o,o],[1220-o,610-o],[o,610-o],[o,o]], -3); });
+  // letters L R 4 as stroked paths
+  var L = [[220,450],[220,170],[220,170],[220,170]]; L = [[220,450],[220,170],[380,170]];
+  var R = [[460,170],[460,450],[600,450],[640,410],[640,350],[600,310],[460,310],[640,170]];
+  var F = [[880,170],[880,450],[730,260],[920,260]];
+  [L, R, F].forEach(function (p) { [0, 6].forEach(function (d) {
+    moveTo(p[0][0] + d, p[0][1] + d);
+    cut(p.map(function (q) { return [q[0] + d, q[1] + d]; }), -6.35);
+  }); });
+  // pocket for a leaf-free plaque on the right
+  for (var r = 0; r < 6; r++) { var x0 = 980 + r*10, y0 = 170 + r*10, x1 = 1140 - r*10, y1 = 450 - r*10;
+    moveTo(x0, y0); cut([[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]], -4); }
+  // outside profile, 3 depth passes
+  [-2, -4, -6.35].forEach(function (z) { moveTo(10, 10); cut([[10,10],[1210,10],[1210,600],[10,600],[10,10]], z); });
+  moveTo(0, 0);
+
+  function iso(p, z) {
+    var k = cv.height / 520, sx = 0.47 * k, sy = 0.47 * k;
+    var x = (p[0] - p[1]) * 0.866 * sx, y = (p[0] + p[1]) * 0.5 * sy - z * 2.5 * k;
+    return [cv.width/2 + x - 30 * k, 70 * k + y];
+  }
+  var css = getComputedStyle(document.documentElement);
+  var C = { cut: css.getPropertyValue('--accent').trim(), done: css.getPropertyValue('--fog').trim(),
+            rapid: css.getPropertyValue('--steel-500').trim(), grid: css.getPropertyValue('--steel-900').trim(),
+            tool: css.getPropertyValue('--fog').trim() };
+  function draw(progress) {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    // sheet outline and grid
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.setLineDash([]);
+    for (var g = 0; g <= 1220; g += 122) { line(iso([g,0],0), iso([g,610],0)); }
+    for (var h = 0; h <= 610; h += 122) { line(iso([0,h],0), iso([1220,h],0)); }
+    var n = Math.floor(segs.length * progress), tip = null;
+    segs.forEach(function (s, i) {
+      var a = iso(s.a, s.z), b = iso(s.b, s.z);
+      if (s.r) { ctx.setLineDash([6, 6]); ctx.strokeStyle = C.rapid; ctx.lineWidth = 1.2; ctx.globalAlpha = .7; }
+      else { ctx.setLineDash([]); ctx.strokeStyle = i < n ? C.done : C.cut; ctx.lineWidth = 1.8; ctx.globalAlpha = i < n ? .85 : 1; }
+      line(a, b); if (i === n) tip = a;
+    });
+    ctx.globalAlpha = 1; ctx.setLineDash([]);
+    if (tip && progress > 0 && progress < 1) {
+      ctx.strokeStyle = C.tool; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(tip[0], tip[1]); ctx.lineTo(tip[0], tip[1] - 60); ctx.stroke();
+      ctx.beginPath(); ctx.arc(tip[0], tip[1], 5, 0, Math.PI*2); ctx.stroke();
+    }
+    // axis gizmo
+    var o = [70, cv.height - 70];
+    [['X',[1,0]],['Y',[0,1]]].forEach(function (a) {
+      var e = iso([a[1][0]*120, a[1][1]*120], 0), z0 = iso([0,0],0);
+      var d = [e[0]-z0[0], e[1]-z0[1]];
+      ctx.strokeStyle = C.done; ctx.lineWidth = 1.5; line(o, [o[0]+d[0]*.8, o[1]+d[1]*.8]);
+      ctx.fillStyle = C.done; ctx.font = '22px "Share Tech Mono", monospace'; ctx.fillText(a[0], o[0]+d[0]*.95-6, o[1]+d[1]*.95+8);
+    });
+    ctx.strokeStyle = C.done; line(o, [o[0], o[1]-50]); ctx.fillText('Z', o[0]-6, o[1]-58);
+  }
+  function line(a, b) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+
+  var S = {
+    idle:  { badge: 'Idle', start: 'Start', x: '0.000', y: '0.000', z: '5.000', f: '0', sp: 'OFF', p: 0, pct: 'Ready · est. 49:10', hold: 'Hold', dimHold: true },
+    run:   { badge: 'Run', start: 'Running', x: '412.350', y: '1186.204', z: '-3.175', f: '1500', sp: 'ON', p: .62, pct: '62% · 18:40 left' },
+    hold:  { badge: 'Hold', start: 'Resume', x: '412.350', y: '1186.204', z: '-3.175', f: '0', sp: 'ON', p: .62, pct: 'Paused at 62%' },
+    alarm: { badge: 'Alarm', start: 'Start', x: '388.912', y: '1201.006', z: '-3.175', f: '0', sp: 'OFF', p: .58, pct: 'Stopped at 58%', dimStart: true }
+  };
+  function setState(k) {
+    var s = S[k]; bezel.setAttribute('data-state', k);
+    document.getElementById('badgeText').textContent = s.badge;
+    document.getElementById('startText').textContent = s.start;
+    document.getElementById('nx').textContent = s.x;
+    document.getElementById('ny').textContent = s.y;
+    document.getElementById('nz').textContent = s.z;
+    document.getElementById('feed').textContent = s.f;
+    document.getElementById('spin').textContent = s.sp;
+    document.getElementById('pct').textContent = s.pct;
+    document.getElementById('progbar').style.width = (s.p * 100) + '%';
+    document.getElementById('bHold').classList.toggle('dim', !!s.dimHold || k === 'alarm' || k === 'hold');
+    var st = document.getElementById('bStart');
+    st.classList.toggle('pri', !s.dimStart); st.classList.toggle('dim', !!s.dimStart);
+    document.querySelectorAll('.switch button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.s === k ? 'true' : 'false'); });
+    cv.height = k === 'alarm' ? 382 : 520; draw(s.p);
+  }
+  document.querySelectorAll('.switch button').forEach(function (b) { b.addEventListener('click', function () { setState(b.dataset.s); }); });
+  document.querySelectorAll('.steps button').forEach(function (b) { b.addEventListener('click', function () {
+    document.querySelectorAll('.steps button').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+  }); });
+  setState('run');
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { draw(S[bezel.getAttribute('data-state')].p); });
+})();
+</script>
