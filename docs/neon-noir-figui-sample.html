@@ -14,9 +14,9 @@
   --steel-300: #a3aaad;
   --fog: #c8cdd0;
   --accent: #7fff00;
-  /* Safety exception (owner-approved): ISO 3864 / IEC 60204-1 colour meanings for stop and caution. */
-  --stop: #ff453a;    /* stop, abort, alarm: 5.72:1 on void, 5.19:1 on asphalt */
-  --caution: #ffb000; /* hold, door: 10.64:1 on void, 9.65:1 on asphalt */
+  /* Owner's colour rule: magenta for safety, warnings and delete; amber for ordinary errors. */
+  --safety: #ff2e88;  /* signal-magenta: stop, abort, alarm, hold, door, delete. 5.57:1 on void, 5.05:1 on asphalt */
+  --error: #ffb000;   /* ordinary errors (failed upload, bad file): 10.64:1 on void */
   --glow: 0 0 8px rgba(127,255,0,0.5);
   --cut: 12px;
   --ease: 120ms ease-out;
@@ -42,8 +42,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   background: transparent; color: var(--fog); border: 0; border-right: 1px solid var(--steel-500); cursor: pointer; }
 .switch button:last-child { border-right: 0; }
 .switch button[aria-pressed="true"] { background: var(--accent); color: var(--void); }
-.switch button[data-s="hold"][aria-pressed="true"] { background: var(--caution); }
-.switch button[data-s="alarm"][aria-pressed="true"] { background: var(--stop); }
+.switch button[data-s="hold"][aria-pressed="true"] { background: var(--void); color: var(--safety); box-shadow: inset 0 0 0 2px var(--safety); }
+.switch button[data-s="alarm"][aria-pressed="true"] { background: var(--safety); }
 .switch button[aria-pressed="true"]:focus-visible { outline-color: var(--fog); }
 
 /* the device frame: 1280×720 CSS px, scaled down to the page width */
@@ -70,9 +70,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   font: 700 20px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 .badge i { width: 10px; height: 10px; background: currentColor; display: block; }
 [data-state="run"] .badge { background: var(--accent); color: var(--void); box-shadow: var(--glow); }
-[data-state="hold"] .badge { background: var(--caution); border-color: var(--caution); color: var(--void); }
+[data-state="hold"] .badge { background: var(--void); border: 2px solid var(--safety); color: var(--safety); }
 [data-state="hold"] .badge i { animation: pulse 1s ease-in-out infinite; }
-[data-state="alarm"] .badge { background: var(--stop); border-color: var(--stop); color: var(--void); }
+[data-state="alarm"] .badge { background: var(--safety); border-color: var(--safety); color: var(--void); }
 @keyframes pulse { 50% { opacity: .15; } }
 .hprog { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .hprog .bar { width: 96px; height: 6px; background: var(--steel-900); flex: none; }
@@ -116,9 +116,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   border: 1px solid var(--steel-500); background: var(--asphalt); color: var(--fog);
   font: 500 18px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 .btn.pri { background: var(--accent); border-color: var(--accent); color: var(--void); font-weight: 700; }
-.btn.caution { background: var(--caution); border-color: var(--caution); color: var(--void); font-weight: 700; }
-.btn.abort { border: 2px solid var(--stop); color: var(--stop); font-weight: 700; }
-.btn.danger { border-color: var(--stop); color: var(--stop); }
+.btn.caution { background: var(--safety); border-color: var(--safety); color: var(--void); font-weight: 700; }
+.btn.abort { border: 2px solid var(--safety); color: var(--safety); font-weight: 700; }
+.btn.danger { border-color: var(--safety); color: var(--safety); }
 /* unavailable controls: no fill, dim edge and label, so a disabled Start can't pass for a live one */
 .bezel .btn:disabled, .bezel .k:disabled { background: var(--asphalt); border: 1px solid var(--steel-900); color: var(--steel-500); box-shadow: none; }
 .num:disabled { color: var(--fog); cursor: default; }
@@ -126,8 +126,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* alarm block (FigUI shows it in the Position panel) */
 .alarm { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; margin: 0 12px 8px 20px; padding: 6px 6px 6px 12px;
-  border: 1px solid var(--stop); background: var(--void); }
-.alarm b { display: flex; align-items: center; gap: 8px; font: 700 16px/1.2 var(--f-sign); letter-spacing: .06em; text-transform: uppercase; color: var(--stop); }
+  border: 1px solid var(--safety); background: var(--void); }
+.alarm b { display: flex; align-items: center; gap: 8px; font: 700 16px/1.2 var(--f-sign); letter-spacing: .06em; text-transform: uppercase; color: var(--safety); }
 .alarm span { display: block; margin-top: 2px; font: 15px/1.3 var(--f-body); color: var(--fog); }
 .alarm .btn { height: 48px; }
 
@@ -157,9 +157,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   font: 700 22px/1 var(--f-sign); font-size: clamp(14px, 13cqmin, 22px); letter-spacing: .04em; display: grid; place-items: center; }
 .jk:active:not(:disabled) { background: var(--accent); color: var(--void); }
 .jk.fine { font: 500 15px/1 var(--f-sign); font-size: clamp(11px, 9cqmin, 15px); letter-spacing: .08em; text-transform: uppercase; color: var(--steel-300); background: var(--asphalt); }
-.jk.stop { border: 2px solid var(--stop); background: var(--asphalt); }
-.jk.stop i { width: clamp(12px, 13cqmin, 22px); aspect-ratio: 1; background: var(--stop); display: block; }
+.jk.stop { border: 2px solid var(--safety); background: var(--asphalt); }
+.jk.stop i { width: clamp(12px, 13cqmin, 22px); aspect-ratio: 1; background: var(--safety); display: block; }
 .jogbody.locked .cluster { opacity: .4; }
+.jogbody.locked .jk.stop { visibility: hidden; }
 .lock { display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); align-items: center; gap: 10px; padding: 10px 16px;
   background: var(--void); border: 1px solid var(--steel-500); color: var(--fog); font: 500 17px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 .jogbody.locked .lock { display: flex; }
@@ -393,7 +394,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   <div class="notes">
     <div><h3>One light</h3><p>Chartreuse marks what is live: titles, the axis letters, the selected step, Start and Resume, and the running state. Everything else is fog and steel.</p></div>
-    <div><h3>Safety colours</h3><p>Red means stop, abort or alarm. Amber means hold or door. Every state also says its name in words.</p></div>
+    <div><h3>Safety colours</h3><p>Magenta is for safety, warnings and delete: a solid badge for an alarm, an outlined one for hold. Amber is for ordinary errors. Every state also says its name in words.</p></div>
     <div><h3>Controls follow the state</h3><p>During a job the axis keys, Zero all and Home all give way to Abort, and jog locks. An alarm shows its reason next to Clear alarm.</p></div>
     <div><h3>Router speed</h3><p>The big figure is the measured RPM. There is no sensor yet, so it shows dashes. “Set” is the S value FluidNC was told to use.</p></div>
     <div><h3>Fonts on the Pi</h3><p>Oswald, Share Tech Mono and Barlow are installed on the Raspberry Pi, so they cost nothing on the Jackpot3's storage.</p></div>
