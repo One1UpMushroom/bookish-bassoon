@@ -18,7 +18,7 @@ the Jackpot3.
 
 - A fifth FigUI theme, **Neon Noir**, that follows the design system: near-black
   `void`/`asphalt` surfaces, fog body text, one chartreuse (#7FFF00) accent at about 10%
-  of the area, magenta (#FF2E88) only for alarms, sharp corners with 45° cut corners on
+  of the area, red and amber only for safety states (owner's exception), sharp corners with 45° cut corners on
   panels, uppercase Oswald signage headings, Share Tech Mono readouts.
 - Made the default theme in this fork; the other four themes stay selectable.
 - Tuned for the 1280×720 touch layout first (FigUI's tablet layout), still correct on
@@ -39,6 +39,7 @@ the Jackpot3.
 - Anything that makes a safety control harder to find or slower to hit: feed hold,
   abort, jog stop must stay large and unmistakable.
 - State shown by colour alone. Every state keeps its word (IDLE, RUN, HOLD, ALARM).
+- Treating the on-screen Abort as an emergency stop.
 - Neon paragraphs, stacked glows, or flicker faster than 3 flashes a second.
 - A bundle that no longer fits, or that pushes `config.yaml` off the board.
 
@@ -80,11 +81,19 @@ the Jackpot3.
 | `--text-dim` | #646B6E | steel-500, units and hints only |
 | `--accent` | #7FFF00 | chartreuse |
 | `--ok` | #7FFF00 | chartreuse (Start, Connected, Run) |
-| `--danger` | #FF2E88 | signal-magenta (Alarm, Abort, jog stop) |
-| `--warn` | #C8CDD0 | fog, always with the word HOLD or DOOR *(my call: the system has no warning colour, and a second hue would break "one accent")* |
+| `--danger` | #FF453A | **safety red** (Alarm, Abort, jog stop): 5.72:1 on void |
+| `--warn` | #FFB000 | **safety amber** (Hold, Door): 10.64:1 on void |
 | `--info` | #A3AAAD | steel-300 |
 
-Labels on chartreuse fills use `void` (15.05:1).
+Labels on chartreuse, red and amber fills use `void` (15.05:1, 5.72:1, 10.64:1).
+
+**Safety exception (decided by the owner).** The one-accent rule gives way where safety
+is involved. Stop, abort and alarm use red; hold and door use amber, following the usual
+machine-safety colour meanings (ISO 3864, IEC 60204-1). The system's magenta is not used
+in this UI. Every safety state still carries its word, because amber and chartreuse are
+close in lightness (1.41:1) and some colour-blind users cannot tell them apart by hue.
+The on-screen Abort is a software stop: the machine still needs a hardware emergency
+stop that cuts motor and router power.
 
 ### State display
 
@@ -92,8 +101,8 @@ Labels on chartreuse fills use `void` (15.05:1).
 |---|---|
 | Idle | chartreuse outline, IDLE |
 | Run / Jog / Home | chartreuse fill, void text, steady glow |
-| Hold / Door | fog fill, void text, slow 1 Hz pulse (off under reduced motion) |
-| Alarm | magenta fill, void text, plus the alarm reason in words |
+| Hold / Door | amber fill, void text, slow 1 Hz pulse (off under reduced motion) |
+| Alarm | red fill, void text, plus the alarm reason in words |
 
 ### Form
 
@@ -107,8 +116,11 @@ Labels on chartreuse fills use `void` (15.05:1).
   (Start, selected jog step) is solid chartreuse. Focus is a 2 px chartreuse ring at
   2 px offset.
 - 3D viewer: cut moves chartreuse, rapids steel-500 dashed, completed moves fog, tool
-  marker magenta-free (fog) so magenta keeps meaning "alarm". Axis gizmo letters stay
-  labelled.
+  marker fog so red keeps meaning "stop". Axis gizmo letters stay labelled.
+- Router readout: `ROUTER 17,940 rpm  set 18,000`. The large number is measured speed
+  and the small one is the commanded speed (FluidNC's `S` value). FluidNC reports only
+  the commanded speed, so until the planned router speed controller and detector exist,
+  the large number shows the commanded value. The "Spindle" panel is renamed "Router".
 - Glow: one 8 px chartreuse text-shadow on the state badge and the active tab only.
 - Motion: 120–200 ms ease-out; no scanlines.
 
@@ -156,13 +168,12 @@ checks it after each step.
 
 ## Calls I made (please check)
 
-- Warning states (Hold, Door) in fog rather than a new colour.
 - Axes told apart by letter instead of red/green/blue.
 - Fonts installed on the Pi instead of embedded in the bundle.
 - Neon Noir becomes the default theme; the other four stay.
-- The sample shows "Router ON/OFF" where FigUI shows spindle RPM, because the LR4's
-  router is switched by a relay, not speed-controlled. That is a label change, not a
-  theme change: keep it only if wanted.
+- Red #FF453A and amber #FFB000 as the safety colours.
+- Until the speed detector exists, the measured-RPM slot shows the commanded speed.
+  The plan for the detector and how it reports to the UI is a separate later design.
 
 ## Sample
 

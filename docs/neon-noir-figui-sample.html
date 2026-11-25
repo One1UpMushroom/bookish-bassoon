@@ -14,7 +14,9 @@
   --steel-300: #a3aaad;
   --fog: #c8cdd0;
   --accent: #7fff00;
-  --alarm: #ff2e88;
+  /* Safety exception (owner-approved): ISO 3864 / IEC 60204-1 colour meanings for stop and caution. */
+  --stop: #ff453a;    /* stop, abort, alarm: 5.72:1 on void */
+  --caution: #ffb000; /* hold, door: 10.64:1 on void */
   --glow: 0 0 8px rgba(127,255,0,0.5);
   --cut: 12px;
   --f-sign: Oswald, "Barlow Condensed", "Arial Narrow", sans-serif;
@@ -36,7 +38,8 @@ body { font-family: var(--f-body); font-size: 16px; line-height: 1.6;
   padding: 10px 16px; cursor: pointer; min-height: 40px; }
 .switch button:last-child { border-right: 0; }
 .switch button[aria-pressed="true"] { background: var(--accent); color: var(--void); }
-.switch button[data-s="alarm"][aria-pressed="true"] { background: var(--alarm); }
+.switch button[data-s="alarm"][aria-pressed="true"] { background: var(--stop); }
+.switch button[data-s="hold"][aria-pressed="true"] { background: var(--caution); }
 .switch-label { font: 12px/1 var(--f-mono); color: var(--steel-300); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -54,8 +57,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   border: 1px solid var(--accent); color: var(--accent); display: inline-flex; gap: 8px; align-items: center; }
 .badge i { width: 8px; height: 8px; background: currentColor; display: block; }
 [data-state="run"] .badge { background: var(--accent); color: var(--void); box-shadow: var(--glow); }
-[data-state="hold"] .badge { background: var(--fog); border-color: var(--fog); color: var(--void); animation: pulse 1s ease-in-out infinite; }
-[data-state="alarm"] .badge { background: var(--alarm); border-color: var(--alarm); color: var(--void); }
+[data-state="hold"] .badge { background: var(--caution); border-color: var(--caution); color: var(--void); animation: pulse 1s ease-in-out infinite; }
+[data-state="alarm"] .badge { background: var(--stop); border-color: var(--stop); color: var(--void); }
 @keyframes pulse { 50% { opacity: .55; } }
 .hdr .sp { flex: 1; }
 .conn { font: 15px/1 var(--f-mono); color: var(--accent); display: flex; gap: 8px; align-items: center; letter-spacing: .04em; }
@@ -94,6 +97,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn.pri { background: var(--accent); border-color: var(--accent); color: var(--void); }
 .fs { display: flex; justify-content: space-between; padding: 8px 16px 10px 20px; border-top: 1px solid var(--steel-900); font: 16px/1 var(--f-mono); color: var(--steel-300); }
 .fs b { color: var(--fog); font-weight: 400; font-size: 20px; margin: 0 4px; }
+.fs .set { font-size: 13px; color: var(--steel-500); margin-left: 8px; letter-spacing: .04em; }
 
 /* jog */
 .jog { flex: 1; display: grid; grid-template-rows: 48px 1fr; min-height: 0; }
@@ -113,8 +117,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pad { display: grid; grid-template-columns: repeat(3, 76px) 40px 76px; grid-template-rows: repeat(3, 66px); gap: 10px; align-content: center; justify-content: center; }
 .jk { border: 1px solid var(--steel-500); background: var(--elevated); color: var(--fog); font: 700 22px/1 var(--f-sign); letter-spacing: .04em; display: grid; place-items: center; cursor: pointer; }
 .jk:active { background: var(--accent); color: var(--void); }
-.jk.stop { border-color: var(--alarm); background: var(--asphalt); }
-.jk.stop i { width: 22px; height: 22px; background: var(--alarm); display: block; }
+.jk.stop { border-color: var(--stop); background: var(--asphalt); }
+.jk.stop i { width: 22px; height: 22px; background: var(--stop); display: block; }
 
 /* right column */
 .tabs { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--steel-900); height: 50px; align-items: stretch; }
@@ -130,7 +134,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .legend i { display: inline-block; width: 16px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
 .vbar { position: absolute; top: 12px; left: 12px; font: 12px/1 var(--f-mono); color: var(--steel-500); }
 .jobrow { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 8px; padding: 0 12px; }
-.btn.abort { border-color: var(--alarm); color: var(--alarm); }
+.btn.abort { border-color: var(--stop); color: var(--stop); }
 .btn.dim { color: var(--steel-500); border-color: var(--steel-900); }
 .file { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px 0; font: 15px/1 var(--f-mono); color: var(--fog); }
 .file span { color: var(--steel-300); }
@@ -138,9 +142,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .prog i { display: block; height: 100%; background: var(--accent); width: 0; }
 [data-state="alarm"] .prog i { background: var(--steel-500); }
 
-.alert { display: none; margin: 0 12px 12px; border: 1px solid var(--alarm); padding: 10px 14px; gap: 12px; align-items: center; background: var(--void); }
+.alert { display: none; margin: 0 12px 12px; border: 1px solid var(--stop); padding: 10px 14px; gap: 12px; align-items: center; background: var(--void); }
 [data-state="alarm"] .alert { display: flex; }
-.alert b { font: 700 16px/1 var(--f-sign); letter-spacing: .08em; color: var(--alarm); text-transform: uppercase; white-space: nowrap; }
+.alert b { font: 700 16px/1 var(--f-sign); letter-spacing: .08em; color: var(--stop); text-transform: uppercase; white-space: nowrap; }
 .alert span { font-size: 15px; line-height: 1.4; color: var(--fog); }
 .panel > .in.collapsed { display: flex; justify-content: space-between; align-items: center; padding: 0 16px 0 20px; height: 52px; }
 .collapsed h2 { margin: 0; font: 700 17px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; color: var(--steel-300); }
@@ -197,7 +201,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
                 <div class="btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/></svg>Zero all</div>
                 <div class="btn"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9H4z"/></svg>Home all</div>
               </div>
-              <div class="fs"><span>F<b id="feed">1500</b>mm/min</span><span>Router<b id="spin">ON</b></span></div>
+              <div class="fs"><span>F<b id="feed">1500</b>mm/min</span><span>Router<b id="spin">17,940</b>rpm <small class="set" id="spinset">set 18,000</small></span></div>
             </div></section>
 
             <section class="panel jogwrap" style="flex:1 1 auto"><div class="in jog">
@@ -243,7 +247,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
             </div></section>
 
             <section class="panel"><div class="in collapsed"><h2>Tool probe</h2><span>Touch plate · 15.10 mm</span></div></section>
-            <section class="panel"><div class="in collapsed"><h2>Spindle &amp; overrides</h2><span>Feed 100% · Rapid 100%</span></div></section>
+            <section class="panel"><div class="in collapsed"><h2>Router &amp; overrides</h2><span>Feed 100% · Rapid 100% · RPM 100%</span></div></section>
           </div>
         </div>
       </div>
@@ -252,7 +256,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   <div class="notes">
     <div><h3>One light</h3><p>Chartreuse marks what is live: titles, the axis letters, the selected step, Start, and the running state. Everything else is fog and steel.</p></div>
-    <div><h3>Magenta means alarm</h3><p>Only Abort, the jog stop and an alarm use magenta, and an alarm always says what happened and what to do.</p></div>
+    <div><h3>Safety colours</h3><p>Safety breaks the one-light rule: red for stop, abort and alarms, amber for hold and door. Every state also says its name in words.</p></div>
     <div><h3>Fonts on the Pi</h3><p>Oswald, Share Tech Mono and Barlow are installed on the Raspberry Pi, so they cost nothing on the Jackpot3's storage.</p></div>
   </div>
 </div>
@@ -333,10 +337,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   function line(a, b) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
 
   var S = {
-    idle:  { badge: 'Idle', start: 'Start', x: '0.000', y: '0.000', z: '5.000', f: '0', sp: 'OFF', p: 0, pct: 'Ready · est. 49:10', hold: 'Hold', dimHold: true },
-    run:   { badge: 'Run', start: 'Running', x: '412.350', y: '1186.204', z: '-3.175', f: '1500', sp: 'ON', p: .62, pct: '62% · 18:40 left' },
-    hold:  { badge: 'Hold', start: 'Resume', x: '412.350', y: '1186.204', z: '-3.175', f: '0', sp: 'ON', p: .62, pct: 'Paused at 62%' },
-    alarm: { badge: 'Alarm', start: 'Start', x: '388.912', y: '1201.006', z: '-3.175', f: '0', sp: 'OFF', p: .58, pct: 'Stopped at 58%', dimStart: true }
+    idle:  { badge: 'Idle', start: 'Start', x: '0.000', y: '0.000', z: '5.000', f: '0', sp: '0', set: 'set 18,000', p: 0, pct: 'Ready · est. 49:10', hold: 'Hold', dimHold: true },
+    run:   { badge: 'Run', start: 'Running', x: '412.350', y: '1186.204', z: '-3.175', f: '1500', sp: '17,940', set: 'set 18,000', p: .62, pct: '62% · 18:40 left' },
+    hold:  { badge: 'Hold', start: 'Resume', x: '412.350', y: '1186.204', z: '-3.175', f: '0', sp: '17,960', set: 'set 18,000', p: .62, pct: 'Paused at 62%' },
+    alarm: { badge: 'Alarm', start: 'Start', x: '388.912', y: '1201.006', z: '-3.175', f: '0', sp: '0', set: 'set 0', p: .58, pct: 'Stopped at 58%', dimStart: true }
   };
   function setState(k) {
     var s = S[k]; bezel.setAttribute('data-state', k);
@@ -347,6 +351,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     document.getElementById('nz').textContent = s.z;
     document.getElementById('feed').textContent = s.f;
     document.getElementById('spin').textContent = s.sp;
+    document.getElementById('spinset').textContent = s.set;
     document.getElementById('pct').textContent = s.pct;
     document.getElementById('progbar').style.width = (s.p * 100) + '%';
     document.getElementById('bHold').classList.toggle('dim', !!s.dimHold || k === 'alarm' || k === 'hold');
