@@ -1,0 +1,257 @@
+<title>LowRider V4 Hardware</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Share+Tech+Mono&family=Barlow:wght@400;600&display=swap">
+<style>
+/* Layout: a sticky progress bar over one column of cut-corner section panels; tick rows inside. Neon Noir, single dark look by design. */
+:root {
+  color-scheme: dark;
+  --void: #0b0d0c;
+  --asphalt: #16191a;
+  --elevated: #1d2123;
+  --steel-900: #2a2f31;
+  --steel-500: #646b6e;
+  --steel-300: #a3aaad;
+  --fog: #c8cdd0;
+  --accent: #7fff00;
+  --safety: #ff2e88;
+  --glow: 0 0 8px rgba(127,255,0,0.5);
+  --cut: 12px;
+  --f-sign: Oswald, "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-mono: "Share Tech Mono", "JetBrains Mono", ui-monospace, monospace;
+  --f-body: Barlow, system-ui, sans-serif;
+}
+html, body { background: var(--void); color: var(--fog); }
+body { font: 16px/1.6 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--void); }
+.wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+button:focus-visible, input:focus-visible + .box, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header.top { padding-top: 28px; display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font: 13px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--steel-300); }
+h1 { margin: 0; font: 700 clamp(32px, 6vw, 50px)/1.05 var(--f-sign); letter-spacing: .04em; text-transform: uppercase; color: var(--accent); text-wrap: balance; }
+.lede { margin: 4px 0 0; color: var(--steel-300); max-width: 64ch; }
+.lede a { color: var(--fog); }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--void); padding: 12px 0; border-bottom: 1px solid var(--steel-900);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.count { font: 28px/1 var(--f-mono); color: var(--fog); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.count small { font-size: 15px; color: var(--steel-300); margin-left: 6px; }
+.meter { flex: 1 1 160px; height: 8px; background: var(--steel-900); min-width: 120px; }
+.meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 160ms ease-out; }
+.filters { display: flex; border: 1px solid var(--steel-500); }
+.filters button { font: 500 14px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; background: none; color: var(--fog);
+  border: 0; border-right: 1px solid var(--steel-500); padding: 0 14px; min-height: 40px; cursor: pointer; }
+.filters button:last-child { border-right: 0; }
+.filters button[aria-pressed="true"] { background: var(--accent); color: var(--void); }
+.reset { font: 500 14px/1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; background: none; color: var(--steel-300);
+  border: 1px solid var(--steel-500); padding: 0 14px; min-height: 40px; cursor: pointer; }
+.reset.arm { color: var(--safety); border-color: var(--safety); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--steel-300); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+
+.panel { background: var(--steel-900); padding: 1px;
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut)); }
+.panel > .in { background: var(--asphalt);
+  clip-path: polygon(calc(var(--cut) - .4px) 0, 100% 0, 100% calc(100% - var(--cut) + .4px), calc(100% - var(--cut) + .4px) 100%, 0 100%, 0 calc(var(--cut) - .4px)); }
+.ph { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 18px 12px 22px; border-bottom: 1px solid var(--steel-900); }
+.ph h2 { margin: 0; font: 700 20px/1.1 var(--f-sign); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.ph .ref { font: 13px/1 var(--f-mono); color: var(--steel-300); letter-spacing: .06em; margin-right: 10px; }
+.ph .tally { font: 15px/1 var(--f-mono); color: var(--steel-300); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.panel.done .ph .tally { color: var(--accent); }
+.intro { margin: 0; padding: 12px 18px 0 22px; color: var(--steel-300); font-size: 15px; }
+ul { list-style: none; margin: 0; padding: 6px 0; }
+li { border-top: 1px solid var(--steel-900); }
+li:first-child { border-top: 0; }
+label.row { display: grid; grid-template-columns: 28px 1fr; gap: 14px; padding: 12px 18px 12px 22px; cursor: pointer; min-height: 48px; }
+label.row:hover { background: var(--elevated); }
+input[type="checkbox"] { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.box { width: 24px; height: 24px; border: 2px solid var(--steel-500); margin-top: 1px; display: grid; place-items: center; }
+.box svg { width: 16px; height: 16px; fill: none; stroke: var(--void); stroke-width: 3; stroke-linecap: square; visibility: hidden; }
+input:checked + .box { background: var(--accent); border-color: var(--accent); }
+input:checked + .box svg { visibility: visible; }
+.txt { min-width: 0; }
+.txt b { font-weight: 600; color: var(--fog); }
+input:checked ~ .txt b, input:checked ~ .txt .what { color: var(--steel-300); }
+input:checked ~ .txt .what { text-decoration: line-through; text-decoration-color: var(--steel-500); }
+.what { display: block; }
+.note { display: block; font-size: 14.5px; color: var(--steel-300); margin-top: 2px; }
+.tags { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-left: 8px; vertical-align: 2px; }
+.tag { font: 12px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 6px 3px; border: 1px solid var(--steel-500); color: var(--fog); white-space: nowrap; }
+.tag.safety { border-color: var(--safety); color: var(--safety); }
+.tag.later { border-style: dashed; color: var(--steel-300); }
+.empty { padding: 14px 22px; color: var(--steel-300); font-size: 15px; }
+footer { color: var(--steel-300); font-size: 14px; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; }
+footer a { color: var(--fog); }
+@media (max-width: 520px) { .ph { flex-direction: column; gap: 6px; } .count { font-size: 24px; } }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">LowRider V4 · Jackpot3 · Neon Noir FigUI</div>
+    <h1>LowRider V4 Hardware</h1>
+    <p class="lede">The control hardware for the build: the controller, motors and switches, power, the router, the Pi touchscreen and the safety gear, then the checks before power-up. Printed and mechanical parts are in <a href="https://docs.v1e.com/lowrider/">V1 Engineering's LR4 docs</a>. Your ticks are saved in this browser only.</p>
+  </header>
+
+  <div class="bar" role="region" aria-label="Progress">
+    <div class="count" id="count">0 / 0<small>done</small></div>
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <div class="filters" role="group" aria-label="Show">
+      <button type="button" id="f-all" data-f="all" aria-pressed="true">All</button>
+      <button type="button" id="f-todo" data-f="todo" aria-pressed="false">To do</button>
+      <button type="button" id="f-check" data-f="check" aria-pressed="false">Check</button>
+    </div>
+    <button type="button" class="reset" id="reset">Clear ticks</button>
+  </div>
+
+  <div class="legend">
+    <span><span class="tag">Check</span>confirm this value before you buy</span>
+    <span><span class="tag safety">Qualified</span>mains or safety wiring: have it done or checked by someone qualified</span>
+    <span><span class="tag later">Later</span>designed in a later stage</span>
+  </div>
+
+  <div id="list" class="wrap" style="gap:16px"></div>
+
+  <footer>
+    <span>Facts from V1 Engineering's <a href="https://docs.v1e.com/lowrider/">LR4</a> and <a href="https://docs.v1e.com/electronics/jackpot3/">Jackpot3</a> docs, read November 2026. Prices and stock weren't checked live.</span>
+    <span>The Abort button in the UI is a software stop. The hardware emergency stop is the one that keeps people safe.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var S = [
+    { ref: 'U1', title: 'Controller', items: [
+      ['ctl-jp3', 'Jackpot3 CNC controller', 'From V1 Engineering or Elecrow, about $76. ESP32 with FluidNC and 6 TMC2226 drivers on the board; the LR4 uses 5. Takes 9–24 V DC, 19 W minimum, with reverse-polarity protection. Comes with 5 plugs and 6 heat sinks.'],
+      ['ctl-usb', 'USB-C data cable', 'Not in the Jackpot3 box. Needed for first setup and flashing.'],
+      ['ctl-hs', 'Heat sinks fitted on the 6 drivers', 'They come in the box.'],
+      ['ctl-sd', 'microSD card for job files', 'Larger than 2 GB, FAT32. V1 says Class 4 works best, up to Class 6. File names 30 characters or fewer.'],
+      ['ctl-case', 'Enclosure for the board', 'Keep wires clear of the antenna that overhangs the board edge.'],
+      ['ctl-fan', 'Board fan (optional)', 'V1 sells a 24 V fan; case fans usually run straight from the supply.', ['check']]
+    ]},
+    { ref: 'M1–M5', title: 'Motion', items: [
+      ['mot-steppers', '5 NEMA17 stepper motors, shaft 20 mm or longer', 'X: 1 (the core). Y: 2 (Y0 left, Y1 right) so homing squares the gantry. Z: 2 (Z0, Z1) so homing levels it. V1 lists a 76 oz-in motor; its rated current sets the driver current in config.yaml.', ['check']],
+      ['mot-ext', 'Motor extension leads and 2.54 mm connectors', 'The Jackpot3 has open 2.54 mm male headers. Some leads may need splicing.'],
+      ['mot-labels', 'Labels on every lead, both ends', 'X, Y0, Y1, Z0, Z1, for the motors and the endstops.']
+    ]},
+    { ref: 'SW1–SW6', title: 'Endstops and probe', items: [
+      ['sw-ends', '5 endstops, wired normally closed', 'X, Y0, Y1, Z0, Z1. NC is V1’s standard. The LR4 homes to Y min.'],
+      ['sw-plate', 'Touch plate for Z, wired normally open', 'Plugs into the last input (gpio.36). Measure its thickness for the probe setting.'],
+      ['sw-volts', 'Nothing above 5 V on any input', 'Inputs are active low with 10 kΩ pull-ups, 3.3–5 V tolerant.'],
+      ['sw-limits', 'Hard limits enabled in config.yaml', 'Planned for this build. It is what makes the Alarm 1 · Hard limit screen happen.']
+    ]},
+    { ref: 'PS1', title: 'Power', items: [
+      ['pwr-psu', '24 V DC power supply, 36 W or more', 'V1’s kit voltage and the LR4 BOM minimum. Add up a fan and any output loads: each output gives 1 A continuous, 2.5 A briefly.', ['check']],
+      ['pwr-mains', 'Mains lead, fuse and switch for the supply', '', ['qualified']],
+      ['pwr-lead', '24 V lead to the Jackpot3 power plug', 'Polarity measured with a multimeter before connecting.']
+    ]},
+    { ref: 'K1', title: 'Router', items: [
+      ['rtr-router', 'Router', 'V1 designs the LR4 around a trim router. Its speed range sets the RPM presets in the UI.', ['check']],
+      ['rtr-ssr', 'Solid-state relay for on/off', 'Rated for the router’s mains current, switched from a Jackpot3 output set to 5 V. Confirm the SSR accepts a 5 V control input.', ['check', 'qualified']],
+      ['rtr-ctl', 'Router speed controller', 'The UI’s ROUTER RPM readout is reserved for it.', ['later']],
+      ['rtr-det', 'Router speed detector', 'Until it exists the UI shows ---- rpm and NO SENSOR beside the set speed.', ['later']],
+      ['rtr-vac', 'Dust hose grounded at one end', 'V1’s warning, if you run dust collection.']
+    ]},
+    { ref: 'HMI', title: 'Touchscreen', items: [
+      ['pi-board', 'Raspberry Pi 4 (2 GB or more) or Pi 5', 'A Pi 5 is smoother in the 3D toolpath viewer.'],
+      ['pi-disp', 'Raspberry Pi Touch Display 2, 7"', 'Mounted in landscape so it runs at 1280 × 720.'],
+      ['pi-psu', 'Official USB-C supply for the Pi', '5 V 3 A for a Pi 4, 5 V 5 A (27 W) for a Pi 5. No battery anywhere in this setup.'],
+      ['pi-sd', 'microSD card for Raspberry Pi OS, 16 GB or larger', ''],
+      ['pi-case', 'Case or mount for the Pi and display', 'Somewhere out of the dust.'],
+      ['pi-net', 'Network plan', 'The Pi joins the Jackpot3’s own "FluidNC" Wi-Fi, or both join your shop router.'],
+      ['pi-fonts', 'Fonts installed on the Pi', 'Oswald, Share Tech Mono and Barlow, all free (OFL). The UI needs them to look right.']
+    ]},
+    { ref: 'ES1', title: 'Safety', items: [
+      ['saf-estop', 'Hardware emergency stop', 'Cuts power to the motors and the router, and stays off until reset. The router is on mains, so its cut-off needs a contactor or relay rated for it.', ['qualified']],
+      ['saf-ppe', 'Eye and hearing protection', ''],
+      ['saf-fire', 'Fire extinguisher within reach', 'A jammed bit can scorch material.']
+    ]},
+    { ref: 'T', title: 'Tools for setup', items: [
+      ['tool-dmm', 'Multimeter', 'For supply polarity, endstop continuity and motor coil pairs.'],
+      ['tool-crimp', 'Small screwdrivers, strippers, crimper for 2.54 mm pins', ''],
+      ['tool-host', 'A laptop or phone for first setup', 'Over USB-C or the "FluidNC" Wi-Fi.']
+    ]},
+    { ref: 'PWR-UP', title: 'Before first power-up', items: [
+      ['up-pol', 'Supply polarity measured at the Jackpot3 plug', ''],
+      ['up-coils', 'Each motor’s coil pairs found and matched to its plug', ''],
+      ['up-nc', 'Every endstop reads closed at rest, open when pressed', ''],
+      ['up-plate', 'Touch plate reads open at rest, closed against the bit', ''],
+      ['up-current', 'Motor currents set in config.yaml from the motor rating', ''],
+      ['up-bit', 'Router unplugged and bit out for the first motion tests', ''],
+      ['up-estop', 'Emergency stop tested', 'It cuts the motors and router, and nothing restarts until it’s reset.']
+    ]},
+    { ref: 'UI', title: 'Before installing the Neon Noir UI', items: [
+      ['ui-size', '$LocalFS/Size run on the Jackpot3', 'Confirms room for the UI file, about 158 KB.'],
+      ['ui-backup', 'Stock index.html.gz and config.yaml backed up', 'Re-uploading the stock file is the way back.'],
+      ['ui-layout', 'FigUI Layout set to Tablet on the Pi', 'On Auto it picks the desktop layout at 1270 px wide or more.']
+    ]}
+  ];
+
+  var KEY = 'lr4-hw-checklist-v1', done = {}, filter = 'all';
+  try { done = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { done = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  var TAG = { check: ['Check', ''], qualified: ['Qualified', 'safety'], later: ['Later', 'later'] };
+  var list = document.getElementById('list');
+  var tick = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function esc(t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function render() {
+    var html = '';
+    S.forEach(function (sec, si) {
+      var n = sec.items.length, d = sec.items.filter(function (it) { return done[it[0]]; }).length;
+      var rows = sec.items.filter(function (it) {
+        if (filter === 'todo') return !done[it[0]];
+        if (filter === 'check') return (it[3] || []).indexOf('check') >= 0;
+        return true;
+      });
+      if (!rows.length && filter !== 'all') return;
+      html += '<section class="panel' + (d === n ? ' done' : '') + '"><div class="in">' +
+        '<div class="ph"><h2><span class="ref">' + sec.ref + '</span>' + sec.title + '</h2><span class="tally">' + d + ' / ' + n + '</span></div><ul>';
+      rows.forEach(function (it) {
+        var tags = (it[3] || []).map(function (t) { return '<span class="tag ' + TAG[t][1] + '">' + TAG[t][0] + '</span>'; }).join('');
+        html += '<li><label class="row" for="c-' + it[0] + '"><input type="checkbox" id="c-' + it[0] + '" data-id="' + it[0] + '"' + (done[it[0]] ? ' checked' : '') + '>' +
+          '<span class="box">' + tick + '</span><span class="txt"><span class="what"><b>' + esc(it[1]) + '</b>' + (tags ? '<span class="tags">' + tags + '</span>' : '') + '</span>' +
+          (it[2] ? '<span class="note">' + esc(it[2]) + '</span>' : '') + '</span></label></li>';
+      });
+      html += '</ul></div></section>';
+    });
+    if (!html) html = '<div class="empty">Nothing left here. Switch to All to see every item.</div>';
+    list.innerHTML = html;
+    var total = 0, got = 0;
+    S.forEach(function (sec) { sec.items.forEach(function (it) { total++; if (done[it[0]]) got++; }); });
+    document.getElementById('count').innerHTML = got + ' / ' + total + '<small>done</small>';
+    document.getElementById('meter').style.width = (total ? got / total * 100 : 0) + '%';
+  }
+  list.addEventListener('change', function (e) {
+    var id = e.target.getAttribute('data-id'); if (!id) return;
+    if (e.target.checked) done[id] = 1; else delete done[id];
+    save();
+    var focusId = e.target.id; render();
+    var el = document.getElementById(focusId); if (el) el.focus();
+  });
+  document.querySelectorAll('.filters button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      filter = b.getAttribute('data-f');
+      document.querySelectorAll('.filters button').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      render();
+    });
+  });
+  var reset = document.getElementById('reset'), armT;
+  reset.addEventListener('click', function () {
+    if (!reset.classList.contains('arm')) {
+      reset.classList.add('arm'); reset.textContent = 'Tap again to clear';
+      armT = setTimeout(function () { reset.classList.remove('arm'); reset.textContent = 'Clear ticks'; }, 3000);
+      return;
+    }
+    clearTimeout(armT); done = {}; save(); render();
+    reset.classList.remove('arm'); reset.textContent = 'Cleared';
+    setTimeout(function () { reset.textContent = 'Clear ticks'; }, 1500);
+  });
+  render();
+})();
+</script>
