@@ -17,11 +17,7 @@ Runs the checklist offline in Scriptable and keeps your ticks in iCloud Drive.
 
 ## Start it from the Home Screen
 
-Either:
-
-- **From Scriptable:** long-press the script › **Details** › **Add to Home Screen**.
-
-or, with Shortcuts:
+With Shortcuts (gives a normal app-style icon):
 
 1. Shortcuts › **+** › **Add Action** › search "Scriptable" › **Run Script**.
 2. Tap **Script** and choose **LR4 Hardware**. Expand the action and turn **Run In App**
@@ -29,6 +25,17 @@ or, with Shortcuts:
 3. Name the shortcut, pick an icon, then Share › **Add to Home Screen**.
 
 You can also say "Hey Siri, LR4 Hardware" once the shortcut exists.
+
+Or as a Scriptable widget:
+
+1. Long-press the Home Screen › **Edit** › **Add Widget** › **Scriptable**, small size.
+2. Long-press the new widget › **Edit Widget**. Set **Script** to **LR4 Hardware** and
+   **When Interacting** to **Run Script**.
+3. Tapping the widget opens the checklist. The script doesn't draw a widget face, so the
+   widget itself stays plain.
+
+An earlier version of these notes said to long-press the script in Scriptable and use
+**Details › Add to Home Screen**. That menu isn't there in current Scriptable.
 
 ## Good to know
 
