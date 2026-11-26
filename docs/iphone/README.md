@@ -6,6 +6,7 @@ Runs the checklist offline in Scriptable and keeps your ticks in iCloud Drive.
 |---|---|
 | `lr4-hardware-checklist.html` | The checklist page, fonts included (about 100 KB) |
 | `LR4 Hardware.js` | The Scriptable script that opens it and saves your ticks |
+| `lr4-icon-1024.png` | The Home Screen icon, 1024 × 1024 (`lr4-icon-source.html` draws it) |
 
 ## Set up (once)
 
@@ -51,6 +52,8 @@ to the iPhone. (`shortcut/build_lr4_launcher.py` rebuilds the file.)
    button to open **Details**.
 2. Tap **Add to Home Screen**.
 3. Optional: change the Home Screen name or icon in the "Home Screen Name and Icon" area.
+   For the LR4 icon, first save `lr4-icon-1024.png` to Photos (or Files), then tap the
+   icon there and choose **Choose Photo** (or **Choose File**).
 4. Tap **Add**.
 
 Run it once from the Shortcuts app first. iOS asks once whether the shortcut may open
@@ -86,3 +89,9 @@ Chromium browser: fonts loaded offline, saved ticks came back, new ticks were wr
 and a damaged state file was cleaned up. It has not been run on an iPhone yet. If a tick
 ever fails to save as you tap it, the script also saves everything when you close the
 checklist.
+
+## Changing the icon on an existing Home Screen shortcut
+
+iOS sets the icon when you add it. To change it, remove the Home Screen icon
+(long-press › Remove Bookmark or Delete), then add it again from the shortcut's Details
+with the new picture.
